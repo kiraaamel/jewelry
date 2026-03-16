@@ -1,5 +1,5 @@
 """
-WSGI config for jewelryshop project.
+WSGI config for jewelryproject project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
