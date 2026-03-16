@@ -49,7 +49,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'jewelryshop.urls'
+ROOT_URLCONF = 'jewelryproject.urls'
 
 TEMPLATES = [
     {
@@ -67,7 +67,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'jewelryshop.wsgi.application'
+WSGI_APPLICATION = 'jewelryproject.wsgi.application'
 
 
 # Database
