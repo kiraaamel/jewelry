@@ -21,3 +21,42 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+class Category(models.Model):
+    """
+    Категория товара с поддержкой вложенности.
+    """
+    name = models.CharField(
+        max_length=255,
+        verbose_name='Название'
+    )
+    slug = models.SlugField(
+        unique=True,
+        verbose_name='URL-идентификатор'
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name='Описание'
+    )
+    parent = models.ForeignKey(
+        'self',  # ссылка на эту же модель
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='children',
+        verbose_name='Родительская категория'
+    )
+    image = models.ImageField(
+        upload_to='categories/',
+        blank=True,
+        null=True,
+        verbose_name='Изображение'
+    )
+
+    class Meta:
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
+        ordering = ['name']  # сортировка по названию
+
+    def __str__(self):
+        return self.name
