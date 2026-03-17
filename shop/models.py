@@ -232,3 +232,34 @@ class Product(models.Model):
         if self.old_price and self.old_price > self.price:
             return int((1 - self.price / self.old_price) * 100)
         return 0
+
+class ProductImage(models.Model):
+    """
+    Изображения товара (одно или несколько).
+    """
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='images',
+        verbose_name='Товар'
+    )
+    image = models.ImageField(
+        upload_to='products/',
+        verbose_name='Изображение'
+    )
+    is_main = models.BooleanField(
+        default=False,
+        verbose_name='Основное'
+    )
+    sort_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Порядок сортировки'
+    )
+
+    class Meta:
+        verbose_name = 'Изображение товара'
+        verbose_name_plural = 'Изображения товаров'
+        ordering = ['sort_order']
+
+    def __str__(self):
+        return f"{self.product.name} - изображение {self.id}"
