@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     User, Category, Brand, Product, ProductImage, 
-    Cart, CartItem, Order, OrderItem, Review
+    Cart, CartItem, Order, OrderItem, Review, Wishlist
 )
 
 class ReviewAdmin(admin.ModelAdmin):
@@ -80,6 +80,14 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ['category', 'brand', 'metal', 'stones']
     search_fields = ['name', 'description']
 
+class WishlistAdmin(admin.ModelAdmin):
+    """
+    Настройки отображения избранного в админке.
+    """
+    list_display = ['id', 'user', 'product', 'added_at']
+    list_filter = ['added_at']
+    search_fields = ['user__email', 'product__name']
+    readonly_fields = ['added_at']
 # Регистрируем все модели
 admin.site.register(User)
 admin.site.register(Category)
@@ -89,4 +97,5 @@ admin.site.register(Cart, CartAdmin)
 admin.site.register(CartItem)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderItem)
-admin.site.register(Review, ReviewAdmin)  # добавили
+admin.site.register(Review, ReviewAdmin)  
+admin.site.register(Wishlist, WishlistAdmin)

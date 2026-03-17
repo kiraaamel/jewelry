@@ -33,6 +33,13 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+    
+    def is_product_in_wishlist(self, product_id):
+        """
+        Проверяет, находится ли товар с указанным ID в избранном у пользователя.
+        Возвращает True или False.
+        """
+        return self.wishlist.filter(product_id=product_id).exists()
 
 class Category(models.Model):
     """
@@ -253,6 +260,14 @@ class Product(models.Model):
         Количество отзывов на товар.
         """
         return self.reviews.filter(moderated=True).count()
+
+    def is_in_wishlist(self, user):
+        """
+        Проверяет, находится ли товар в избранном у указанного пользователя.
+        """
+        if not user or not user.is_authenticated:
+            return False
+        return Wishlist.objects.filter(user=user, product=self).exists()
         
     @property
     def discount_percent(self):
@@ -596,3 +611,39 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Отзыв {self.user.email} на {self.product.name} - {self.rating}★"
+
+class Wishlist(models.Model):
+    """
+    Список избранного пользователя.
+    """
+    # Связь с пользователем
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='wishlist',
+        verbose_name='Пользователь'
+    )
+    
+    # Связь с товаром
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='wishlisted_by',
+        verbose_name='Товар'
+    )
+    
+    # Дата добавления
+    added_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата добавления'
+    )
+
+    class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
+        # Один пользователь может добавить один товар в избранное только один раз
+        unique_together = ('user', 'product')
+        ordering = ['-added_at']  # сначала новые добавления
+
+    def __str__(self):
+        return f"{self.user.email} -> {self.product.name}"
