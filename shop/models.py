@@ -91,3 +91,144 @@ class Brand(models.Model):
 
     def __str__(self):
         return self.name
+
+class Product(models.Model):
+    """
+    Ювелирное изделие.
+    """
+    # Основная информация
+    name = models.CharField(
+        max_length=255,
+        verbose_name='Название'
+    )
+    slug = models.SlugField(
+        unique=True,
+        verbose_name='URL-идентификатор'
+    )
+    description = models.TextField(
+        verbose_name='Описание'
+    )
+    
+    # Цены и наличие
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Цена'
+    )
+    old_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        verbose_name='Старая цена'
+    )
+    stock_quantity = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Количество на складе'
+    )
+    reserved_quantity = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Зарезервированное количество'
+    )
+    
+    # Связи с другими таблицами
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='products',
+        verbose_name='Категория'
+    )
+    brand = models.ForeignKey(
+        Brand,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='products',
+        verbose_name='Бренд'
+    )
+    
+    # Характеристики ювелирного изделия
+    metal = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name='Металл'
+    )
+    fineness = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name='Проба'
+    )
+    weight = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        verbose_name='Вес (г)'
+    )
+    size = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name='Размер'
+    )
+    stones = models.BooleanField(
+        default=False,
+        verbose_name='Наличие камней'
+    )
+    stone_type = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='Тип камня'
+    )
+    collection = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='Коллекция'
+    )
+    
+    # Мета-информация
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата обновления'
+    )
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='products_created',
+        verbose_name='Создал'
+    )
+
+    class Meta:
+        verbose_name = 'Товар'
+        verbose_name_plural = 'Товары'
+        ordering = ['-created_at']  # сортировка по убыванию даты создания
+        indexes = [
+            models.Index(fields=['slug']),
+            models.Index(fields=['category', 'price']),
+        ]
+
+    def __str__(self):
+        return self.name
+    
+    @property
+    def available_quantity(self):
+        """
+        Доступное количество товара (на складе минус зарезервированное).
+        Это вычисляемое поле, не хранится в БД.
+        """
+        return self.stock_quantity - self.reserved_quantity
+    
+    @property
+    def discount_percent(self):
+        """
+        Процент скидки (если есть старая цена).
+        """
+        if self.old_price and self.old_price > self.price:
+            return int((1 - self.price / self.old_price) * 100)
+        return 0
