@@ -243,7 +243,7 @@ class Product(models.Model):
         """
         return self.stock_quantity - self.reserved_quantity
     
-     @property
+    @property
     def average_rating(self):
         """
         Средний рейтинг товара на основе отзывов.
