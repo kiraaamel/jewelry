@@ -1,5 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+import uuid
+from django.utils import timezone
+
+def generate_order_number():
+    """
+    Генерирует уникальный номер заказа.
+    Формат: ORD-YYYYMMDD-XXXX (где XXXX - случайные символы)
+    """
+    date_part = timezone.now().strftime('%Y%m%d')
+    random_part = str(uuid.uuid4())[:4].upper()
+    return f"ORD-{date_part}-{random_part}"
 
 class User(AbstractUser):
     """
@@ -353,3 +364,154 @@ class CartItem(models.Model):
         Стоимость этой позиции (цена товара * количество).
         """
         return self.product.price * self.quantity
+
+class Order(models.Model):
+    """
+    Заказ покупателя.
+    """
+    class Status(models.TextChoices):
+        """
+        Возможные статусы заказа.
+        TextChoices - специальный класс Django для создания выпадающих списков.
+        """
+        NEW = 'new', 'Новый'              # (значение в БД, отображаемое имя)
+        CONFIRMED = 'confirmed', 'Подтверждён'
+        SHIPPED = 'shipped', 'Отправлен'
+        DELIVERED = 'delivered', 'Доставлен'
+        CANCELLED = 'cancelled', 'Отменён'
+
+    # Связь с пользователем (может быть NULL, если пользователь удалён)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orders',
+        verbose_name='Пользователь'
+    )
+    
+    # Уникальный номер заказа для клиента
+    order_number = models.CharField(
+        max_length=50,
+        unique=True,
+        default=generate_order_number,
+        verbose_name='Номер заказа'
+    )
+    
+    # Дата создания
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    
+    # Статус заказа (используем класс Status выше)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,  # выпадающий список из Status
+        default=Status.NEW,
+        verbose_name='Статус'
+    )
+    
+    # Общая стоимость заказа
+    total_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Общая стоимость'
+    )
+    
+    # Информация о доставке
+    delivery_address = models.TextField(
+        verbose_name='Адрес доставки'
+    )
+    delivery_method = models.CharField(
+        max_length=100,
+        verbose_name='Способ доставки'
+    )
+    
+    # Информация об оплате
+    payment_method = models.CharField(
+        max_length=100,
+        verbose_name='Способ оплаты'
+    )
+    
+    # Дополнительные опции
+    gift_wrap = models.BooleanField(
+        default=False,
+        verbose_name='Подарочная упаковка'
+    )
+    gift_message = models.TextField(
+        blank=True,
+        verbose_name='Текст открытки'
+    )
+    comment = models.TextField(
+        blank=True,
+        verbose_name='Комментарий к заказу'
+    )
+    
+    # Дата фактического получения (заполняется при доставке)
+    delivered_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата получения'
+    )
+
+    class Meta:
+        verbose_name = 'Заказ'
+        verbose_name_plural = 'Заказы'
+        ordering = ['-created_at']  # сначала новые заказы
+
+    def __str__(self):
+        return f"Заказ №{self.order_number}"
+
+
+class OrderItem(models.Model):
+    """
+    Позиция заказа (товар в заказе).
+    """
+    # Связь с заказом
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='items',
+        verbose_name='Заказ'
+    )
+    
+    # Связь с товаром (может быть NULL, если товар удалён из каталога)
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Товар'
+    )
+    
+    # Копия названия товара на момент заказа (для истории)
+    product_name = models.CharField(
+        max_length=255,
+        verbose_name='Название товара (на момент заказа)'
+    )
+    
+    # Цена на момент заказа (для истории)
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Цена на момент заказа'
+    )
+    
+    # Количество
+    quantity = models.PositiveIntegerField(
+        verbose_name='Количество'
+    )
+
+    class Meta:
+        verbose_name = 'Позиция заказа'
+        verbose_name_plural = 'Позиции заказа'
+
+    def __str__(self):
+        return f"{self.product_name} x{self.quantity}"
+    
+    @property
+    def total_price(self):
+        """
+        Стоимость этой позиции (цена * количество).
+        """
+        return self.price * self.quantity
