@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import (
     User, Category, Brand, Product, ProductImage, 
-    Cart, CartItem, Order, OrderItem, Review, Wishlist
+    Cart, CartItem, Order, OrderItem, Review, Wishlist,
+    Promotion, Payment, Employee
 )
 
 class ReviewAdmin(admin.ModelAdmin):
@@ -88,6 +89,47 @@ class WishlistAdmin(admin.ModelAdmin):
     list_filter = ['added_at']
     search_fields = ['user__email', 'product__name']
     readonly_fields = ['added_at']
+
+class PromotionAdmin(admin.ModelAdmin):
+    """
+    Настройки отображения акций в админке.
+    """
+    list_display = ['name', 'discount_type', 'discount_value', 'start_date', 'end_date', 'is_active']
+    list_filter = ['discount_type', 'is_active', 'start_date', 'end_date']
+    search_fields = ['name', 'description']
+    filter_horizontal = ['products', 'categories']  # удобный виджет для ManyToMany полей
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('name', 'description', 'is_active')
+        }),
+        ('Скидка', {
+            'fields': ('discount_type', 'discount_value')
+        }),
+        ('Срок действия', {
+            'fields': ('start_date', 'end_date')
+        }),
+        ('Применяется к', {
+            'fields': ('products', 'categories'),
+            'classes': ('collapse',)
+        }),
+    )
+
+class PaymentAdmin(admin.ModelAdmin):
+    """
+    Настройки отображения платежей в админке.
+    """
+    list_display = ['id', 'order', 'amount', 'method', 'status', 'created_at']
+    list_filter = ['status', 'method', 'created_at']
+    search_fields = ['order__order_number', 'transaction_id']
+    readonly_fields = ['created_at']
+
+class EmployeeAdmin(admin.ModelAdmin):
+    """
+    Настройки отображения сотрудников в админке.
+    """
+    list_display = ['name', 'position', 'email', 'phone', 'is_active']
+    list_filter = ['position', 'is_active']
+    search_fields = ['name', 'email', 'phone']
 # Регистрируем все модели
 admin.site.register(User)
 admin.site.register(Category)
@@ -99,3 +141,6 @@ admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderItem)
 admin.site.register(Review, ReviewAdmin)  
 admin.site.register(Wishlist, WishlistAdmin)
+admin.site.register(Promotion, PromotionAdmin)
+admin.site.register(Payment, PaymentAdmin)
+admin.site.register(Employee, EmployeeAdmin)

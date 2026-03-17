@@ -268,7 +268,7 @@ class Product(models.Model):
         if not user or not user.is_authenticated:
             return False
         return Wishlist.objects.filter(user=user, product=self).exists()
-        
+
     @property
     def discount_percent(self):
         """
@@ -647,3 +647,202 @@ class Wishlist(models.Model):
 
     def __str__(self):
         return f"{self.user.email} -> {self.product.name}"
+
+class Promotion(models.Model):
+    """
+    Акция (скидка на товары или категории).
+    """
+    class DiscountType(models.TextChoices):
+        """Типы скидок"""
+        PERCENT = 'percent', 'Процент'
+        FIXED = 'fixed', 'Фиксированная сумма'
+
+    # Основная информация
+    name = models.CharField(
+        max_length=255,
+        verbose_name='Название акции'
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name='Описание'
+    )
+    
+    # Тип и размер скидки
+    discount_type = models.CharField(
+        max_length=20,
+        choices=DiscountType.choices,
+        verbose_name='Тип скидки'
+    )
+    discount_value = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Значение скидки'
+    )
+    
+    # Срок действия
+    start_date = models.DateTimeField(
+        verbose_name='Начало действия'
+    )
+    end_date = models.DateTimeField(
+        verbose_name='Окончание действия'
+    )
+    
+    # На какие товары действует (связи)
+    products = models.ManyToManyField(
+        Product,
+        blank=True,
+        related_name='promotions',
+        verbose_name='Товары'
+    )
+    categories = models.ManyToManyField(
+        Category,
+        blank=True,
+        related_name='promotions',
+        verbose_name='Категории'
+    )
+    
+    # Активна ли акция (можно отключить вручную)
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Активна'
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+
+    class Meta:
+        verbose_name = 'Акция'
+        verbose_name_plural = 'Акции'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.get_discount_type_display()}: {self.discount_value})"
+    
+    @property
+    def is_valid(self):
+        """
+        Проверяет, действует ли акция сейчас.
+        """
+        now = timezone.now()
+        return self.is_active and self.start_date <= now <= self.end_date
+
+class Payment(models.Model):
+    """
+    Информация о платеже по заказу.
+    """
+    class Status(models.TextChoices):
+        """Статусы платежа"""
+        PENDING = 'pending', 'В обработке'
+        SUCCESS = 'success', 'Успешно'
+        FAILED = 'failed', 'Ошибка'
+        REFUNDED = 'refunded', 'Возврат'
+
+    # Связь с заказом
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        verbose_name='Заказ'
+    )
+    
+    # Сумма платежа
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Сумма'
+    )
+    
+    # Способ оплаты
+    method = models.CharField(
+        max_length=100,
+        verbose_name='Метод оплаты'
+    )
+    
+    # Статус
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        verbose_name='Статус платежа'
+    )
+    
+    # ID транзакции в платёжной системе
+    transaction_id = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='ID транзакции'
+    )
+    
+    # Дата платежа
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата платежа'
+    )
+
+    class Meta:
+        verbose_name = 'Платёж'
+        verbose_name_plural = 'Платежи'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Платёж {self.id} по заказу {self.order.order_number} - {self.get_status_display()}"
+
+class Employee(models.Model):
+    """
+    Сотрудник компании.
+    """
+    # Основная информация
+    name = models.CharField(
+        max_length=255,
+        verbose_name='Полное имя'
+    )
+    position = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='Должность'
+    )
+    hire_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Дата приёма'
+    )
+    
+    # Связь с учётной записью пользователя (если есть)
+    user = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='employee_profile',
+        verbose_name='Учётная запись'
+    )
+    
+    # Контактные данные
+    phone = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name='Телефон'
+    )
+    email = models.EmailField(
+        blank=True,
+        verbose_name='Email'
+    )
+    
+    # Дополнительно
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Работает'
+    )
+    notes = models.TextField(
+        blank=True,
+        verbose_name='Примечания'
+    )
+
+    class Meta:
+        verbose_name = 'Сотрудник'
+        verbose_name_plural = 'Сотрудники'
+
+    def __str__(self):
+        return self.name
