@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 import uuid
 from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 def generate_order_number():
     """
@@ -235,6 +236,24 @@ class Product(models.Model):
         """
         return self.stock_quantity - self.reserved_quantity
     
+     @property
+    def average_rating(self):
+        """
+        Средний рейтинг товара на основе отзывов.
+        """
+        reviews = self.reviews.filter(moderated=True)  # только промодерированные
+        if not reviews:
+            return 0
+        total = sum(review.rating for review in reviews)
+        return round(total / reviews.count(), 1)  # округляем до 1 знака
+    
+    @property
+    def reviews_count(self):
+        """
+        Количество отзывов на товар.
+        """
+        return self.reviews.filter(moderated=True).count()
+        
     @property
     def discount_percent(self):
         """
@@ -515,3 +534,65 @@ class OrderItem(models.Model):
         Стоимость этой позиции (цена * количество).
         """
         return self.price * self.quantity
+
+class Review(models.Model):
+    """
+    Отзыв на товар от покупателя.
+    """
+    # Связь с пользователем (кто оставил отзыв)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name='Пользователь'
+    )
+    
+    # Связь с товаром (на какой товар отзыв)
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name='Товар'
+    )
+    
+    # Оценка (от 1 до 5)
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name='Оценка'
+    )
+    
+    # Текст отзыва
+    comment = models.TextField(
+        blank=True,
+        verbose_name='Текст отзыва'
+    )
+    
+    # Фото к отзыву (необязательно)
+    image = models.ImageField(
+        upload_to='reviews/',
+        blank=True,
+        null=True,
+        verbose_name='Фото'
+    )
+    
+    # Дата создания
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата'
+    )
+    
+    # Флаг модерации (прошёл ли отзыв проверку)
+    moderated = models.BooleanField(
+        default=False,
+        verbose_name='Промодерировано'
+    )
+
+    class Meta:
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+        # Один пользователь может оставить только один отзыв на товар
+        unique_together = ('user', 'product')
+        ordering = ['-created_at']  # сначала новые отзывы
+
+    def __str__(self):
+        return f"Отзыв {self.user.email} на {self.product.name} - {self.rating}★"

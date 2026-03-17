@@ -1,21 +1,37 @@
 from django.contrib import admin
 from .models import (
     User, Category, Brand, Product, ProductImage, 
-    Cart, CartItem, Order, OrderItem  # добавили Order и OrderItem
+    Cart, CartItem, Order, OrderItem, Review
 )
 
+class ReviewAdmin(admin.ModelAdmin):
+    """
+    Настройки отображения отзывов в админке.
+    """
+    list_display = ['id', 'user', 'product', 'rating', 'created_at', 'moderated']
+    list_filter = ['rating', 'moderated', 'created_at']
+    search_fields = ['user__email', 'product__name', 'comment']
+    list_editable = ['moderated']
+    readonly_fields = ['created_at']
+    
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('user', 'product', 'rating', 'created_at')
+        }),
+        ('Содержание', {
+            'fields': ('comment', 'image')
+        }),
+        ('Модерация', {
+            'fields': ('moderated',)
+        }),
+    )
+
 class OrderItemInline(admin.TabularInline):
-    """
-    Встроенная форма для позиций заказа.
-    """
     model = OrderItem
     extra = 0
     readonly_fields = ['product_name', 'price', 'quantity', 'total_price']
 
 class OrderAdmin(admin.ModelAdmin):
-    """
-    Настройки отображения заказа в админке.
-    """
     inlines = [OrderItemInline]
     list_display = [
         'order_number', 'user', 'created_at', 'status', 
@@ -24,7 +40,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = ['status', 'delivery_method', 'payment_method', 'created_at']
     search_fields = ['order_number', 'user__email', 'delivery_address']
     readonly_fields = ['order_number', 'created_at', 'total_price']
-    list_editable = ['status']  # можно менять статус прямо из списка
+    list_editable = ['status']
     
     fieldsets = (
         ('Основная информация', {
@@ -38,7 +54,7 @@ class OrderAdmin(admin.ModelAdmin):
         }),
         ('Дополнительно', {
             'fields': ('gift_wrap', 'gift_message', 'comment'),
-            'classes': ('collapse',)  # сворачиваемый блок
+            'classes': ('collapse',)
         }),
     )
 
@@ -71,5 +87,6 @@ admin.site.register(Brand)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Cart, CartAdmin)
 admin.site.register(CartItem)
-admin.site.register(Order, OrderAdmin)  # используем специальный класс
+admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderItem)
+admin.site.register(Review, ReviewAdmin)  # добавили
