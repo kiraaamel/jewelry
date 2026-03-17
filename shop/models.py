@@ -60,3 +60,34 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+class Brand(models.Model):
+    """
+    Бренд производителя.
+    """
+    name = models.CharField(
+        max_length=255,
+        verbose_name='Название'
+    )
+    slug = models.SlugField(
+        unique=True,
+        verbose_name='URL-идентификатор'
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name='Описание'
+    )
+    logo = models.ImageField(
+        upload_to='brands/',
+        blank=True,
+        null=True,
+        verbose_name='Логотип'
+    )
+
+    class Meta:
+        verbose_name = 'Бренд'
+        verbose_name_plural = 'Бренды'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
