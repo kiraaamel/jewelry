@@ -1,9 +1,9 @@
 from django.contrib import admin
 from .models import (
-    User, Category, Brand, Product, ProductImage, 
-    Cart, CartItem, Order, OrderItem, Review, Wishlist,
-    Promotion, Payment, Employee
+    User, Category, Product, 
+    Cart, CartItem, Order, OrderItem, Review, Wishlist
 )
+
 
 class ReviewAdmin(admin.ModelAdmin):
     """
@@ -27,12 +27,20 @@ class ReviewAdmin(admin.ModelAdmin):
         }),
     )
 
+
 class OrderItemInline(admin.TabularInline):
+    """
+    Встроенная форма для позиций заказа.
+    """
     model = OrderItem
     extra = 0
     readonly_fields = ['product_name', 'price', 'quantity', 'total_price']
 
+
 class OrderAdmin(admin.ModelAdmin):
+    """
+    Настройки отображения заказа в админке.
+    """
     inlines = [OrderItemInline]
     list_display = [
         'order_number', 'user', 'created_at', 'status', 
@@ -59,27 +67,56 @@ class OrderAdmin(admin.ModelAdmin):
         }),
     )
 
+
 class CartItemInline(admin.TabularInline):
+    """
+    Встроенная форма для элементов корзины.
+    """
     model = CartItem
     extra = 0
     readonly_fields = ['product', 'quantity', 'added_at', 'total_price']
 
+
 class CartAdmin(admin.ModelAdmin):
+    """
+    Настройки отображения корзины в админке.
+    """
     inlines = [CartItemInline]
     list_display = ['id', 'user', 'session_key', 'total_items', 'total_price', 'updated_at']
     list_filter = ['updated_at']
     search_fields = ['user__email', 'session_key']
     readonly_fields = ['created_at', 'updated_at']
 
-class ProductImageInline(admin.TabularInline):
-    model = ProductImage
-    extra = 1
 
 class ProductAdmin(admin.ModelAdmin):
-    inlines = [ProductImageInline]
-    list_display = ['name', 'price', 'stock_quantity', 'category', 'created_at']
-    list_filter = ['category', 'brand', 'metal', 'stones']
-    search_fields = ['name', 'description']
+    """
+    Настройки отображения товара в админке.
+    """
+    list_display = ['name', 'price', 'stock_quantity', 'category', 'metal', 'stones', 'created_at']
+    list_filter = ['category', 'metal', 'stones', 'created_at']
+    search_fields = ['name', 'description', 'collection']
+    prepopulated_fields = {'slug': ('name',)}
+    
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('name', 'slug', 'description', 'category')
+        }),
+        ('Цены и наличие', {
+            'fields': ('price', 'old_price', 'stock_quantity', 'reserved_quantity')
+        }),
+        ('Характеристики', {
+            'fields': ('metal', 'fineness', 'weight', 'size', 'stones', 'stone_type', 'collection')
+        }),
+        ('Изображение', {
+            'fields': ('image',)
+        }),
+        ('Мета-информация', {
+            'fields': ('created_at', 'updated_at', 'created_by'),
+            'classes': ('collapse',)
+        }),
+    )
+    readonly_fields = ['created_at', 'updated_at']
+
 
 class WishlistAdmin(admin.ModelAdmin):
     """
@@ -90,57 +127,36 @@ class WishlistAdmin(admin.ModelAdmin):
     search_fields = ['user__email', 'product__name']
     readonly_fields = ['added_at']
 
-class PromotionAdmin(admin.ModelAdmin):
+
+class UserAdmin(admin.ModelAdmin):
     """
-    Настройки отображения акций в админке.
+    Настройки отображения пользователя в админке.
     """
-    list_display = ['name', 'discount_type', 'discount_value', 'start_date', 'end_date', 'is_active']
-    list_filter = ['discount_type', 'is_active', 'start_date', 'end_date']
-    search_fields = ['name', 'description']
-    filter_horizontal = ['products', 'categories']  # удобный виджет для ManyToMany полей
+    list_display = ['email', 'first_name', 'last_name', 'phone', 'bonus_points', 'is_staff', 'is_active']
+    list_filter = ['is_staff', 'is_active']
+    search_fields = ['email', 'first_name', 'last_name', 'phone']
     fieldsets = (
-        ('Основная информация', {
-            'fields': ('name', 'description', 'is_active')
+        ('Личная информация', {
+            'fields': ('email', 'first_name', 'last_name', 'phone', 'bonus_points')
         }),
-        ('Скидка', {
-            'fields': ('discount_type', 'discount_value')
+        ('Права доступа', {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')
         }),
-        ('Срок действия', {
-            'fields': ('start_date', 'end_date')
-        }),
-        ('Применяется к', {
-            'fields': ('products', 'categories'),
+        ('Важные даты', {
+            'fields': ('last_login', 'date_joined'),
             'classes': ('collapse',)
         }),
     )
+    readonly_fields = ['last_login', 'date_joined']
 
-class PaymentAdmin(admin.ModelAdmin):
-    """
-    Настройки отображения платежей в админке.
-    """
-    list_display = ['id', 'order', 'amount', 'method', 'status', 'created_at']
-    list_filter = ['status', 'method', 'created_at']
-    search_fields = ['order__order_number', 'transaction_id']
-    readonly_fields = ['created_at']
 
-class EmployeeAdmin(admin.ModelAdmin):
-    """
-    Настройки отображения сотрудников в админке.
-    """
-    list_display = ['name', 'position', 'email', 'phone', 'is_active']
-    list_filter = ['position', 'is_active']
-    search_fields = ['name', 'email', 'phone']
 # Регистрируем все модели
-admin.site.register(User)
+admin.site.register(User, UserAdmin)
 admin.site.register(Category)
-admin.site.register(Brand)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Cart, CartAdmin)
 admin.site.register(CartItem)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderItem)
-admin.site.register(Review, ReviewAdmin)  
+admin.site.register(Review, ReviewAdmin)
 admin.site.register(Wishlist, WishlistAdmin)
-admin.site.register(Promotion, PromotionAdmin)
-admin.site.register(Payment, PaymentAdmin)
-admin.site.register(Employee, EmployeeAdmin)
