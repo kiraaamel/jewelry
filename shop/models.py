@@ -2,9 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 import uuid
 from django.utils import timezone
-from django.core.validators import MinValueValidator, MaxValueValidato
-from .models import Order 
-
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 def generate_order_number():
     """
