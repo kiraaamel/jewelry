@@ -92,8 +92,8 @@ class ProductAdmin(admin.ModelAdmin):
     """
     Настройки отображения товара в админке.
     """
-    list_display = ['name', 'price', 'stock_quantity', 'category', 'metal', 'stones', 'created_at']
-    list_filter = ['category', 'metal', 'stones', 'created_at']
+    list_display = ['name', 'price', 'stock_quantity', 'category', 'metal', 'stones', 'is_active', 'created_at']
+    list_filter = ['category', 'metal', 'stones', 'is_active', 'created_at']
     search_fields = ['name', 'description', 'collection']
     prepopulated_fields = {'slug': ('name',)}
     
@@ -109,6 +109,9 @@ class ProductAdmin(admin.ModelAdmin):
         }),
         ('Изображение', {
             'fields': ('image',)
+        }),
+        ('Статус', {
+            'fields': ('is_active',)
         }),
         ('Мета-информация', {
             'fields': ('created_at', 'updated_at', 'created_by'),
