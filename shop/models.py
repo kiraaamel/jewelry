@@ -331,6 +331,20 @@ class CartItem(models.Model):
         verbose_name_plural = 'Элементы корзины'
         unique_together = ('cart', 'product')
 
+    def clean(self):
+        """
+        Проверка наличия товара на складе перед сохранением.
+        """
+        if self.quantity > self.product.available_quantity:
+            from django.core.exceptions import ValidationError
+            raise ValidationError(
+                f'Доступно только {self.product.available_quantity} единиц товара "{self.product.name}"'
+            )
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+        
     def __str__(self):
         return f"{self.product.name} x{self.quantity}"
 
