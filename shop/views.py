@@ -1,5 +1,8 @@
 from django.shortcuts import render
-
+from django.contrib.auth.decorators import login_required
+from django.views.generic import CreateView
+from django.urls import reverse_lazy
+from .models import User
 # Create your views here.
 from django.http import HttpResponse
 from rest_framework import viewsets, generics, permissions, status
@@ -23,6 +26,10 @@ from .serializers import (
 )
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+def product_detail(request, pk):
+    """Детальная страница товара"""
+    return render(request, 'shop/product_detail.html', {'product_id': pk})
+    
 def index(request):
     return HttpResponse("Добро пожаловать в ювелирный магазин!")
 
@@ -223,3 +230,44 @@ class WishlistViewSet(viewsets.ModelViewSet):
         context['request'] = self.request
         return context
 
+def home(request):
+    """Главная страница"""
+    return render(request, 'shop/home.html')
+
+def catalog(request):
+    """Страница каталога"""
+    return render(request, 'shop/catalog.html')
+
+def cart_page(request):
+    """Страница корзины"""
+    return render(request, 'shop/cart.html')
+
+@login_required
+def profile(request):
+    """Страница профиля пользователя"""
+    return render(request, 'shop/profile.html')
+
+@login_required
+def orders(request):
+    """Страница заказов"""
+    return render(request, 'shop/orders.html')
+
+@login_required
+def favorites(request):
+    """Страница избранного"""
+    return render(request, 'shop/favorites.html')
+
+class RegisterPageView(CreateView):
+    """Страница регистрации пользователя"""
+    model = User
+    template_name = 'registration/register.html'
+    fields = ['email', 'first_name', 'last_name', 'phone']
+    success_url = reverse_lazy('login')
+    
+    def form_valid(self, form):
+        """При регистрации создаём пользователя с паролем"""
+        user = form.save(commit=False)
+        password = self.request.POST.get('password')
+        user.set_password(password)
+        user.save()
+        return super().form_valid(form)

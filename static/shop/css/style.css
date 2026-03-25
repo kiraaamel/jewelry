@@ -1,0 +1,109 @@
+/* Основные стили для сайта Argentic Jewelry */
+
+:root {
+    --gold: #d4af37;
+    --gold-dark: #c0a030;
+    --dark: #343a40;
+    --dark-light: #495057;
+    --light: #dee2e6;
+    --white: #ffffff;
+    --gray: #6c757d;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--light);
+    color: var(--dark);
+}
+
+/* Цвета */
+.text-gold {
+    color: var(--gold) !important;
+}
+.bg-gold {
+    background-color: var(--gold) !important;
+}
+.btn-gold {
+    background-color: var(--gold);
+    color: var(--dark);
+    border: none;
+    font-weight: 600;
+}
+.btn-gold:hover {
+    background-color: var(--gold-dark);
+    color: var(--dark);
+}
+
+/* Навигация */
+.top-bar {
+    background-color: var(--dark);
+    font-size: 12px;
+}
+
+.navbar a {
+    transition: color 0.3s ease;
+}
+.navbar a:hover {
+    color: var(--gold) !important;
+}
+
+/* Карточка товара */
+.product-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+}
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* Корзина */
+.cart-count {
+    background-color: var(--gold);
+    color: var(--dark);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 50%;
+}
+
+/* Баннер */
+.banner-section {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+}
+
+/* Промо-баннер */
+.promo-banner {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--gold-dark) 100%);
+}
+
+/* Футер */
+.footer a {
+    transition: color 0.3s ease;
+}
+.footer a:hover {
+    color: var(--gold) !important;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .top-bar .container > div {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .main-header .row {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .user-actions {
+        justify-content: center;
+        margin-top: 10px;
+    }
+    
+    .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+    }
+}

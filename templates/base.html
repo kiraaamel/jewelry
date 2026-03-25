@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Argentic Jewelry | Серебряные украшения</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'shop/css/style.css' %}">
+    <style>
+        .text-gold { color: #d4af37 !important; }
+        .bg-gold { background-color: #d4af37 !important; }
+        .btn-gold {
+            background-color: #d4af37;
+            color: #343a40;
+            border: none;
+            font-weight: 600;
+        }
+        .btn-gold:hover {
+            background-color: #c0a030;
+            color: #343a40;
+        }
+        .top-bar {
+            background-color: #343a40;
+            font-size: 12px;
+        }
+        .navbar a:hover {
+            color: #d4af37 !important;
+        }
+        .product-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .cart-count {
+            background-color: #d4af37;
+            color: #343a40;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 50%;
+        }
+        .banner-section {
+            background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+        }
+        .footer a {
+            transition: color 0.3s ease;
+        }
+        .footer a:hover {
+            color: #d4af37 !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="top-bar py-2">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="contact-info">
+                    <span class="text-white me-3">📞 +7 (999) 123-45-67</span>
+                    <span class="text-white">✉️ info@argentic.ru</span>
+                </div>
+                <div class="social-links">
+                    <a href="#" class="text-white me-2"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-white me-2"><i class="fab fa-telegram"></i></a>
+                    <a href="#" class="text-white"><i class="fab fa-vk"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-header bg-dark py-3">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <a href="/" class="logo text-gold fs-3 text-decoration-none">
+                        <i class="fas fa-gem"></i>
+                        <span class="text-white">Argentic Jewelry</span>
+                    </a>
+                </div>
+                <div class="col-md-5">
+                    <div class="search-bar d-flex">
+                        <input type="text" class="form-control" placeholder="Поиск украшений..." id="search-input">
+                        <button class="btn btn-gold ms-2" id="search-btn"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="user-actions d-flex justify-content-end gap-3 align-items-center">
+                        <a href="/favorites/" class="text-white text-decoration-none">
+                            <i class="far fa-heart"></i>
+                            <span>Избранное</span>
+                        </a>
+                        <a href="/cart/" class="text-white text-decoration-none position-relative">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Корзина</span>
+                            <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-gold text-dark">0</span>
+                        </a>
+                        {% if user.is_authenticated %}
+                        <div class="dropdown">
+                            <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-user"></i>
+                                <span>{{ user.email|truncatechars:15 }}</span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/profile/">Профиль</a></li>
+                                <li><a class="dropdown-item" href="/orders/">Мои заказы</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="/logout/">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item">Выйти</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                        {% else %}
+                        <a href="/login/" class="text-white text-decoration-none">
+                            <i class="fas fa-user"></i>
+                            <span>Вход</span>
+                        </a>
+                        <a href="/register/" class="btn btn-gold btn-sm">Регистрация</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <nav class="navbar navbar-expand-lg bg-dark border-top border-secondary">
+        <div class="container">
+            <div class="collapse navbar-collapse">
+                <div class="nav-links d-flex justify-content-center flex-grow-1 gap-4">
+                    <a href="/catalog/" class="text-white text-decoration-none">Каталог</a>
+                    <a href="/catalog/?category=кольца" class="text-white text-decoration-none">Кольца</a>
+                    <a href="/catalog/?category=серьги" class="text-white text-decoration-none">Серьги</a>
+                    <a href="/catalog/?category=браслеты" class="text-white text-decoration-none">Браслеты</a>
+                    <a href="/catalog/?category=подвески" class="text-white text-decoration-none">Подвески</a>
+                    <a href="#" class="text-white text-decoration-none">Коллекции</a>
+                    <a href="#" class="text-white text-decoration-none">Акции</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer bg-dark text-white py-5 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3">
+                    <h4 class="text-gold">Argentic Jewelry</h4>
+                    <p class="text-secondary">Изысканные серебряные украшения ручной работы</p>
+                    <div class="social-links">
+                        <a href="#" class="text-white me-2"><i class="fab fa-instagram fa-lg"></i></a>
+                        <a href="#" class="text-white me-2"><i class="fab fa-telegram fa-lg"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-vk fa-lg"></i></a>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <h5>Информация</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-secondary text-decoration-none">О нас</a></li>
+                        <li><a href="#" class="text-secondary text-decoration-none">Доставка и оплата</a></li>
+                        <li><a href="#" class="text-secondary text-decoration-none">Возврат и обмен</a></li>
+                        <li><a href="#" class="text-secondary text-decoration-none">Политика конфиденциальности</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Каталог</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-secondary text-decoration-none">Кольца</a></li>
+                        <li><a href="#" class="text-secondary text-decoration-none">Серьги</a></li>
+                        <li><a href="#" class="text-secondary text-decoration-none">Браслеты</a></li>
+                        <li><a href="#" class="text-secondary text-decoration-none">Подвески</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Контакты</h5>
+                    <p class="text-secondary mb-1">📞 +7 (999) 123-45-67</p>
+                    <p class="text-secondary mb-1">✉️ info@argentic.ru</p>
+                    <p class="text-secondary">📍 г. Москва, ул. Тверская, 1</p>
+                </div>
+            </div>
+            <hr class="bg-secondary">
+            <div class="text-center text-secondary">
+                <p>&copy; 2025 Argentic Jewelry. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function updateCartCount() {
+            fetch('/api/cart/')
+                .then(response => response.json())
+                .then(data => {
+                    const count = data.total_items || 0;
+                    const cartCount = document.getElementById('cart-count');
+                    if (cartCount) cartCount.textContent = count;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        updateCartCount();
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        function addToCart(productId) {
+            fetch('/api/cart/add_item/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ product_id: productId, quantity: 1 })
+            })
+            .then(response => response.json())
+            .then(() => {
+                updateCartCount();
+                alert('Товар добавлен в корзину!');
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            notification.style.position = 'fixed';
+            notification.style.bottom = '20px';
+            notification.style.right = '20px';
+            notification.style.backgroundColor = '#343a40';
+            notification.style.color = '#fff';
+            notification.style.padding = '12px 24px';
+            notification.style.borderRadius = '8px';
+            notification.style.zIndex = '1000';
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 2000);
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

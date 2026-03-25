@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4" id="product-detail">
+    <div class="text-center text-secondary py-5">Загрузка...</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Получаем ID товара из URL
+    const pathParts = window.location.pathname.split('/');
+    const productId = pathParts[pathParts.length - 2];
+    
+    function loadProductDetail() {
+        fetch(`/api/products/${productId}/`)
+            .then(response => response.json())
+            .then(product => {
+                const container = document.getElementById('product-detail');
+                
+                const priceHtml = product.old_price 
+                    ? `<span class="text-gold fw-bold fs-1">${product.price} ₽</span>
+                       <span class="text-secondary text-decoration-line-through fs-4 ms-3">${product.old_price} ₽</span>
+                       <span class="badge bg-danger ms-3">-${product.discount_percent}%</span>`
+                    : `<span class="text-gold fw-bold fs-1">${product.price} ₽</span>`;
+                
+                const imageHtml = product.image 
+                    ? `<img src="${product.image}" alt="${product.name}" class="img-fluid rounded shadow">`
+                    : `<div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="height: 400px;">
+                         <i class="fas fa-gem fa-5x text-gold"></i>
+                       </div>`;
+                
+                const metalInfo = product.metal ? `${product.metal} ${product.fineness || ''}` : '';
+                const ratingStars = product.average_rating > 0 
+                    ? '★'.repeat(Math.round(product.average_rating)) + '☆'.repeat(5 - Math.round(product.average_rating)) 
+                    : 'Нет отзывов';
+                
+                container.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            ${imageHtml}
+                        </div>
+                        <div class="col-md-6">
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="/catalog/">Каталог</a></li>
+                                    <li class="breadcrumb-item active">${product.name}</li>
+                                </ol>
+                            </nav>
+                            <h1 class="display-5 fw-bold">${product.name}</h1>
+                            <div class="mb-3">
+                                <span class="text-warning fs-5">${ratingStars}</span>
+                                <span class="text-secondary ms-2">(${product.reviews_count} отзывов)</span>
+                            </div>
+                            <div class="mb-4">
+                                ${priceHtml}
+                            </div>
+                            <div class="mb-4">
+                                <div class="row g-3">
+                                    <div class="col-auto">
+                                        <label class="form-label">Количество:</label>
+                                        <input type="number" id="quantity" class="form-control" value="1" min="1" max="${product.available_quantity}" style="width: 80px;">
+                                    </div>
+                                    <div class="col-auto">
+                                        <button class="btn btn-gold btn-lg mt-4" onclick="addToCartWithQuantity(${product.id})">
+                                            <i class="fas fa-shopping-cart"></i> В корзину
+                                        </button>
+                                    </div>
+                                    <div class="col-auto">
+                                        <button class="btn btn-outline-gold btn-lg mt-4" onclick="toggleFavorite(${product.id})">
+                                            <i class="far fa-heart"></i> В избранное
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="text-success mt-2">
+                                    <i class="fas fa-check-circle"></i> В наличии: ${product.available_quantity} шт.
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h5>Характеристики:</h5>
+                                <table class="table table-sm">
+                                    <tr><td style="width: 150px;">Металл:</td><td>${product.metal || '—'}</td></tr>
+                                    <tr><td>Проба:</td><td>${product.fineness || '—'}</td></tr>
+                                    <tr><td>Вес:</td><td>${product.weight ? product.weight + ' г' : '—'}</td></tr>
+                                    <tr><td>Размер:</td><td>${product.size || '—'}</td></tr>
+                                    <tr><td>Камни:</td><td>${product.stones ? (product.stone_type || 'Да') : 'Нет'}</td></tr>
+                                    <tr><td>Коллекция:</td><td>${product.collection || '—'}</td></tr>
+                                </table>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h5>Описание:</h5>
+                                <p>${product.description}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-5">
+                        <div class="col-12">
+                            <h3>Отзывы покупателей</h3>
+                            <div id="reviews-section" class="mt-3">
+                                <div class="text-secondary">Загрузка отзывов...</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                loadReviews();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('product-detail').innerHTML = '<div class="text-center text-danger py-5">Товар не найден</div>';
+            });
+    }
+    
+    function loadReviews() {
+        fetch(`/api/products/${productId}/reviews/`)
+            .then(response => response.json())
+            .then(reviews => {
+                const container = document.getElementById('reviews-section');
+                if (!container) return;
+                
+                if (reviews.length === 0) {
+                    container.innerHTML = '<p class="text-secondary">Пока нет отзывов. Будьте первым!</p>';
+                    return;
+                }
+                
+                let html = '';
+                reviews.forEach(review => {
+                    const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+                    html += `
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="card-title">${review.user_email || 'Пользователь'}</h6>
+                                    <span class="text-warning">${stars}</span>
+                                </div>
+                                <p class="card-text">${review.comment}</p>
+                                <small class="text-secondary">${new Date(review.created_at).toLocaleDateString('ru-RU')}</small>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            })
+            .catch(error => console.error('Error:', error));
+    }
+    
+    function addToCartWithQuantity(productId) {
+        const quantity = document.getElementById('quantity').value;
+        fetch('/api/cart/add_item/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ product_id: productId, quantity: parseInt(quantity) })
+        })
+        .then(response => response.json())
+        .then(() => {
+            updateCartCount();
+            alert('Товар добавлен в корзину!');
+        })
+        .catch(error => console.error('Error:', error));
+    }
+    
+    function toggleFavorite(productId) {
+        fetch(`/api/favorites/add/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => {
+            if (response.status === 201) {
+                alert('Добавлено в избранное');
+            } else if (response.status === 400) {
+                fetch(`/api/favorites/remove/${productId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(() => alert('Удалено из избранного'));
+            }
+        });
+    }
+    
+    loadProductDetail();
+</script>
+{% endblock %}

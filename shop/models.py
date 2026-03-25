@@ -3,6 +3,33 @@ from django.contrib.auth.models import AbstractUser
 import uuid
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.base_user import BaseUserManager
+
+
+class UserManager(BaseUserManager):
+    """
+    Кастомный менеджер для модели User с email в качестве логина.
+    """
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('Email обязателен')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Суперпользователь должен иметь is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Суперпользователь должен иметь is_superuser=True.')
+
+        return self.create_user(email, password, **extra_fields)
 
 def generate_order_number():
     """
@@ -15,18 +42,15 @@ def generate_order_number():
 
 
 class User(AbstractUser):
-    """
-    Модель пользователя.
-    """
-    phone = models.CharField(
-        max_length=20,
-        blank=True,
-        verbose_name='Телефон'
-    )
-    bonus_points = models.IntegerField(
-        default=0,
-        verbose_name='Бонусные баллы'
-    )
+    username = None
+    email = models.EmailField(unique=True, verbose_name='Email')
+    phone = models.CharField(max_length=20, blank=True, verbose_name='Телефон')
+    bonus_points = models.IntegerField(default=0, verbose_name='Бонусные баллы')
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    objects = UserManager()  # ← кастомный менеджер
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -36,10 +60,6 @@ class User(AbstractUser):
         return self.email
 
     def is_product_in_wishlist(self, product_id):
-        """
-        Проверяет, находится ли товар с указанным ID в избранном у пользователя.
-        Возвращает True или False.
-        """
         return self.wishlist.filter(product_id=product_id).exists()
 
 

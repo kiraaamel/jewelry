@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Боковая панель с фильтрами -->
+        <div class="col-md-3">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Фильтры</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Фильтр по категории -->
+                    <div class="mb-4">
+                        <label class="fw-bold mb-2">Категория</label>
+                        <div id="category-filter">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="category" value="" id="cat-all" checked>
+                                <label class="form-check-label" for="cat-all">Все</label>
+                            </div>
+                            <div id="categories-list">
+                                <div class="text-secondary">Загрузка...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Фильтр по металлу -->
+                    <div class="mb-4">
+                        <label class="fw-bold mb-2">Металл</label>
+                        <div id="metal-filter">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="metal" value="" id="metal-all" checked>
+                                <label class="form-check-label" for="metal-all">Все</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="metal" value="Серебро" id="metal-silver">
+                                <label class="form-check-label" for="metal-silver">Серебро</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="metal" value="Золото" id="metal-gold">
+                                <label class="form-check-label" for="metal-gold">Золото</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="metal" value="Платина" id="metal-platinum">
+                                <label class="form-check-label" for="metal-platinum">Платина</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Фильтр по цене -->
+                    <div class="mb-4">
+                        <label class="fw-bold mb-2">Цена (₽)</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="number" class="form-control form-control-sm" id="price-min" placeholder="От">
+                            </div>
+                            <div class="col-6">
+                                <input type="number" class="form-control form-control-sm" id="price-max" placeholder="До">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Фильтр по наличию камней -->
+                    <div class="mb-4">
+                        <label class="fw-bold mb-2">Камни</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="stones-filter">
+                            <label class="form-check-label" for="stones-filter">С драгоценными камнями</label>
+                        </div>
+                    </div>
+                    
+                    <!-- Кнопки -->
+                    <button class="btn btn-gold w-100 mb-2" id="apply-filters">Применить</button>
+                    <button class="btn btn-outline-secondary w-100" id="reset-filters">Сбросить</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Список товаров -->
+        <div class="col-md-9">
+            <!-- Сортировка и информация -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <span class="text-secondary" id="products-count">Загрузка...</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <label class="fw-bold me-2">Сортировка:</label>
+                    <select class="form-select form-select-sm w-auto" id="sort-select">
+                        <option value="-created_at">Новинки</option>
+                        <option value="price">Цена (по возрастанию)</option>
+                        <option value="-price">Цена (по убыванию)</option>
+                        <option value="-average_rating">По рейтингу</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Результаты -->
+            <div id="products-container" class="row">
+                <div class="col-12 text-center text-secondary py-5">Загрузка...</div>
+            </div>
+            
+            <!-- Пагинация -->
+            <div id="pagination" class="d-flex justify-content-center mt-4"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentPage = 1;
+    let totalPages = 1;
+    
+    // Функция загрузки категорий для фильтра
+    function loadCategories() {
+        fetch('/api/categories/')
+            .then(response => response.json())
+            .then(categories => {
+                const container = document.getElementById('categories-list');
+                container.innerHTML = '';
+                categories.forEach(cat => {
+                    container.innerHTML += `
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="category" value="${cat.id}" id="cat-${cat.id}">
+                            <label class="form-check-label" for="cat-${cat.id}">${cat.name}</label>
+                        </div>
+                    `;
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    }
+    
+    // Функция построения URL с параметрами
+    function buildUrl() {
+        let url = '/api/products/?';
+        const params = [];
+        
+        // Категория
+        const selectedCategory = document.querySelector('input[name="category"]:checked');
+        if (selectedCategory && selectedCategory.value) {
+            params.push(`category=${selectedCategory.value}`);
+        }
+        
+        // Металл
+        const selectedMetal = document.querySelector('input[name="metal"]:checked');
+        if (selectedMetal && selectedMetal.value) {
+            params.push(`metal=${selectedMetal.value}`);
+        }
+        
+        // Цена
+        const priceMin = document.getElementById('price-min').value;
+        const priceMax = document.getElementById('price-max').value;
+        if (priceMin) params.push(`price_min=${priceMin}`);
+        if (priceMax) params.push(`price_max=${priceMax}`);
+        
+        // Камни
+        const stonesFilter = document.getElementById('stones-filter').checked;
+        if (stonesFilter) params.push(`stones=true`);
+        
+        // Сортировка
+        const sort = document.getElementById('sort-select').value;
+        params.push(`ordering=${sort}`);
+        
+        // Пагинация
+        params.push(`page=${currentPage}`);
+        params.push(`page_size=9`);
+        
+        return url + params.join('&');
+    }
+    
+    // Функция отрисовки карточки товара
+    function renderProductCard(product) {
+        const discountBadge = product.discount_percent > 0 
+            ? `<span class="badge bg-danger position-absolute top-0 start-0 m-2">-${product.discount_percent}%</span>`
+            : '';
+        
+        const priceHtml = product.old_price 
+            ? `<span class="text-gold fw-bold fs-4">${product.price} ₽</span>
+               <span class="text-secondary text-decoration-line-through ms-2">${product.old_price} ₽</span>`
+            : `<span class="text-gold fw-bold fs-4">${product.price} ₽</span>`;
+        
+        const imageHtml = product.image 
+            ? `<img src="${product.image}" alt="${product.name}" class="card-img-top" style="height: 250px; object-fit: cover;">`
+            : `<div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 250px;">
+                 <i class="fas fa-gem fa-4x text-gold"></i>
+               </div>`;
+        
+        const metalInfo = product.metal ? `${product.metal} ${product.fineness || ''}` : '';
+        const ratingStars = product.average_rating > 0 ? '★'.repeat(Math.round(product.average_rating)) + '☆'.repeat(5 - Math.round(product.average_rating)) : 'Нет отзывов';
+        
+        return `
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 position-relative product-card shadow-sm">
+                    ${discountBadge}
+                    ${imageHtml}
+                    <div class="card-body">
+                        <div class="text-muted small mb-1">${product.category_name || 'Украшение'}</div>
+                        <h5 class="card-title">
+                            <a href="/product/${product.id}/" class="text-dark text-decoration-none">${product.name}</a>
+                        </h5>
+                        <div class="text-muted small mb-2">${metalInfo}</div>
+                        <div class="mb-2">
+                            <small class="text-warning">${ratingStars}</small>
+                            <small class="text-secondary ms-2">(${product.reviews_count})</small>
+                        </div>
+                        <div class="mb-3">${priceHtml}</div>
+                        <button class="btn btn-gold w-100" onclick="addToCart(${product.id})">
+                            <i class="fas fa-shopping-cart"></i> В корзину
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Функция загрузки товаров
+    function loadProducts() {
+        const url = buildUrl();
+        const container = document.getElementById('products-container');
+        container.innerHTML = '<div class="col-12 text-center text-secondary py-5">Загрузка...</div>';
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                container.innerHTML = '';
+                const products = data.results || data;
+                totalPages = Math.ceil((data.count || products.length) / 9);
+                
+                // Обновляем счётчик
+                document.getElementById('products-count').textContent = `Найдено товаров: ${data.count || products.length}`;
+                
+                if (products.length === 0) {
+                    container.innerHTML = '<div class="col-12 text-center text-secondary py-5">Товаров не найдено</div>';
+                    return;
+                }
+                
+                products.forEach(product => {
+                    container.innerHTML += renderProductCard(product);
+                });
+                
+                renderPagination();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                container.innerHTML = '<div class="col-12 text-center text-danger py-5">Ошибка загрузки товаров</div>';
+            });
+    }
+    
+    // Функция отрисовки пагинации
+    function renderPagination() {
+        const container = document.getElementById('pagination');
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        let html = '<nav><ul class="pagination">';
+        
+        // Previous
+        html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="goToPage(${currentPage - 1}); return false;">«</a>
+                 </li>`;
+        
+        // Номера страниц
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                html += `<li class="page-item ${currentPage === i ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="goToPage(${i}); return false;">${i}</a>
+                         </li>`;
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
+                html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+        }
+        
+        // Next
+        html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="goToPage(${currentPage + 1}); return false;">»</a>
+                 </li>`;
+        
+        html += '</ul></nav>';
+        container.innerHTML = html;
+    }
+    
+    function goToPage(page) {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        loadProducts();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    // События
+    document.getElementById('apply-filters').addEventListener('click', () => {
+        currentPage = 1;
+        loadProducts();
+    });
+    
+    document.getElementById('reset-filters').addEventListener('click', () => {
+        document.querySelectorAll('input[name="category"]').forEach(r => r.checked = false);
+        document.getElementById('cat-all').checked = true;
+        document.querySelectorAll('input[name="metal"]').forEach(r => r.checked = false);
+        document.getElementById('metal-all').checked = true;
+        document.getElementById('price-min').value = '';
+        document.getElementById('price-max').value = '';
+        document.getElementById('stones-filter').checked = false;
+        document.getElementById('sort-select').value = '-created_at';
+        currentPage = 1;
+        loadProducts();
+    });
+    
+    document.getElementById('sort-select').addEventListener('change', () => {
+        currentPage = 1;
+        loadProducts();
+    });
+    
+    // Инициализация
+    loadCategories();
+    loadProducts();
+</script>
+{% endblock %}

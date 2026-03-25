@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <h1>Корзина</h1>
+    <div id="cart-content" class="mt-4">
+        <p class="text-secondary">Загрузка...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    fetch('/api/cart/')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('cart-content');
+            if (!container) return;
+            
+            if (data.items && data.items.length > 0) {
+                let html = '<div class="table-responsive"><table class="table"><thead><tr><th>Товар</th><th>Количество</th><th>Цена</th><th></th></tr></thead><tbody>';
+                data.items.forEach(item => {
+                    html += `
+                        <tr>
+                            <td>${item.product_name}</td>
+                            <td>${item.quantity}</td>
+                            <td>${item.total_price} ₽</td>
+                            <td><button class="btn btn-sm btn-danger" onclick="removeItem(${item.product.id})">Удалить</button></td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table></div>
+                         <h4 class="mt-3">Итого: ${data.total_price} ₽</h4>
+                         <button class="btn btn-gold mt-3" onclick="checkout()">Оформить заказ</button>`;
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p class="text-secondary">Корзина пуста</p><a href="/catalog/" class="btn btn-gold">Перейти в каталог</a>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('cart-content').innerHTML = '<p class="text-danger">Ошибка загрузки корзины. Возможно, вы не авторизованы. <a href="/login/">Войдите</a></p>';
+        });
+    
+    function removeItem(productId) {
+        fetch('/api/cart/remove_item/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ product_id: productId })
+        })
+        .then(() => location.reload());
+    }
+    
+    function checkout() {
+        window.location.href = '/orders/';
+    }
+</script>
+{% endblock %}

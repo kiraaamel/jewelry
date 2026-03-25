@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Главный баннер -->
+<div class="banner-section bg-dark text-white py-5" style="min-height: 500px;">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1 class="display-3 fw-bold text-gold">Argentic Jewelry</h1>
+                <p class="lead">Изысканные серебряные украшения для особых моментов</p>
+                <a href="{% url 'catalog' %}" class="btn btn-gold btn-lg mt-3">Смотреть коллекцию</a>
+            </div>
+            <div class="col-md-6 text-center">
+                <div class="bg-secondary rounded-circle mx-auto" style="width: 300px; height: 300px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-gem fa-5x text-gold"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Популярные товары -->
+<div class="section py-5">
+    <div class="container">
+        <h2 class="text-center mb-3">Популярные товары</h2>
+        <p class="text-center text-secondary mb-5">Наши клиенты выбирают эти украшения чаще всего</p>
+        
+        <div class="row" id="popular-products">
+            <div class="col-12 text-center text-secondary">Загрузка...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Новинки -->
+<div class="section bg-light py-5">
+    <div class="container">
+        <h2 class="text-center mb-3">Новинки</h2>
+        <p class="text-center text-secondary mb-5">Свежие поступления этой коллекции</p>
+        
+        <div class="row" id="new-products">
+            <div class="col-12 text-center text-secondary">Загрузка...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Промо-баннер -->
+<div class="promo-banner bg-gradient py-5" style="background: linear-gradient(135deg, #2c3e50, #d4af37);">
+    <div class="container py-4">
+        <div class="row align-items-center">
+            <div class="col-md-8 text-white">
+                <h2 class="display-5">Скидка 20% на первую покупку</h2>
+                <p class="lead">При регистрации в нашем магазине</p>
+                <a href="{% url 'register' %}" class="btn btn-light btn-lg mt-2">Зарегистрироваться</a>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-gift fa-5x text-white"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Преимущества -->
+<div class="features py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-3 text-center">
+                <i class="fas fa-truck fa-3x text-gold mb-3"></i>
+                <h5>Бесплатная доставка</h5>
+                <p class="text-secondary">При заказе от 5000 рублей</p>
+            </div>
+            <div class="col-md-3 text-center">
+                <i class="fas fa-gem fa-3x text-gold mb-3"></i>
+                <h5>925 проба</h5>
+                <p class="text-secondary">Только качественное серебро</p>
+            </div>
+            <div class="col-md-3 text-center">
+                <i class="fas fa-shield-alt fa-3x text-gold mb-3"></i>
+                <h5>Гарантия 1 год</h5>
+                <p class="text-secondary">На все изделия</p>
+            </div>
+            <div class="col-md-3 text-center">
+                <i class="fas fa-gift fa-3x text-gold mb-3"></i>
+                <h5>Подарочная упаковка</h5>
+                <p class="text-secondary">Бесплатно для всех заказов</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function renderProductCard(product) {
+        const discountBadge = product.discount_percent > 0 
+            ? `<span class="badge bg-danger position-absolute top-0 start-0 m-2">-${product.discount_percent}%</span>`
+            : '';
+        
+        const priceHtml = product.old_price 
+            ? `<span class="text-gold fw-bold fs-4">${product.price} ₽</span>
+               <span class="text-secondary text-decoration-line-through ms-2">${product.old_price} ₽</span>`
+            : `<span class="text-gold fw-bold fs-4">${product.price} ₽</span>`;
+        
+        const imageHtml = product.image 
+            ? `<img src="${product.image}" alt="${product.name}" class="card-img-top" style="height: 250px; object-fit: cover;">`
+            : `<div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 250px;">
+                 <i class="fas fa-gem fa-4x text-gold"></i>
+               </div>`;
+        
+        const metalInfo = product.metal ? `${product.metal} ${product.fineness || ''}` : '';
+        
+        return `
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 position-relative product-card shadow-sm">
+                    ${discountBadge}
+                    ${imageHtml}
+                    <div class="card-body">
+                        <div class="text-muted small mb-1">${product.category_name || 'Украшение'}</div>
+                        <h5 class="card-title">${product.name}</h5>
+                        <div class="text-muted small mb-2">${metalInfo}</div>
+                        <div class="mb-3">${priceHtml}</div>
+                        <button class="btn btn-gold w-100" onclick="addToCart(${product.id})">
+                            <i class="fas fa-shopping-cart"></i> В корзину
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function loadProducts(containerId, url) {
+        fetch(url)
+            .then(response => response.json())
+            .then(products => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                container.innerHTML = '';
+                if (products.length === 0) {
+                    container.innerHTML = '<div class="col-12 text-center text-secondary">Товаров пока нет</div>';
+                    return;
+                }
+                products.forEach(product => {
+                    container.innerHTML += renderProductCard(product);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const container = document.getElementById(containerId);
+                if (container) container.innerHTML = '<div class="col-12 text-center text-danger">Ошибка загрузки товаров</div>';
+            });
+    }
+    
+    // Загрузка популярных товаров (первые 4 по цене)
+    loadProducts('popular-products', '/api/products/?ordering=-price&page_size=4');
+    
+    // Загрузка новинок (последние 4 по дате)
+    loadProducts('new-products', '/api/products/?ordering=-created_at&page_size=4');
+</script>
+{% endblock %}
