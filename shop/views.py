@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from django.shortcuts import get_object_or_404
+from .filters import ProductFilter
 
 from .models import (
     Category, Product, Cart, CartItem, 
@@ -64,15 +65,11 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = [permissions.AllowAny]
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
-    filterset_fields = ['category', 'metal', 'stones', 'collection']
+    filterset_class = ProductFilter  # ← используем кастомный фильтр
     search_fields = ['name', 'description']
     ordering_fields = ['price', 'created_at', 'average_rating']
 
     def get_serializer_context(self):
-        """
-        Передаём request в контекст сериализатора,
-        чтобы в is_in_favorites был доступ к текущему пользователю.
-        """
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
