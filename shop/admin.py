@@ -33,27 +33,43 @@ class OrderItemInline(admin.TabularInline):
     Встроенная форма для позиций заказа.
     """
     model = OrderItem
-    extra = 0
-    readonly_fields = ['product_name', 'price', 'quantity', 'total_price']
+    extra = 1
+    fields = ['product', 'quantity', 'item_total_display']
+    readonly_fields = ['item_total_display']
+    
+    def item_total_display(self, obj):
+        """
+        Рассчитывает стоимость позиции.
+        """
+        if obj.pk and obj.product and obj.quantity:
+            total = obj.product.price * obj.quantity
+            return f"{total} ₽"
+        elif obj.pk and obj.price and obj.quantity:
+            total = obj.price * obj.quantity
+            return f"{total} ₽"
+        return "0 ₽"
+    item_total_display.short_description = "Стоимость"
 
 
 class OrderAdmin(admin.ModelAdmin):
     """
     Настройки отображения заказа в админке.
+    total_price не вводится, а рассчитывается автоматически.
     """
     inlines = [OrderItemInline]
     list_display = [
         'order_number', 'user', 'created_at', 'status', 
-        'total_price', 'delivery_method'
+        'total_price_display', 'delivery_method'
     ]
     list_filter = ['status', 'delivery_method', 'payment_method', 'created_at']
     search_fields = ['order_number', 'user__email', 'delivery_address']
-    readonly_fields = ['order_number', 'created_at', 'total_price']
+    readonly_fields = ['order_number', 'created_at', 'total_price_display']
     list_editable = ['status']
+    exclude = ['total_price']  # ← скрываем поле total_price из формы
     
     fieldsets = (
         ('Основная информация', {
-            'fields': ('order_number', 'user', 'status', 'total_price', 'created_at')
+            'fields': ('order_number', 'user', 'status', 'total_price_display', 'created_at')
         }),
         ('Доставка', {
             'fields': ('delivery_address', 'delivery_method', 'delivered_at')
@@ -66,6 +82,53 @@ class OrderAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+    
+    def total_price_display(self, obj):
+        """
+        Рассчитывает общую стоимость заказа из позиций.
+        """
+        if obj.pk:
+            total = 0
+            for item in obj.items.all():
+                if item.product and item.quantity:
+                    total += item.product.price * item.quantity
+                elif item.price and item.quantity:
+                    # fallback: если нет product, используем сохранённую цену
+                    total += item.price * item.quantity
+            return f"{total} ₽"
+        return "0 ₽"
+    total_price_display.short_description = "Общая стоимость"
+    
+    def save_related(self, request, form, formsets, change):
+        """
+        Сохраняем позиции и обновляем total_price в заказе.
+        """
+        super().save_related(request, form, formsets, change)
+        
+        order = form.instance
+        
+        # Заполняем поля позиций из товара
+        for item in order.items.all():
+            if item.product:
+                # Название товара
+                if not item.product_name or item.product_name != item.product.name:
+                    item.product_name = item.product.name
+                # Цена из товара
+                if not item.price or item.price != item.product.price:
+                    item.price = item.product.price
+                item.save()
+        
+        # Вычисляем и сохраняем общую сумму заказа
+        total = 0
+        for item in order.items.all():
+            if item.product and item.quantity:
+                total += item.product.price * item.quantity
+            elif item.price and item.quantity:
+                total += item.price * item.quantity
+        
+        if total != order.total_price:
+            order.total_price = total
+            order.save(update_fields=['total_price'])
 
 
 class CartItemInline(admin.TabularInline):

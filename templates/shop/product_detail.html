@@ -2,14 +2,456 @@
 {% load static %}
 
 {% block content %}
-<div class="container py-4" id="product-detail">
-    <div class="text-center text-secondary py-5">Загрузка...</div>
+<style>
+    /* Цвета из вашего дизайна */
+    :root {
+        --bg-cream: #F7F2EB;
+        --accent: #5D6E80;
+        --brown: #7A6B5B;
+        --gray: #808E92;
+        --dark-gray: #5a5f63;
+    }
+    
+    .product-detail-page {
+        background-color: var(--bg-cream);
+        padding: 40px 0;
+        min-height: 100vh;
+    }
+    
+    /* Пагинация (хлебные крошки) */
+    .breadcrumb-custom {
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+    
+    .breadcrumb-custom a {
+        color: var(--accent);
+        text-decoration: none;
+    }
+    
+    .breadcrumb-custom span {
+        color: var(--gray);
+    }
+    
+    /* Заголовок категории */
+    .category-title {
+        font-size: 32px;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--accent);
+    }
+    
+    /* Основной блок */
+    .product-main {
+        display: flex;
+        gap: 40px;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
+    }
+    
+    .product-image-col {
+        flex: 1;
+        min-width: 300px;
+    }
+    
+    .product-image {
+        background: white;
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+    
+    .product-image img {
+        width: 100%;
+        border-radius: 12px;
+    }
+    
+    .product-info-col {
+        flex: 1;
+        min-width: 350px;
+    }
+    
+    .product-name {
+        font-size: 32px;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 10px;
+    }
+    
+    .product-country {
+        color: var(--gray);
+        font-size: 14px;
+        margin-bottom: 20px;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Популярный отзыв */
+    .featured-review {
+        background-color: var(--gray);
+        padding: 15px 20px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+    }
+    
+    .featured-review .stars {
+        color: #ffc107;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+    
+    .featured-review .review-text {
+        color: white;
+        font-size: 14px;
+        line-height: 1.4;
+        margin-bottom: 8px;
+    }
+    
+    .featured-review .review-author {
+        color: var(--brown);
+        font-weight: 600;
+        font-size: 13px;
+    }
+    
+    /* Доставка */
+    .delivery-section {
+        margin-bottom: 25px;
+    }
+    
+    .delivery-title {
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 12px;
+        font-size: 16px;
+    }
+    
+    .delivery-options {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+    
+    .delivery-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+    
+    .delivery-option input {
+        accent-color: var(--accent);
+    }
+    
+    .delivery-option label {
+        color: var(--brown);
+        cursor: pointer;
+    }
+    
+    .city-selector {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .city-selector select {
+        padding: 8px 12px;
+        border: 1px solid var(--accent);
+        border-radius: 8px;
+        background: white;
+        color: var(--brown);
+    }
+    
+    /* Размер и количество */
+    .size-section {
+        margin-bottom: 25px;
+    }
+    
+    .size-label {
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .size-label a {
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 14px;
+    }
+    
+    .size-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .size-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        border: 1px solid var(--accent);
+        background: white;
+        color: var(--accent);
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .size-btn:hover, .size-btn.active {
+        background: var(--accent);
+        color: white;
+    }
+    
+    .quantity-price-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--accent);
+        border-radius: 30px;
+        background: white;
+    }
+    
+    .quantity-control button {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: transparent;
+        font-size: 18px;
+        cursor: pointer;
+        color: var(--accent);
+    }
+    
+    .quantity-control input {
+        width: 60px;
+        text-align: center;
+        border: none;
+        font-size: 16px;
+        color: var(--brown);
+    }
+    
+    .price-block {
+        text-align: right;
+    }
+    
+    .current-price {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--accent);
+    }
+    
+    .old-price {
+        font-size: 18px;
+        color: var(--gray);
+        text-decoration: line-through;
+        margin-right: 10px;
+    }
+    
+    /* Кнопки действий */
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-add-to-cart {
+        flex: 2;
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 14px 24px;
+        border-radius: 40px;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .btn-add-to-cart:hover {
+        background: #4a5a6a;
+        transform: translateY(-2px);
+    }
+    
+    .btn-favorite {
+        background: transparent;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        padding: 14px 20px;
+        border-radius: 40px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-favorite:hover {
+        background: var(--accent);
+        color: white;
+    }
+    
+    /* Табы */
+    .tabs {
+        display: flex;
+        gap: 40px;
+        border-bottom: 1px solid var(--accent);
+        margin: 30px 0 25px;
+    }
+    
+    .tab-btn {
+        background: none;
+        border: none;
+        padding: 12px 0;
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--gray);
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .tab-btn.active {
+        color: var(--accent);
+    }
+    
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--accent);
+    }
+    
+    .tab-content {
+        display: none;
+        padding: 20px 0;
+        color: var(--brown);
+        line-height: 1.6;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    /* Таблица характеристик */
+    .specs-table {
+        width: 100%;
+    }
+    
+    .specs-table tr td {
+        padding: 12px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .specs-table tr td:first-child {
+        width: 200px;
+        color: var(--accent);
+        font-weight: 500;
+    }
+    
+    .specs-table tr td:last-child {
+        color: var(--brown);
+    }
+    
+    /* Отзывы */
+    .reviews-section {
+        margin-top: 50px;
+    }
+    
+    .reviews-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 25px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--accent);
+    }
+    
+    .review-card {
+        background-color: var(--gray);
+        padding: 20px;
+        border-radius: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .review-author {
+        font-weight: 600;
+        color: var(--brown);
+        font-size: 16px;
+    }
+    
+    .review-stars {
+        color: #ffc107;
+        font-size: 14px;
+    }
+    
+    .review-date {
+        color: rgba(255,255,255,0.7);
+        font-size: 12px;
+    }
+    
+    .review-text {
+        color: white;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+    
+    .no-reviews {
+        text-align: center;
+        padding: 40px;
+        background: var(--gray);
+        border-radius: 16px;
+        color: white;
+    }
+    
+    /* Вопросы */
+    .questions-empty {
+        text-align: center;
+        padding: 40px;
+        background: var(--gray);
+        border-radius: 16px;
+        color: white;
+    }
+    
+    /* Дополнительно */
+    .product-id {
+        display: none;
+    }
+</style>
+
+<div class="product-detail-page">
+    <div class="container">
+        <div id="product-content">
+            <div class="text-center py-5">
+                <div class="spinner-border text-secondary" role="status"></div>
+                <p class="mt-2 text-secondary">Загрузка товара...</p>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Получаем ID товара из URL
     const pathParts = window.location.pathname.split('/');
     const productId = pathParts[pathParts.length - 2];
     
@@ -17,139 +459,315 @@
         fetch(`/api/products/${productId}/`)
             .then(response => response.json())
             .then(product => {
-                const container = document.getElementById('product-detail');
-                
-                const priceHtml = product.old_price 
-                    ? `<span class="text-gold fw-bold fs-1">${product.price} ₽</span>
-                       <span class="text-secondary text-decoration-line-through fs-4 ms-3">${product.old_price} ₽</span>
-                       <span class="badge bg-danger ms-3">-${product.discount_percent}%</span>`
-                    : `<span class="text-gold fw-bold fs-1">${product.price} ₽</span>`;
-                
-                const imageHtml = product.image 
-                    ? `<img src="${product.image}" alt="${product.name}" class="img-fluid rounded shadow">`
-                    : `<div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="height: 400px;">
-                         <i class="fas fa-gem fa-5x text-gold"></i>
-                       </div>`;
-                
-                const metalInfo = product.metal ? `${product.metal} ${product.fineness || ''}` : '';
-                const ratingStars = product.average_rating > 0 
-                    ? '★'.repeat(Math.round(product.average_rating)) + '☆'.repeat(5 - Math.round(product.average_rating)) 
-                    : 'Нет отзывов';
-                
-                container.innerHTML = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            ${imageHtml}
-                        </div>
-                        <div class="col-md-6">
-                            <nav aria-label="breadcrumb">
-                                <ol class="breadcrumb">
-                                    <li class="breadcrumb-item"><a href="/catalog/">Каталог</a></li>
-                                    <li class="breadcrumb-item active">${product.name}</li>
-                                </ol>
-                            </nav>
-                            <h1 class="display-5 fw-bold">${product.name}</h1>
-                            <div class="mb-3">
-                                <span class="text-warning fs-5">${ratingStars}</span>
-                                <span class="text-secondary ms-2">(${product.reviews_count} отзывов)</span>
-                            </div>
-                            <div class="mb-4">
-                                ${priceHtml}
-                            </div>
-                            <div class="mb-4">
-                                <div class="row g-3">
-                                    <div class="col-auto">
-                                        <label class="form-label">Количество:</label>
-                                        <input type="number" id="quantity" class="form-control" value="1" min="1" max="${product.available_quantity}" style="width: 80px;">
-                                    </div>
-                                    <div class="col-auto">
-                                        <button class="btn btn-gold btn-lg mt-4" onclick="addToCartWithQuantity(${product.id})">
-                                            <i class="fas fa-shopping-cart"></i> В корзину
-                                        </button>
-                                    </div>
-                                    <div class="col-auto">
-                                        <button class="btn btn-outline-gold btn-lg mt-4" onclick="toggleFavorite(${product.id})">
-                                            <i class="far fa-heart"></i> В избранное
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="text-success mt-2">
-                                    <i class="fas fa-check-circle"></i> В наличии: ${product.available_quantity} шт.
-                                </div>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <h5>Характеристики:</h5>
-                                <table class="table table-sm">
-                                    <tr><td style="width: 150px;">Металл:</td><td>${product.metal || '—'}</td></tr>
-                                    <tr><td>Проба:</td><td>${product.fineness || '—'}</td></tr>
-                                    <tr><td>Вес:</td><td>${product.weight ? product.weight + ' г' : '—'}</td></tr>
-                                    <tr><td>Размер:</td><td>${product.size || '—'}</td></tr>
-                                    <tr><td>Камни:</td><td>${product.stones ? (product.stone_type || 'Да') : 'Нет'}</td></tr>
-                                    <tr><td>Коллекция:</td><td>${product.collection || '—'}</td></tr>
-                                </table>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <h5>Описание:</h5>
-                                <p>${product.description}</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row mt-5">
-                        <div class="col-12">
-                            <h3>Отзывы покупателей</h3>
-                            <div id="reviews-section" class="mt-3">
-                                <div class="text-secondary">Загрузка отзывов...</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
+                renderProductPage(product);
+                loadFeaturedReview(productId);
                 loadReviews();
             })
             .catch(error => {
                 console.error('Error:', error);
-                document.getElementById('product-detail').innerHTML = '<div class="text-center text-danger py-5">Товар не найден</div>';
+                document.getElementById('product-content').innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-gem fa-3x text-secondary mb-3"></i>
+                        <p class="text-danger">Товар не найден</p>
+                        <a href="/catalog/" class="btn btn-gold mt-3">Вернуться в каталог</a>
+                    </div>
+                `;
+            });
+    }
+    
+    function renderProductPage(product) {
+        // Определяем категорию для хлебных крошек
+        const categoryName = product.category_name || 'Каталог';
+        
+        const discount = product.discount_percent > 0 ? product.discount_percent : 0;
+        const priceHtml = product.old_price 
+            ? `<span class="old-price">${product.old_price} ₽</span>`
+            : '';
+        
+        // Характеристики
+        const specs = {
+            'Артикул': product.id,
+            'Бренд': 'Argentic',
+            'Коллекция': product.collection || 'Основная',
+            'Материал': product.metal || 'Серебро',
+            'Проба': product.fineness ? `${product.fineness}` : '925',
+            'Вставка': product.stones ? (product.stone_type || 'Драгоценные камни') : 'Без вставок',
+            'Страна производства': product.country || 'Италия',
+            'Вес': product.weight ? `${product.weight} г` : '—',
+            'Размеры': '15, 16, 17, 18, 19, 20'
+        };
+        
+        // Размеры (для колец)
+        const sizes = [15, 16, 17, 18, 19, 20];
+        
+        const content = `
+            <!-- Хлебные крошки -->
+            <div class="breadcrumb-custom">
+                <a href="/">Главная</a> / 
+                <a href="/catalog/">Каталог</a> / 
+                <span>${product.name}</span>
+            </div>
+            
+            <!-- Заголовок категории -->
+            <h1 class="category-title">${categoryName}</h1>
+            
+            <!-- Основной блок -->
+            <div class="product-main">
+                <div class="product-image-col">
+                    <div class="product-image">
+                        ${product.image 
+                            ? `<img src="${product.image}" alt="${product.name}">`
+                            : `<div style="height: 400px; background: #e9ecef; display: flex; align-items: center; justify-content: center; border-radius: 12px;">
+                                 <i class="fas fa-gem fa-5x text-secondary"></i>
+                               </div>`
+                        }
+                    </div>
+                </div>
+                
+                <div class="product-info-col">
+                    <h2 class="product-name">${product.name}</h2>
+                    <div class="product-country">Made from ${product.country || 'Italy'}</div>
+                    
+                    <!-- Популярный отзыв (будет загружен отдельно) -->
+                    <div id="featured-review-placeholder" class="featured-review">
+                        <div class="stars">★★★★★</div>
+                        <div class="review-text">Загрузка популярного отзыва...</div>
+                        <div class="review-author">—</div>
+                    </div>
+                    
+                    <!-- Доставка -->
+                    <div class="delivery-section">
+                        <div class="delivery-title">Способы доставки</div>
+                        <div class="delivery-options" id="delivery-options">
+                            <label class="delivery-option">
+                                <input type="radio" name="delivery" value="pickup" checked> <span>Самовывоз</span>
+                            </label>
+                            <label class="delivery-option">
+                                <input type="radio" name="delivery" value="courier"> <span>Курьер</span>
+                            </label>
+                            <label class="delivery-option">
+                                <input type="radio" name="delivery" value="post"> <span>Почта России</span>
+                            </label>
+                        </div>
+                        <div class="city-selector">
+                            <select id="city-select">
+                                <option value="msk">Москва</option>
+                                <option value="spb">Санкт-Петербург</option>
+                                <option value="kazan">Казань</option>
+                                <option value="ekb">Екатеринбург</option>
+                            </select>
+                            <span class="text-secondary">— доставка 1-3 дня</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Размер -->
+                    <div class="size-section">
+                        <div class="size-label">
+                            <span>Размер:</span>
+                            <a href="#" id="size-guide-link">Определить</a>
+                        </div>
+                        <div class="size-buttons" id="size-buttons">
+                            ${sizes.map(s => `<button class="size-btn" data-size="${s}">${s}</button>`).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- Количество и цена -->
+                    <div class="quantity-price-row">
+                        <div class="quantity-control">
+                            <button id="decrease-qty">-</button>
+                            <input type="text" id="quantity" value="1" readonly>
+                            <button id="increase-qty">+</button>
+                        </div>
+                        <div class="price-block">
+                            ${priceHtml}
+                            <span class="current-price" id="item-price">${product.price}</span> ₽
+                        </div>
+                    </div>
+                    
+                    <!-- Кнопки -->
+                    <div class="action-buttons">
+                        <button class="btn-add-to-cart" onclick="addToCartWithQuantity(${product.id})">
+                            В корзину <span id="total-price">${product.price}</span> ₽
+                        </button>
+                        <button class="btn-favorite" onclick="toggleFavorite(${product.id})">
+                            <i class="far fa-heart"></i> В избранное
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Табы -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="description">Описание</button>
+                <button class="tab-btn" data-tab="specs">Характеристики</button>
+                <button class="tab-btn" data-tab="questions">Вопросы о товаре (0)</button>
+            </div>
+            
+            <div class="tab-content active" id="tab-description">
+                <p>${product.description || 'Описание товара отсутствует.'}</p>
+            </div>
+            
+            <div class="tab-content" id="tab-specs">
+                <table class="specs-table">
+                    ${Object.entries(specs).map(([key, value]) => `
+                        <tr>
+                            <td>${key}</td>
+                            <td>${value}</td>
+                        </tr>
+                    `).join('')}
+                </table>
+            </div>
+            
+            <div class="tab-content" id="tab-questions">
+                <div class="questions-empty">
+                    <i class="fas fa-comment-dots fa-2x mb-3"></i>
+                    <p>Вопросов пока нет. Будьте первым, кто задаст вопрос!</p>
+                </div>
+            </div>
+            
+            <!-- Отзывы -->
+            <div class="reviews-section">
+                <h3 class="reviews-title">Последние отзывы</h3>
+                <div id="reviews-list">
+                    <div class="text-center py-3 text-secondary">Загрузка отзывов...</div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('product-content').innerHTML = content;
+        
+        // Инициализация
+        initQuantityControls(product.price);
+        initSizeButtons();
+        initTabs();
+    }
+    
+    function loadFeaturedReview(productId) {
+        fetch(`/api/products/${productId}/reviews/?page_size=3`)
+            .then(response => response.json())
+            .then(reviews => {
+                const container = document.getElementById('featured-review-placeholder');
+                if (!container) return;
+                
+                if (reviews && reviews.length > 0) {
+                    const topReview = reviews[0];
+                    const stars = '★'.repeat(topReview.rating) + '☆'.repeat(5 - topReview.rating);
+                    container.innerHTML = `
+                        <div class="stars">${stars}</div>
+                        <div class="review-text">${topReview.comment || 'Отличное украшение!'}</div>
+                        <div class="review-author">${topReview.user_email || 'Покупатель'}</div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="stars">★★★★★</div>
+                        <div class="review-text">Пока нет отзывов. Будьте первым!</div>
+                        <div class="review-author">—</div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading featured review:', error);
             });
     }
     
     function loadReviews() {
-        fetch(`/api/products/${productId}/reviews/`)
+        fetch(`/api/products/${productId}/reviews/?ordering=-created_at&page_size=3`)
             .then(response => response.json())
             .then(reviews => {
-                const container = document.getElementById('reviews-section');
+                const container = document.getElementById('reviews-list');
                 if (!container) return;
                 
                 if (reviews.length === 0) {
-                    container.innerHTML = '<p class="text-secondary">Пока нет отзывов. Будьте первым!</p>';
+                    container.innerHTML = '<div class="no-reviews"><i class="fas fa-star fa-2x mb-3"></i><p>Пока нет отзывов. Будьте первым!</p></div>';
                     return;
                 }
                 
                 let html = '';
                 reviews.forEach(review => {
                     const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+                    const date = new Date(review.created_at).toLocaleDateString('ru-RU');
                     html += `
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between">
-                                    <h6 class="card-title">${review.user_email || 'Пользователь'}</h6>
-                                    <span class="text-warning">${stars}</span>
-                                </div>
-                                <p class="card-text">${review.comment}</p>
-                                <small class="text-secondary">${new Date(review.created_at).toLocaleDateString('ru-RU')}</small>
+                        <div class="review-card">
+                            <div class="review-header">
+                                <span class="review-author">${review.user_email || 'Пользователь'}</span>
+                                <span class="review-stars">${stars}</span>
+                                <span class="review-date">${date}</span>
                             </div>
+                            <p class="review-text">${review.comment || 'Отличное украшение!'}</p>
                         </div>
                     `;
                 });
                 container.innerHTML = html;
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('reviews-list').innerHTML = '<div class="no-reviews"><p class="text-danger">Ошибка загрузки отзывов</p></div>';
+            });
+    }
+    
+    function initQuantityControls(price) {
+        const quantityInput = document.getElementById('quantity');
+        const decreaseBtn = document.getElementById('decrease-qty');
+        const increaseBtn = document.getElementById('increase-qty');
+        const totalSpan = document.getElementById('total-price');
+        
+        let qty = 1;
+        
+        decreaseBtn.addEventListener('click', () => {
+            if (qty > 1) {
+                qty--;
+                quantityInput.value = qty;
+                updateTotal(price, qty);
+            }
+        });
+        
+        increaseBtn.addEventListener('click', () => {
+            qty++;
+            quantityInput.value = qty;
+            updateTotal(price, qty);
+        });
+        
+        function updateTotal(price, qty) {
+            const total = price * qty;
+            totalSpan.textContent = total.toFixed(0);
+        }
+    }
+    
+    function initSizeButtons() {
+        const sizeBtns = document.querySelectorAll('.size-btn');
+        sizeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                sizeBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+        
+        document.getElementById('size-guide-link')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('Размерная сетка: 15-20 — стандартные размеры колец.\n\nДля точного определения размера:\n• Измерьте окружность пальца\n• Сравните с таблицей размеров\n• При необходимости посетите наш магазин');
+        });
+    }
+    
+    function initTabs() {
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                btn.classList.add('active');
+                document.getElementById(`tab-${tabId}`).classList.add('active');
+            });
+        });
     }
     
     function addToCartWithQuantity(productId) {
         const quantity = document.getElementById('quantity').value;
+        
         fetch('/api/cart/add_item/', {
             method: 'POST',
             headers: {
@@ -161,7 +779,7 @@
         .then(response => response.json())
         .then(() => {
             updateCartCount();
-            alert('Товар добавлен в корзину!');
+            showNotification('Товар добавлен в корзину!');
         })
         .catch(error => console.error('Error:', error));
     }
@@ -176,7 +794,7 @@
         })
         .then(response => {
             if (response.status === 201) {
-                alert('Добавлено в избранное');
+                showNotification('Добавлено в избранное!');
             } else if (response.status === 400) {
                 fetch(`/api/favorites/remove/${productId}/`, {
                     method: 'DELETE',
@@ -184,9 +802,26 @@
                         'X-CSRFToken': getCookie('csrftoken')
                     }
                 })
-                .then(() => alert('Удалено из избранного'));
+                .then(() => showNotification('Удалено из избранного'));
             }
         });
+    }
+    
+    function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.textContent = message;
+        notification.style.position = 'fixed';
+        notification.style.bottom = '20px';
+        notification.style.right = '20px';
+        notification.style.backgroundColor = 'var(--accent)';
+        notification.style.color = 'var(--bg-cream)';
+        notification.style.padding = '12px 24px';
+        notification.style.borderRadius = '30px';
+        notification.style.zIndex = '1000';
+        notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 2000);
     }
     
     loadProductDetail();

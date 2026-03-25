@@ -133,6 +133,12 @@ class Product(models.Model):
         null=True,
         verbose_name='Старая цена'
     )
+    country = models.CharField(
+    max_length=100,
+    blank=True,
+    default='Италия',
+    verbose_name='Страна производства'
+)
     stock_quantity = models.PositiveIntegerField(
         default=0,
         verbose_name='Количество на складе'
@@ -372,7 +378,9 @@ class CartItem(models.Model):
         """
         Стоимость этой позиции (цена товара * количество).
         """
-        return self.product.price * self.quantity
+        if self.product and self.product.price is not None and self.quantity is not None:
+            return self.product.price * self.quantity
+        return 0
 
 
 class Order(models.Model):
@@ -413,6 +421,7 @@ class Order(models.Model):
     total_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+        default=0,  # ← значение по умолчанию
         verbose_name='Общая стоимость'
     )
     delivery_address = models.TextField(
@@ -443,7 +452,14 @@ class Order(models.Model):
         blank=True,
         verbose_name='Дата получения'
     )
-
+    def save(self, *args, **kwargs):
+        """
+        Автоматически вычисляем общую стоимость заказа.
+        """
+        if not self.total_price and self.pk:
+            # Если заказ уже существует, считаем сумму по позициям
+            self.total_price = sum(item.total_price for item in self.items.all())
+        super().save(*args, **kwargs)
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
@@ -476,6 +492,7 @@ class OrderItem(models.Model):
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+        default=0,
         verbose_name='Цена на момент заказа'
     )
     quantity = models.PositiveIntegerField(
@@ -494,7 +511,9 @@ class OrderItem(models.Model):
         """
         Стоимость этой позиции (цена * количество).
         """
-        return self.price * self.quantity
+        if self.price is not None and self.quantity is not None:
+            return self.price * self.quantity
+        return 0
 
 
 class Review(models.Model):

@@ -80,6 +80,16 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+    
+    @action(detail=True, methods=['get'])
+    def reviews(self, request, pk=None):
+        """
+        Получить все отзывы для конкретного товара.
+        """
+        product = self.get_object()
+        reviews = product.reviews.filter(moderated=True).order_by('-created_at')
+        serializer = ReviewSerializer(reviews, many=True, context={'request': request})
+        return Response(serializer.data)
 
 class CartViewSet(viewsets.GenericViewSet):
     """

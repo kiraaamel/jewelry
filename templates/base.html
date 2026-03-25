@@ -9,186 +9,384 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'shop/css/style.css' %}">
     <style>
-        .text-gold { color: #d4af37 !important; }
-        .bg-gold { background-color: #d4af37 !important; }
+        :root {
+            --bg-cream: #F7F2EB;
+            --accent: #5D6E80;
+            --brown: #7A6B5B;
+            --gray: #808E92;
+            --dark-gray: #5a5f63;
+        }
+        
+        body {
+            background-color: var(--bg-cream);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--accent);
+        }
+        
+        /* Квадратные кнопки */
+        .btn-gold, .catalog-btn, .search-bar-new button, .btn-add-to-cart, .btn-favorite {
+            border-radius: 8px !important;
+        }
+        
         .btn-gold {
-            background-color: #d4af37;
-            color: #343a40;
+            background-color: var(--accent);
+            color: white;
             border: none;
-            font-weight: 600;
         }
         .btn-gold:hover {
-            background-color: #c0a030;
-            color: #343a40;
+            background-color: #4a5a6a;
+            color: white;
         }
-        .top-bar {
-            background-color: #343a40;
+        .btn-outline-gold {
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            background: transparent;
+            border-radius: 8px;
+        }
+        .btn-outline-gold:hover {
+            background: var(--accent);
+            color: white;
+        }
+        
+        /* ========== ХЕДЕР (3 строки) ========== */
+        
+        /* Первая строка: телефон, почта слева / О нас, магазины справа */
+        .top-bar-first {
+            background-color: var(--accent);
+            color: var(--bg-cream);
             font-size: 12px;
+            padding: 6px 0;
         }
-        .navbar a:hover {
-            color: #d4af37 !important;
+        .top-bar-first a {
+            color: var(--bg-cream);
+            text-decoration: none;
         }
-        .product-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        .top-bar-first a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Вторая строка: логотип, каталог+поиск, избранное+профиль+корзина */
+        .main-header-second {
+            background-color: var(--bg-cream);
+            padding: 15px 0;
+            border-bottom: 1px solid var(--accent);
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent) !important;
+            text-decoration: none;
+        }
+        
+        .search-bar-new {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-start;
+            margin-left: 20px;
+        }
+        .search-bar-new input {
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 8px 16px;
+            width: 280px;
+            outline: none;
+            font-size: 14px;
+        }
+        .search-bar-new input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(93, 110, 128, 0.2);
+        }
+        .search-bar-new button {
+            background: var(--accent);
             border: none;
+            border-radius: 8px;
+            padding: 8px 18px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
         }
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        .catalog-btn {
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 18px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
         }
-        .cart-count {
-            background-color: #d4af37;
-            color: #343a40;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 50%;
+        .catalog-btn:hover {
+            background-color: #4a5a6a;
+            color: white;
         }
-        .banner-section {
-            background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+        
+        .user-actions-new {
+            display: flex;
+            justify-content: flex-end;
+            gap: 20px;
+            align-items: center;
         }
-        .footer a {
-            transition: color 0.3s ease;
+        .user-actions-new a {
+            color: var(--brown);
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.3s;
+            white-space: nowrap;
         }
-        .footer a:hover {
-            color: #d4af37 !important;
+        .user-actions-new a:hover {
+            color: var(--accent);
+        }
+        
+        /* Третья строка: категории товаров (уменьшенная высота) */
+        .nav-categories {
+            background-color: var(--bg-cream);
+            border-bottom: 1px solid var(--accent);
+            padding: 5px 0;
+        }
+        .nav-categories a {
+            color: var(--brown);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 4px 14px;
+            transition: color 0.3s;
+            font-size: 14px;
+            display: inline-block;
+        }
+        .nav-categories a:hover {
+            color: var(--accent);
+        }
+        
+        /* ========== ФУТЕР ========== */
+        .footer-new {
+            background-color: var(--accent);
+            color: var(--bg-cream);
+            padding: 40px 0 25px;
+            margin-top: 60px;
+        }
+        .footer-new h5 {
+            color: var(--bg-cream);
+            margin-bottom: 18px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .footer-new a {
+            color: rgba(247, 242, 235, 0.8);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            transition: color 0.3s;
+        }
+        .footer-new a:hover {
+            color: var(--bg-cream);
+        }
+        .footer-new .social-links a {
+            display: inline-block;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        .footer-new hr {
+            border-color: rgba(247, 242, 235, 0.2);
+            margin: 25px 0 18px;
+        }
+        .copyright {
+            text-align: center;
+            font-size: 12px;
+            color: rgba(247, 242, 235, 0.6);
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--accent);
+            color: var(--bg-cream);
+            padding: 10px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease;
+            font-size: 14px;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 992px) {
+            .search-bar-new {
+                margin-left: 0;
+                justify-content: center;
+            }
+            .user-actions-new {
+                justify-content: center;
+                margin-top: 10px;
+                flex-wrap: wrap;
+            }
+            .main-header-second .row > div {
+                text-align: center;
+                margin-bottom: 10px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .top-bar-first .row > div:first-child {
+                text-align: center;
+                margin-bottom: 5px;
+            }
+            .top-bar-first .row > div:last-child {
+                text-align: center;
+            }
+            .nav-categories .d-flex {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .search-bar-new {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .search-bar-new input {
+                width: 100%;
+            }
+            .user-actions-new {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 15px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="top-bar py-2">
+    <!-- ========== ХЕДЕР (3 строки) ========== -->
+    
+    <!-- Первая строка: телефон, почта слева / О нас, магазины справа -->
+    <div class="top-bar-first">
         <div class="container">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="contact-info">
-                    <span class="text-white me-3">📞 +7 (999) 123-45-67</span>
-                    <span class="text-white">✉️ info@argentic.ru</span>
+            <div class="row">
+                <div class="col-md-6">
+                    <span class="me-4">📞 +7 (999) 999-99-99</span>
+                    <span>✉️ argentic@gmail.com</span>
                 </div>
-                <div class="social-links">
-                    <a href="#" class="text-white me-2"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="text-white me-2"><i class="fab fa-telegram"></i></a>
-                    <a href="#" class="text-white"><i class="fab fa-vk"></i></a>
+                <div class="col-md-6 text-md-end text-center">
+                    <a href="#" class="me-3">О нас</a>
+                    <a href="#">Магазины</a>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="main-header bg-dark py-3">
+    <!-- Вторая строка: логотип, каталог+поиск, избранное+профиль+корзина -->
+    <div class="main-header-second">
         <div class="container">
             <div class="row align-items-center">
-                <div class="col-md-3">
-                    <a href="/" class="logo text-gold fs-3 text-decoration-none">
-                        <i class="fas fa-gem"></i>
-                        <span class="text-white">Argentic Jewelry</span>
+                <div class="col-md-3 text-center text-md-start">
+                    <a href="/" class="logo">
+                        ARGENTIC JEWELRY
                     </a>
                 </div>
-                <div class="col-md-5">
-                    <div class="search-bar d-flex">
-                        <input type="text" class="form-control" placeholder="Поиск украшений..." id="search-input">
-                        <button class="btn btn-gold ms-2" id="search-btn"><i class="fas fa-search"></i></button>
+                <div class="col-md-6">
+                    <div class="search-bar-new">
+                        <a href="/catalog/" class="catalog-btn">
+                            <i class="fas fa-bars"></i> Каталог
+                        </a>
+                        <input type="text" placeholder="Поиск по каталогу..." id="search-input">
+                        <button id="search-btn"><i class="fas fa-search"></i></button>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="user-actions d-flex justify-content-end gap-3 align-items-center">
-                        <a href="/favorites/" class="text-white text-decoration-none">
-                            <i class="far fa-heart"></i>
-                            <span>Избранное</span>
-                        </a>
-                        <a href="/cart/" class="text-white text-decoration-none position-relative">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span>Корзина</span>
-                            <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-gold text-dark">0</span>
+                <div class="col-md-3">
+                    <div class="user-actions-new">
+                        <a href="/favorites/">
+                            <i class="far fa-heart"></i> Избранное
                         </a>
                         {% if user.is_authenticated %}
-                        <div class="dropdown">
-                            <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="fas fa-user"></i>
-                                <span>{{ user.email|truncatechars:15 }}</span>
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="/profile/">Профиль</a></li>
-                                <li><a class="dropdown-item" href="/orders/">Мои заказы</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form method="post" action="/logout/">
-                                        {% csrf_token %}
-                                        <button type="submit" class="dropdown-item">Выйти</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
-                        {% else %}
-                        <a href="/login/" class="text-white text-decoration-none">
-                            <i class="fas fa-user"></i>
-                            <span>Вход</span>
+                        <a href="/profile/">
+                            <i class="far fa-user"></i> {{ user.email|truncatechars:20 }}
                         </a>
-                        <a href="/register/" class="btn btn-gold btn-sm">Регистрация</a>
+                        {% else %}
+                        <a href="/login/">
+                            <i class="far fa-user"></i> Вход
+                        </a>
                         {% endif %}
+                        <a href="/cart/" class="position-relative">
+                            <i class="fas fa-shopping-cart"></i> Корзина
+                            <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill" style="background: var(--accent); font-size: 10px;">0</span>
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <nav class="navbar navbar-expand-lg bg-dark border-top border-secondary">
+    <!-- Третья строка: категории товаров (уменьшенная высота) -->
+    <div class="nav-categories">
         <div class="container">
-            <div class="collapse navbar-collapse">
-                <div class="nav-links d-flex justify-content-center flex-grow-1 gap-4">
-                    <a href="/catalog/" class="text-white text-decoration-none">Каталог</a>
-                    <a href="/catalog/?category=кольца" class="text-white text-decoration-none">Кольца</a>
-                    <a href="/catalog/?category=серьги" class="text-white text-decoration-none">Серьги</a>
-                    <a href="/catalog/?category=браслеты" class="text-white text-decoration-none">Браслеты</a>
-                    <a href="/catalog/?category=подвески" class="text-white text-decoration-none">Подвески</a>
-                    <a href="#" class="text-white text-decoration-none">Коллекции</a>
-                    <a href="#" class="text-white text-decoration-none">Акции</a>
-                </div>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="/catalog/?category=кольца">Кольца</a>
+                <a href="/catalog/?category=браслеты">Браслеты</a>
+                <a href="/catalog/?category=серьги">Серьги</a>
+                <a href="/catalog/?category=наборы">Наборы</a>
+                <a href="/catalog/?category=подвески">Подвески</a>
             </div>
         </div>
-    </nav>
+    </div>
 
     <main>
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="footer bg-dark text-white py-5 mt-5">
+    <!-- ========== ФУТЕР ========== -->
+    <footer class="footer-new">
         <div class="container">
             <div class="row">
-                <div class="col-md-3">
-                    <h4 class="text-gold">Argentic Jewelry</h4>
-                    <p class="text-secondary">Изысканные серебряные украшения ручной работы</p>
-                    <div class="social-links">
-                        <a href="#" class="text-white me-2"><i class="fab fa-instagram fa-lg"></i></a>
-                        <a href="#" class="text-white me-2"><i class="fab fa-telegram fa-lg"></i></a>
-                        <a href="#" class="text-white"><i class="fab fa-vk fa-lg"></i></a>
+                <div class="col-md-4">
+                    <h5>ARGENTIC JEWELRY</h5>
+                    <p class="mt-2" style="color: rgba(247,242,235,0.8); font-size: 13px;">Изысканные серебряные украшения ручной работы</p>
+                    <div class="social-links mt-2">
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-telegram"></i></a>
+                        <a href="#"><i class="fab fa-vk"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <h5>Информация</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-secondary text-decoration-none">О нас</a></li>
-                        <li><a href="#" class="text-secondary text-decoration-none">Доставка и оплата</a></li>
-                        <li><a href="#" class="text-secondary text-decoration-none">Возврат и обмен</a></li>
-                        <li><a href="#" class="text-secondary text-decoration-none">Политика конфиденциальности</a></li>
-                    </ul>
+                <div class="col-md-2">
+                    <h5>Покупателям</h5>
+                    <a href="#">Как сделать заказ</a>
+                    <a href="#">Способы оплаты</a>
+                    <a href="#">Доставка и оплата</a>
+                    <a href="#">Возврат товара</a>
                 </div>
                 <div class="col-md-3">
-                    <h5>Каталог</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-secondary text-decoration-none">Кольца</a></li>
-                        <li><a href="#" class="text-secondary text-decoration-none">Серьги</a></li>
-                        <li><a href="#" class="text-secondary text-decoration-none">Браслеты</a></li>
-                        <li><a href="#" class="text-secondary text-decoration-none">Подвески</a></li>
-                    </ul>
+                    <h5>О компании</h5>
+                    <a href="#">О нас</a>
+                    <a href="#">Магазины</a>
+                    <a href="#">Контакты</a>
+                    <a href="#">Вакансии</a>
                 </div>
                 <div class="col-md-3">
                     <h5>Контакты</h5>
-                    <p class="text-secondary mb-1">📞 +7 (999) 123-45-67</p>
-                    <p class="text-secondary mb-1">✉️ info@argentic.ru</p>
-                    <p class="text-secondary">📍 г. Москва, ул. Тверская, 1</p>
+                    <p style="color: rgba(247,242,235,0.8); margin-bottom: 5px; font-size: 13px;">📞 +7 (999) 999-99-99</p>
+                    <p style="color: rgba(247,242,235,0.8); margin-bottom: 5px; font-size: 13px;">✉️ argentic@gmail.com</p>
+                    <p style="color: rgba(247,242,235,0.8); font-size: 13px;">📍 г. Москва, ул. Тверская, 1</p>
                 </div>
             </div>
-            <hr class="bg-secondary">
-            <div class="text-center text-secondary">
-                <p>&copy; 2025 Argentic Jewelry. Все права защищены.</p>
+            <hr>
+            <div class="copyright">
+                <p>&copy; 2025 ARGENTIC JEWELRY. Все права защищены.</p>
             </div>
         </div>
     </footer>
@@ -234,7 +432,7 @@
             .then(response => response.json())
             .then(() => {
                 updateCartCount();
-                alert('Товар добавлен в корзину!');
+                showNotification('Товар добавлен в корзину!');
             })
             .catch(error => console.error('Error:', error));
         }
@@ -243,16 +441,32 @@
             const notification = document.createElement('div');
             notification.className = 'notification';
             notification.textContent = message;
-            notification.style.position = 'fixed';
-            notification.style.bottom = '20px';
-            notification.style.right = '20px';
-            notification.style.backgroundColor = '#343a40';
-            notification.style.color = '#fff';
-            notification.style.padding = '12px 24px';
-            notification.style.borderRadius = '8px';
-            notification.style.zIndex = '1000';
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 2000);
+        }
+        
+        // Поиск
+        const searchBtn = document.getElementById('search-btn');
+        const searchInput = document.getElementById('search-input');
+        
+        if (searchBtn) {
+            searchBtn.addEventListener('click', () => {
+                const query = searchInput.value;
+                if (query) {
+                    window.location.href = `/catalog/?search=${encodeURIComponent(query)}`;
+                }
+            });
+        }
+        
+        if (searchInput) {
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const query = e.target.value;
+                    if (query) {
+                        window.location.href = `/catalog/?search=${encodeURIComponent(query)}`;
+                    }
+                }
+            });
         }
     </script>
     {% block scripts %}{% endblock %}
