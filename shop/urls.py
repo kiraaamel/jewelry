@@ -1,7 +1,7 @@
 from django.urls import path, include
-from django.contrib.auth import views as auth_views
 from rest_framework.routers import DefaultRouter
 from . import views
+from allauth.account.views import SignupView
 
 router = DefaultRouter()
 router.register(r'categories', views.CategoryViewSet, basename='category')
@@ -21,11 +21,23 @@ urlpatterns = [
     path('favorites/', views.favorites, name='favorites'),
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
     
+    # Регистрация
+    path('accounts/signup/', SignupView.as_view(), name='account_signup'),
+    
     # API
     path('api/', include(router.urls)),
     path('api/auth/register/', views.RegisterView.as_view(), name='api_register'),
     path('api/auth/login/', views.CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/me/', views.UserProfileView.as_view(), name='user_profile'),
-    
-    # allauth обрабатывает accounts/ автоматически
+]
+
+# Подключаем остальные allauth URLs
+from allauth.account import views as allauth_views
+
+urlpatterns += [
+    path('accounts/login/', allauth_views.LoginView.as_view(), name='account_login'),
+    path('accounts/logout/', allauth_views.LogoutView.as_view(), name='account_logout'),
+    path('accounts/password/reset/', allauth_views.PasswordResetView.as_view(), name='account_reset_password'),
+    path('accounts/confirm-email/<str:key>/', allauth_views.ConfirmEmailView.as_view(), name='account_confirm_email'),
+    path('accounts/verification-sent/', allauth_views.EmailVerificationSentView.as_view(), name='account_email_verification_sent'),
 ]

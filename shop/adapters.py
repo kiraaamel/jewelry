@@ -13,16 +13,16 @@ class CustomAccountAdapter(DefaultAccountAdapter):
 
     def save_user(self, request, user, form, commit=True):
         """
-        Сохраняем пользователя со всеми полями.
+        Сохраняем пользователя со всеми полями из POST запроса.
         """
         # Сохраняем email и пароль
         user.email = form.cleaned_data.get('email')
         user.set_password(form.cleaned_data.get('password1'))
         
-        # Сохраняем дополнительные поля из формы
-        user.first_name = form.cleaned_data.get('first_name', '')
-        user.last_name = form.cleaned_data.get('last_name', '')
-        user.phone = form.cleaned_data.get('phone', '')
+        # Сохраняем дополнительные поля из POST запроса
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.phone = request.POST.get('phone', '')
         
         if commit:
             user.save()

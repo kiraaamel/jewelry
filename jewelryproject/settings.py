@@ -60,9 +60,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Адаптер для кастомной модели пользователя
 ACCOUNT_ADAPTER = 'shop.adapters.CustomAccountAdapter'
 
-# Кастомная форма регистрации
-ACCOUNT_SIGNUP_FORM_CLASS = 'shop.forms.CustomSignupForm'
-
 # Настройки входа и регистрации
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_EMAIL_REQUIRED = True
