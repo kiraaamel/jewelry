@@ -25,7 +25,20 @@ from .serializers import (
     CustomTokenObtainPairSerializer
 )
 from rest_framework_simplejwt.views import TokenObtainPairView
+from allauth.account.views import SignupView
+from django.urls import reverse_lazy
 
+
+class CustomSignupView(SignupView):
+    """
+    Кастомное представление регистрации для сохранения дополнительных полей.
+    """
+    def form_valid(self, form):
+        # Сохраняем дополнительные поля в сессию или обрабатываем
+        self.request.session['signup_first_name'] = form.cleaned_data.get('first_name', '')
+        self.request.session['signup_last_name'] = form.cleaned_data.get('last_name', '')
+        self.request.session['signup_phone'] = form.cleaned_data.get('phone', '')
+        return super().form_valid(form)
 def product_detail(request, pk):
     """Детальная страница товара"""
     return render(request, 'shop/product_detail.html', {'product_id': pk})
@@ -266,18 +279,3 @@ def orders(request):
 def favorites(request):
     """Страница избранного"""
     return render(request, 'shop/favorites.html')
-
-class RegisterPageView(CreateView):
-    """Страница регистрации пользователя"""
-    model = User
-    template_name = 'registration/register.html'
-    fields = ['email', 'first_name', 'last_name', 'phone']
-    success_url = reverse_lazy('login')
-    
-    def form_valid(self, form):
-        """При регистрации создаём пользователя с паролем"""
-        user = form.save(commit=False)
-        password = self.request.POST.get('password')
-        user.set_password(password)
-        user.save()
-        return super().form_valid(form)

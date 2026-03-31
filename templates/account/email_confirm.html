@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow text-center">
+                <div class="card-header" style="background-color: var(--accent); color: white;">
+                    <h4 class="mb-0">Подтверждение email</h4>
+                </div>
+                <div class="card-body">
+                    {% if confirmation %}
+                        <i class="fas fa-envelope fa-4x mb-3" style="color: var(--accent);"></i>
+                        <p>Подтвердите email <strong>{{ confirmation.email_address.email }}</strong> для завершения регистрации.</p>
+                        <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-gold mt-3">Подтвердить</button>
+                        </form>
+                    {% else %}
+                        <i class="fas fa-exclamation-triangle fa-4x mb-3" style="color: #dc3545;"></i>
+                        <p>Ссылка для подтверждения недействительна или уже использована.</p>
+                        <a href="{% url 'account_signup' %}" class="btn btn-gold mt-3">Зарегистрироваться заново</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

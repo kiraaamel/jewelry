@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow text-center">
+                <div class="card-header" style="background-color: var(--accent); color: white;">
+                    <h4 class="mb-0">Проверьте почту</h4>
+                </div>
+                <div class="card-body">
+                    <i class="fas fa-envelope fa-4x mb-3" style="color: var(--accent);"></i>
+                    <h5>Письмо отправлено!</h5>
+                    <p class="mt-3">
+                        На указанный email отправлено письмо с подтверждением.
+                    </p>
+                    <p class="text-muted">
+                        Пожалуйста, перейдите по ссылке в письме для завершения регистрации.
+                    </p>
+                    <p class="text-muted small mt-4">
+                        Не пришло письмо? Проверьте папку "Спам" или 
+                        <a href="{% url 'account_email' %}">отправить повторно</a>.
+                    </p>
+                    <a href="{% url 'account_login' %}" class="btn btn-gold mt-3">Перейти на страницу входа</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
