@@ -79,28 +79,34 @@ class ProductSerializer(serializers.ModelSerializer):
     """
     Сериализатор для товара.
     """
-    # Дополнительные поля, которых нет в модели, но нужно вернуть клиенту
     average_rating = serializers.FloatField(read_only=True)
     reviews_count = serializers.IntegerField(read_only=True)
     discount_percent = serializers.IntegerField(read_only=True)
     available_quantity = serializers.IntegerField(read_only=True)
     is_in_favorites = serializers.SerializerMethodField()
+    
+    silver_type_display = serializers.CharField(source='get_silver_type_display', read_only=True)
+    fineness_display = serializers.CharField(source='get_fineness_display', read_only=True)
+    stone_type_display = serializers.CharField(source='get_stone_type_display', read_only=True)
+    category_name = serializers.CharField(source='category.name', read_only=True)
 
     class Meta:
         model = Product
         fields = (
             'id', 'name', 'slug', 'description', 'price', 'old_price',
             'stock_quantity', 'reserved_quantity', 'available_quantity',
-            'category', 'metal', 'fineness', 'weight', 'size',
-            'stones', 'stone_type', 'collection', 'image',
+            'category', 'category_name', 'country',
+            'silver_type', 'silver_type_display',
+            'fineness', 'fineness_display',
+            'weight', 'size',
+            'stones', 'stone_type', 'stone_type_display', 'stone_weight',
+            'collection',
+            'image', 'image_2', 'image_3', 'image_4', 'image_5',
             'average_rating', 'reviews_count', 'discount_percent',
-            'created_at', 'is_in_favorites'
+            'created_at', 'is_in_favorites', 'is_active'
         )
 
     def get_is_in_favorites(self, obj):
-        """
-        Проверяем, находится ли товар в избранном у текущего пользователя.
-        """
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return obj.is_in_wishlist(request.user)
@@ -118,7 +124,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = ('id', 'product', 'product_name', 'product_price', 'product_image', 
-                  'quantity', 'added_at', 'total_price')
+                  'quantity', 'size', 'added_at', 'total_price')
         read_only_fields = ('id', 'added_at', 'total_price')
 
 class CartSerializer(serializers.ModelSerializer):

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html 
 from .models import (
     User, Category, Product, 
     Cart, CartItem, Order, OrderItem, Review, Wishlist
@@ -152,33 +153,202 @@ class CartAdmin(admin.ModelAdmin):
 
 
 class ProductAdmin(admin.ModelAdmin):
-    """
-    Настройки отображения товара в админке.
-    """
-    list_display = ['name', 'price', 'stock_quantity', 'category', 'metal', 'stones', 'created_at']
-    list_filter = ['category', 'metal', 'stones', 'created_at']
+    list_display = ['id', 'name', 'category', 'price_display', 
+                   'silver_info', 'weight', 'stock_status', 'has_discount_display', 
+                   'stones_display', 'image_preview', 'images_count_display', 'created_at']
+    list_filter = ['category', 'silver_type', 'fineness', 'stones', 'created_at', 'collection']
+    list_display_links = ['name']
     search_fields = ['name', 'description', 'collection']
     prepopulated_fields = {'slug': ('name',)}
+    readonly_fields = ['created_at', 'updated_at', 'available_quantity_display', 
+                      'full_silver_info', 'images_preview']
+    raw_id_fields = ['created_by', 'category']
+    date_hierarchy = 'created_at'
     
     fieldsets = (
         ('Основная информация', {
             'fields': ('name', 'slug', 'description', 'category')
         }),
-        ('Цены и наличие', {
-            'fields': ('price', 'old_price', 'stock_quantity', 'reserved_quantity')
+        ('Цены', {
+            'fields': ('price', 'old_price'),
+            'classes': ('wide',)
         }),
-        ('Характеристики', {
-            'fields': ('metal', 'fineness', 'weight', 'size', 'stones', 'stone_type', 'collection')
+        ('Остатки на складе', {
+            'fields': ('stock_quantity', 'reserved_quantity', 'available_quantity_display'),
+            'classes': ('wide',)
         }),
-        ('Изображение', {
-            'fields': ('image',)
+        ('Фотографии товара', {
+            'fields': ('image', 'image_2', 'image_3', 'image_4', 'image_5', 'images_preview'),
+            'description': 'Загрузите фотографии товара. Первое фото (Главное) обязательно для отображения',
+            'classes': ('wide',)
         }),
-        ('Мета-информация', {
-            'fields': ('created_at', 'updated_at', 'created_by'),
+        ('Характеристики серебра', {
+            'fields': ('silver_type', 'fineness', 'weight', 'size', 'full_silver_info'),
+            'description': 'Информация о типе и пробе серебряного изделия'
+        }),
+        ('Драгоценные камни', {
+            'fields': ('stones', 'stone_type', 'stone_weight'),
+            'classes': ('collapse',),
+            'description': 'Если в изделии есть камни, укажите их характеристики'
+        }),
+        ('Метаданные', {
+            'fields': ('collection', 'created_by', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
-    readonly_fields = ['created_at', 'updated_at']
+    
+    @admin.display(description='Цена')
+    def price_display(self, obj):
+        if obj.has_discount:
+            discount_percent = int((obj.old_price - obj.price) / obj.old_price * 100)
+            return format_html(
+                '<span style="color: red; font-weight: bold;">{} ₽</span> '
+                '<del style="color: gray;">{} ₽</del> '
+                '<span style="color: green;">(-{}%)</span>',
+                obj.price, obj.old_price, discount_percent
+            )
+        return format_html('<span style="font-weight: bold;">{} ₽</span>', obj.price)
+    
+    @admin.display(description='Серебро')
+    def silver_info(self, obj):
+        silver_type_display = obj.get_silver_type_display()
+        fineness_display = obj.get_fineness_display()
+        
+        color = '#666'
+        if 'sterling' in obj.silver_type:
+            color = '#2c3e50'
+        elif 'oxidized' in obj.silver_type:
+            color = '#34495e'
+        elif 'rhodium' in obj.silver_type:
+            color = '#7f8c8d'
+        elif 'black' in obj.silver_type:
+            color = '#2c3e50'
+            
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span><br>'
+            '<span style="color: gray; font-size: 0.9em;">{}</span>',
+            color, silver_type_display, fineness_display
+        )
+    
+    @admin.display(description='Полное описание')
+    def full_silver_info(self, obj):
+        return format_html(
+            '<div style="background: #f8f9fa; padding: 10px; border-radius: 5px;">'
+            '<strong>Тип:</strong> {}<br>'
+            '<strong>Проба:</strong> {}<br>'
+            '<strong>Вес:</strong> {} г<br>'
+            '<strong>Размер:</strong> {}</div>',
+            obj.get_silver_type_display(),
+            obj.get_fineness_display(),
+            obj.weight,
+            obj.size or 'Не указан'
+        )
+    
+    @admin.display(description='Превью фото')
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="max-height: 50px; max-width: 50px; border-radius: 5px;" />',
+                obj.image.url
+            )
+        return '-'
+    
+    @admin.display(description='Все фото')
+    def images_preview(self, obj):
+        images_html = '<div style="display: flex; gap: 10px; flex-wrap: wrap;">'
+        if obj.image:
+            images_html += format_html(
+                '<div><img src="{}" style="max-height: 100px; max-width: 100px; border-radius: 5px;" /><br><small>Главное</small></div>',
+                obj.image.url
+            )
+        if obj.image_2:
+            images_html += format_html(
+                '<div><img src="{}" style="max-height: 100px; max-width: 100px; border-radius: 5px;" /></div>',
+                obj.image_2.url
+            )
+        if obj.image_3:
+            images_html += format_html(
+                '<div><img src="{}" style="max-height: 100px; max-width: 100px; border-radius: 5px;" /></div>',
+                obj.image_3.url
+            )
+        if obj.image_4:
+            images_html += format_html(
+                '<div><img src="{}" style="max-height: 100px; max-width: 100px; border-radius: 5px;" /></div>',
+                obj.image_4.url
+            )
+        if obj.image_5:
+            images_html += format_html(
+                '<div><img src="{}" style="max-height: 100px; max-width: 100px; border-radius: 5px;" /></div>',
+                obj.image_5.url
+            )
+        images_html += '</div>'
+        
+        if obj.images_count == 0:
+            return 'Нет фотографий'
+        return format_html(images_html)
+    
+    @admin.display(description='Кол-во фото')
+    def images_count_display(self, obj):
+        count = obj.images_count
+        if count == 0:
+            return format_html('<span style="color: red;">0</span>')
+        elif count == 1:
+            return format_html('<span style="color: orange;">{} (нет доп.)</span>', count)
+        else:
+            return format_html('<span style="color: green;">{} ({} доп.)</span>', count, count - 1)
+    
+    @admin.display(description='Доступно')
+    def available_quantity_display(self, obj):
+        available = obj.available_quantity
+        if available <= 0:
+            return format_html('<span style="color: red; font-weight: bold;">Нет в наличии</span>')
+        elif available < 10:
+            return format_html('<span style="color: orange; font-weight: bold;">Осталось {} шт</span>', available)
+        elif available < 50:
+            return format_html('<span style="color: green;">В наличии {} шт</span>', available)
+        else:
+            return format_html('<span style="color: blue;">В наличии {} шт</span>', available)
+    
+    @admin.display(boolean=True, description='Скидка')
+    def has_discount_display(self, obj):
+        return obj.has_discount
+    
+    @admin.display(description='Статус')
+    def stock_status(self, obj):
+        available = obj.available_quantity
+        if available <= 0:
+            return 'Нет в наличии'
+        elif available < 10:
+            return 'Мало'
+        return 'В наличии'
+    
+    @admin.display(description='Камни')
+    def stones_display(self, obj):
+        if not obj.stones:
+            return 'Без камней'
+        
+        stone_display = obj.get_stone_type_display()
+        if obj.stone_weight:
+            return f"{stone_display} ({obj.stone_weight} кар)"
+        return stone_display
+    
+    actions = ['apply_discount', 'increase_price']
+    
+    @admin.action(description='Применить скидку 10 процентов к выбранным товарам')
+    def apply_discount(self, request, queryset):
+        for product in queryset:
+            if not product.old_price:
+                product.old_price = product.price
+            product.price = product.price * Decimal('0.9')
+            product.save()
+        self.message_user(request, f'Скидка применена к {queryset.count()} товарам')
+    
+    @admin.action(description='Увеличить цену на 5 процентов')
+    def increase_price(self, request, queryset):
+        for product in queryset:
+            product.price = product.price * Decimal('1.05')
+            product.save()
+        self.message_user(request, f'Цена увеличена для {queryset.count()} товаров')
 
 
 class WishlistAdmin(admin.ModelAdmin):

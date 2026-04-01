@@ -271,7 +271,7 @@
         }
     </style>
 </head>
-<body>
+<body class="{% if user.is_authenticated %}user-authenticated{% endif %}">
     <!-- ========== ХЕДЕР (3 строки) ========== -->
     
     <!-- Первая строка: телефон, почта слева / О нас, магазины справа -->

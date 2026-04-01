@@ -5,6 +5,9 @@ from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.base_user import BaseUserManager
 
+def product_image_upload_path(instance, filename):
+    """Путь для загрузки изображений товаров"""
+    return f'products/{instance.slug}/{filename}'
 
 class UserManager(BaseUserManager):
     """
@@ -107,46 +110,60 @@ class Product(models.Model):
     """
     Ювелирное изделие.
     """
+    # Типы серебра
+    SILVER_TYPE_CHOICES = [
+        ('sterling', 'Стерлинговое серебро (925)'),
+        ('fine', 'Чистое серебро (999)'),
+        ('argentium', 'Аргентиум серебро'),
+        ('mexican', 'Мексиканское серебро'),
+        ('oxidized', 'Оксидированное серебро'),
+        ('rhodium_plated', 'Серебро с родиевым покрытием'),
+        ('black', 'Черненое серебро'),
+        ('matte', 'Матовое серебро'),
+    ]
+    
+    # Пробы серебра
+    FINENESS_CHOICES = [
+        ('800', '800 проба'),
+        ('830', '830 проба'),
+        ('875', '875 проба'),
+        ('900', '900 проба'),
+        ('916', '916 проба'),
+        ('925', '925 проба'),
+        ('960', '960 проба'),
+        ('999', '999 проба'),
+    ]
+    
+    # Типы камней
+    STONE_TYPE_CHOICES = [
+        ('diamond', 'Бриллиант'),
+        ('ruby', 'Рубин'),
+        ('sapphire', 'Сапфир'),
+        ('emerald', 'Изумруд'),
+        ('topaz', 'Топаз'),
+        ('amethyst', 'Аметист'),
+        ('garnet', 'Гранат'),
+        ('peridot', 'Перидот'),
+        ('citrine', 'Цитрин'),
+        ('aquamarine', 'Аквамарин'),
+        ('tourmaline', 'Турмалин'),
+        ('opal', 'Опал'),
+        ('pearl', 'Жемчуг'),
+        ('cubic_zirconia', 'Фианит'),
+        ('moonstone', 'Лунный камень'),
+        ('none', 'Нет камней'),
+    ]
+    
     # Основная информация
-    name = models.CharField(
-        max_length=255,
-        verbose_name='Название'
-    )
-    slug = models.SlugField(
-        unique=True,
-        verbose_name='URL-идентификатор'
-    )
-    description = models.TextField(
-        verbose_name='Описание'
-    )
+    name = models.CharField(max_length=255, verbose_name='Название')
+    slug = models.SlugField(unique=True, verbose_name='URL-идентификатор')
+    description = models.TextField(verbose_name='Описание')
     
     # Цены и наличие
-    price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        verbose_name='Цена'
-    )
-    old_price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        blank=True,
-        null=True,
-        verbose_name='Старая цена'
-    )
-    country = models.CharField(
-    max_length=100,
-    blank=True,
-    default='Италия',
-    verbose_name='Страна производства'
-)
-    stock_quantity = models.PositiveIntegerField(
-        default=0,
-        verbose_name='Количество на складе'
-    )
-    reserved_quantity = models.PositiveIntegerField(
-        default=0,
-        verbose_name='Зарезервированное количество'
-    )
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена')
+    old_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name='Старая цена')
+    stock_quantity = models.PositiveIntegerField(default=0, verbose_name='Количество на складе')
+    reserved_quantity = models.PositiveIntegerField(default=0, verbose_name='Зарезервированное количество')
     
     # Связь с категорией
     category = models.ForeignKey(
@@ -157,61 +174,100 @@ class Product(models.Model):
         verbose_name='Категория'
     )
     
-    # Характеристики ювелирного изделия
-    metal = models.CharField(
-        max_length=50,
+    # Страна производства
+    country = models.CharField(
+        max_length=100,
         blank=True,
-        verbose_name='Металл'
+        default='Италия',
+        verbose_name='Страна производства'
     )
-    fineness = models.PositiveIntegerField(
+    
+    # Фотографии (5 полей вместо отдельной модели)
+    image = models.ImageField(
+        upload_to=product_image_upload_path,
         blank=True,
         null=True,
-        verbose_name='Проба'
+        verbose_name='Главное фото',
+        help_text='Основное фото товара'
     )
+    image_2 = models.ImageField(
+        upload_to=product_image_upload_path,
+        blank=True,
+        null=True,
+        verbose_name='Дополнительное фото 2'
+    )
+    image_3 = models.ImageField(
+        upload_to=product_image_upload_path,
+        blank=True,
+        null=True,
+        verbose_name='Дополнительное фото 3'
+    )
+    image_4 = models.ImageField(
+        upload_to=product_image_upload_path,
+        blank=True,
+        null=True,
+        verbose_name='Дополнительное фото 4'
+    )
+    image_5 = models.ImageField(
+        upload_to=product_image_upload_path,
+        blank=True,
+        null=True,
+        verbose_name='Дополнительное фото 5'
+    )
+    
+    # Характеристики серебра
+    silver_type = models.CharField(
+        max_length=30,
+        choices=SILVER_TYPE_CHOICES,
+        default='sterling',
+        verbose_name='Тип серебра'
+    )
+    fineness = models.CharField(
+        max_length=4,
+        choices=FINENESS_CHOICES,
+        default='925',
+        verbose_name='Проба серебра'
+    )
+    
+    # Физические характеристики
     weight = models.DecimalField(
         max_digits=8,
         decimal_places=2,
         blank=True,
         null=True,
-        verbose_name='Вес (г)'
+        verbose_name='Вес изделия (г)'
     )
     size = models.CharField(
         max_length=50,
         blank=True,
-        verbose_name='Размер'
-    )
-    stones = models.BooleanField(
-        default=False,
-        verbose_name='Наличие камней'
-    )
-    stone_type = models.CharField(
-        max_length=100,
-        blank=True,
-        verbose_name='Тип камня'
-    )
-    collection = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name='Коллекция'
+        verbose_name='Размер',
+        help_text='Например: 16.5, 17, 18, S, M, L'
     )
     
-    # Изображение (одно фото, упрощённо)
-    image = models.ImageField(
-        upload_to='products/',
+    # Камни
+    stones = models.BooleanField(default=False, verbose_name='Наличие драгоценных камней')
+    stone_type = models.CharField(
+        max_length=30,
+        choices=STONE_TYPE_CHOICES,
         blank=True,
         null=True,
-        verbose_name='Изображение'
+        verbose_name='Тип камня'
+    )
+    stone_weight = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        verbose_name='Вес камней (карат)',
+        help_text='Общий вес всех камней в каратах'
     )
     
+    # Коллекция
+    collection = models.CharField(max_length=255, blank=True, verbose_name='Коллекция')
+    
     # Мета-информация
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата создания'
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name='Дата обновления'
-    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -220,6 +276,9 @@ class Product(models.Model):
         related_name='products_created',
         verbose_name='Создал'
     )
+    
+    # Активность (мягкое удаление)
+    is_active = models.BooleanField(default=True, verbose_name='Активен')
 
     class Meta:
         verbose_name = 'Товар'
@@ -228,23 +287,22 @@ class Product(models.Model):
         indexes = [
             models.Index(fields=['slug']),
             models.Index(fields=['category', 'price']),
+            models.Index(fields=['is_active']),
         ]
 
     def __str__(self):
-        return self.name
+        silver_display = self.get_silver_type_display()
+        fineness_display = self.get_fineness_display()
+        return f"{self.name} - {silver_display} ({fineness_display}) - {self.price}₽"
 
+    # ========== СВОЙСТВА ==========
+    
     @property
     def available_quantity(self):
-        """
-        Доступное количество товара (на складе минус зарезервированное).
-        """
         return self.stock_quantity - self.reserved_quantity
 
     @property
     def average_rating(self):
-        """
-        Средний рейтинг товара на основе отзывов.
-        """
         reviews = self.reviews.filter(moderated=True)
         if not reviews:
             return 0
@@ -253,27 +311,108 @@ class Product(models.Model):
 
     @property
     def reviews_count(self):
-        """
-        Количество отзывов на товар.
-        """
         return self.reviews.filter(moderated=True).count()
-
-    def is_in_wishlist(self, user):
-        """
-        Проверяет, находится ли товар в избранном у указанного пользователя.
-        """
-        if not user or not user.is_authenticated:
-            return False
-        return Wishlist.objects.filter(user=user, product=self).exists()
 
     @property
     def discount_percent(self):
-        """
-        Процент скидки (если есть старая цена).
-        """
         if self.old_price and self.old_price > self.price:
             return int((1 - self.price / self.old_price) * 100)
         return 0
+    
+    @property
+    def has_discount(self):
+        return self.old_price is not None and self.old_price > self.price
+    
+    @property
+    def all_images(self):
+        """Список всех загруженных изображений"""
+        images = []
+        if self.image:
+            images.append(('main', self.image.url if hasattr(self.image, 'url') else self.image))
+        if self.image_2:
+            images.append(('2', self.image_2.url if hasattr(self.image_2, 'url') else self.image_2))
+        if self.image_3:
+            images.append(('3', self.image_3.url if hasattr(self.image_3, 'url') else self.image_3))
+        if self.image_4:
+            images.append(('4', self.image_4.url if hasattr(self.image_4, 'url') else self.image_4))
+        if self.image_5:
+            images.append(('5', self.image_5.url if hasattr(self.image_5, 'url') else self.image_5))
+        return images
+    
+    @property
+    def images_count(self):
+        """Количество загруженных изображений"""
+        count = 0
+        if self.image:
+            count += 1
+        if self.image_2:
+            count += 1
+        if self.image_3:
+            count += 1
+        if self.image_4:
+            count += 1
+        if self.image_5:
+            count += 1
+        return count
+    
+    @property
+    def main_image(self):
+        """Возвращает URL главного фото"""
+        if self.image:
+            return self.image.url if hasattr(self.image, 'url') else self.image
+        return None
+
+    # ========== МЕТОДЫ ==========
+    
+    def is_in_wishlist(self, user):
+        if not user or not user.is_authenticated:
+            return False
+        return Wishlist.objects.filter(user=user, product=self).exists()
+    
+    def clean(self):
+        """Валидация данных перед сохранением"""
+        # Проверка старой цены
+        if self.old_price and self.old_price <= self.price:
+            raise ValidationError({'old_price': 'Старая цена должна быть больше текущей'})
+        
+        # Проверка камней
+        if self.stones and not self.stone_type:
+            raise ValidationError({'stone_type': 'Укажите тип камней'})
+        
+        if self.stones and self.stone_type == 'none':
+            raise ValidationError({'stone_type': 'Выберите конкретный тип камня'})
+        
+        if self.stone_weight and not self.stones:
+            raise ValidationError({'stones': 'Отметьте наличие камней для указания веса'})
+        
+        # Проверка веса
+        if self.weight and self.weight <= 0:
+            raise ValidationError({'weight': 'Вес должен быть положительным числом'})
+        
+        # Проверка количества на складе
+        if self.stock_quantity < 0:
+            raise ValidationError({'stock_quantity': 'Количество на складе не может быть отрицательным'})
+    
+    def save(self, *args, **kwargs):
+        """Создаём slug, если не указан"""
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        """Удаляем файлы изображений при удалении товара"""
+        if self.image and self.image.name and os.path.isfile(self.image.path):
+            os.remove(self.image.path)
+        if self.image_2 and self.image_2.name and os.path.isfile(self.image_2.path):
+            os.remove(self.image_2.path)
+        if self.image_3 and self.image_3.name and os.path.isfile(self.image_3.path):
+            os.remove(self.image_3.path)
+        if self.image_4 and self.image_4.name and os.path.isfile(self.image_4.path):
+            os.remove(self.image_4.path)
+        if self.image_5 and self.image_5.name and os.path.isfile(self.image_5.path):
+            os.remove(self.image_5.path)
+        super().delete(*args, **kwargs)
+
 
 
 class Cart(models.Model):
@@ -346,6 +485,8 @@ class CartItem(models.Model):
         default=1,
         verbose_name='Количество'
     )
+    size = models.CharField(max_length=20, blank=True, null=True)
+    
     added_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата добавления'

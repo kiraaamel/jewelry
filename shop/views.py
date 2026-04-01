@@ -104,12 +104,19 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = ReviewSerializer(reviews, many=True, context={'request': request})
         return Response(serializer.data)
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
+
 class CartViewSet(viewsets.GenericViewSet):
     """
     ViewSet для корзины.
     """
     serializer_class = CartSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    @method_decorator(ensure_csrf_cookie)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return Cart.objects.filter(user=self.request.user)
@@ -134,6 +141,7 @@ class CartViewSet(viewsets.GenericViewSet):
         cart = self.get_object()
         product_id = request.data.get('product_id')
         quantity = request.data.get('quantity', 1)
+        size = request.data.get('size', '')  # ← получаем размер из запроса
 
         product = get_object_or_404(Product, id=product_id)
 
@@ -144,26 +152,29 @@ class CartViewSet(viewsets.GenericViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Ищем товар с таким же размером в корзине
         cart_item, created = CartItem.objects.get_or_create(
-            cart=cart, product=product,
+            cart=cart, 
+            product=product, 
+            size=size,  # ← добавляем размер в поиск
             defaults={'quantity': quantity}
         )
+        
         if not created:
             cart_item.quantity += quantity
             cart_item.save()
 
         return Response(self.get_serializer(cart).data)
-
     @action(detail=False, methods=['post'])
     def update_item(self, request):
         """
         Изменение количества товара в корзине.
         """
         cart = self.get_object()
-        product_id = request.data.get('product_id')
+        cart_item_id = request.data.get('cart_item_id')
         quantity = request.data.get('quantity')
 
-        cart_item = get_object_or_404(CartItem, cart=cart, product_id=product_id)
+        cart_item = get_object_or_404(CartItem, id=cart_item_id, cart=cart)
 
         if quantity <= 0:
             cart_item.delete()
@@ -177,18 +188,16 @@ class CartViewSet(viewsets.GenericViewSet):
             cart_item.save()
 
         return Response(self.get_serializer(cart).data)
-
     @action(detail=False, methods=['post'])
     def remove_item(self, request):
         """
         Удаление товара из корзины.
         """
         cart = self.get_object()
-        product_id = request.data.get('product_id')
+        cart_item_id = request.data.get('cart_item_id')
 
-        CartItem.objects.filter(cart=cart, product_id=product_id).delete()
+        CartItem.objects.filter(id=cart_item_id, cart=cart).delete()
         return Response(self.get_serializer(cart).data)
-
     @action(detail=False, methods=['post'])
     def clear(self, request):
         """

@@ -1,5 +1,4 @@
 from django_filters import rest_framework as filters
-from django.db.models import Q
 from django.db import models
 from .models import Product
 
@@ -15,6 +14,20 @@ class ProductFilter(filters.FilterSet):
     # Фильтр по наличию камней
     stones = filters.BooleanFilter(field_name='stones')
     
+    # Фильтр по типу серебра
+    silver_type = filters.ChoiceFilter(
+        field_name='silver_type',
+        choices=Product.SILVER_TYPE_CHOICES,
+        lookup_expr='exact'
+    )
+    
+    # Фильтр по пробе
+    fineness = filters.ChoiceFilter(
+        field_name='fineness',
+        choices=Product.FINENESS_CHOICES,
+        lookup_expr='exact'
+    )
+    
     # Фильтр по скидке (товары, у которых old_price > price)
     has_discount = filters.BooleanFilter(method='filter_has_discount')
     
@@ -28,4 +41,7 @@ class ProductFilter(filters.FilterSet):
 
     class Meta:
         model = Product
-        fields = ['category', 'metal', 'fineness', 'stones', 'price_min', 'price_max', 'has_discount']
+        fields = [
+            'category', 'silver_type', 'fineness', 'stones', 
+            'collection', 'is_active', 'price_min', 'price_max', 'has_discount'
+        ]
