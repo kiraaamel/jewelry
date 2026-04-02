@@ -565,6 +565,7 @@ class Order(models.Model):
         default=0,  # ← значение по умолчанию
         verbose_name='Общая стоимость'
     )
+    bonus_earned = models.IntegerField(default=0, verbose_name='Начислено бонусов')
     delivery_address = models.TextField(
         verbose_name='Адрес доставки'
     )

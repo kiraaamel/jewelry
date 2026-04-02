@@ -13,6 +13,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from django.shortcuts import get_object_or_404
 from .filters import ProductFilter
+from decimal import Decimal
 
 from .models import (
     Category, Product, Cart, CartItem, 
@@ -215,15 +216,24 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['post'])
     def create_order(self, request):
-        """
-        Создание заказа.
-        """
         serializer = OrderCreateSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             order = serializer.save()
+            
+            # Начисляем бонусы (5% от суммы заказа)
+            # Используем Decimal для умножения
+            bonus_earned = int(order.total_price * Decimal('0.05'))
+            order.bonus_earned = bonus_earned
+            order.save()
+            
+            # Добавляем бонусы пользователю
+            if order.user:
+                order.user.bonus_points += bonus_earned
+                order.user.save()
+            
             return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        
 class ReviewViewSet(viewsets.ModelViewSet):
     """
     ViewSet для отзывов.
@@ -284,3 +294,11 @@ def orders(request):
 def favorites(request):
     """Страница избранного"""
     return render(request, 'shop/favorites.html')
+
+def checkout_page(request):
+    """Страница оформления заказа"""
+    return render(request, 'shop/checkout.html')
+
+def orders(request):
+    """Страница моих заказов"""
+    return render(request, 'shop/orders.html')

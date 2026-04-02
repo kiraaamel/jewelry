@@ -146,9 +146,6 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ('id', 'product', 'product_name', 'price', 'quantity', 'total_price')
 
 class OrderSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор для заказа.
-    """
     items = OrderItemSerializer(many=True, read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
 
@@ -157,14 +154,11 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'order_number', 'user', 'created_at', 'status', 'status_display',
             'total_price', 'delivery_address', 'delivery_method', 'payment_method',
-            'gift_wrap', 'gift_message', 'comment', 'delivered_at', 'items'
+            'gift_wrap', 'gift_message', 'comment', 'delivered_at', 'items', 'bonus_earned'
         )
         read_only_fields = ('id', 'order_number', 'created_at', 'total_price')
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор для создания заказа.
-    """
     class Meta:
         model = Order
         fields = (

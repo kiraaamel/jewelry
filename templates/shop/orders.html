@@ -3,6 +3,36 @@
 {% block content %}
 <div class="container py-5">
     <h1>Мои заказы</h1>
-    <p class="text-secondary">Страница в разработке. Здесь будет история ваших заказов.</p>
+    <div id="orders-list">
+        <p class="text-secondary">Загрузка...</p>
+    </div>
 </div>
+
+<script>
+    fetch('/api/orders/')
+        .then(r => r.json())
+        .then(orders => {
+            const container = document.getElementById('orders-list');
+            if (orders.length === 0) {
+                container.innerHTML = '<p>У вас пока нет заказов</p>';
+                return;
+            }
+            let html = '<div class="list-group">';
+            orders.forEach(order => {
+                html += `
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <h5>Заказ №${order.order_number}</h5>
+                            <span class="badge bg-secondary">${order.status}</span>
+                        </div>
+                        <p>Дата: ${new Date(order.created_at).toLocaleDateString()}</p>
+                        <p>Сумма: ${order.total_price} ₽</p>
+                        <p>Доставка: ${order.delivery_address}</p>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        });
+</script>
 {% endblock %}

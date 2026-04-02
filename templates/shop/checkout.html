@@ -1,0 +1,1683 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+:root {
+    --bg-cream: #F7F2EB;
+    --accent: #5D6E80;
+    --brown: #7A6B5B;
+    --gray: #808E92;
+}
+
+.checkout-page {
+    background: var(--bg-cream);
+    padding: 40px 0;
+    min-height: 70vh;
+}
+
+.checkout-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.checkout-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkout-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 30px;
+    align-items: start;
+}
+
+/* Форма */
+.checkout-form {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+.form-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--brown);
+    margin-bottom: 6px;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(93,110,128,0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Способы доставки */
+.delivery-methods, .payment-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.method-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.method-item:hover {
+    border-color: var(--accent);
+    background: #f8f9fa;
+}
+
+.method-item.selected {
+    border-color: var(--accent);
+    background: #f0f4f8;
+}
+
+.method-item input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+}
+
+.method-info {
+    flex: 1;
+}
+
+.method-name {
+    font-weight: 500;
+    color: var(--brown);
+}
+
+.method-price {
+    font-size: 12px;
+    color: var(--gray);
+}
+
+/* Пункты выдачи */
+.pickup-points {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    display: none;
+}
+
+.pickup-points.active {
+    display: block;
+}
+
+.pickup-point {
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.pickup-point:hover {
+    background: white;
+    border-color: var(--accent);
+}
+
+.pickup-point.selected {
+    background: white;
+    border-color: var(--accent);
+}
+
+.pickup-point-name {
+    font-weight: 500;
+    color: var(--brown);
+}
+
+.pickup-point-address {
+    font-size: 12px;
+    color: var(--gray);
+    margin-top: 4px;
+}
+
+/* Боковая панель (sticky) */
+.order-summary {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 20px;
+}
+
+.summary-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--accent);
+}
+
+.summary-items {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.summary-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.summary-item-image {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.summary-item-info {
+    flex: 1;
+}
+
+.summary-item-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--brown);
+    margin-bottom: 4px;
+}
+
+.summary-item-size {
+    font-size: 11px;
+    color: var(--gray);
+}
+
+.summary-item-price {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 14px;
+}
+
+.summary-row.total {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    border-top: 2px solid var(--accent);
+    margin-top: 10px;
+    padding-top: 15px;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.3s;
+}
+
+.submit-btn:hover {
+    background: #4a5a6a;
+    transform: translateY(-2px);
+}
+
+.bonus-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin: 10px 0;
+    padding: 12px;
+}
+
+.bonus-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.promo-section {
+    margin: 10px 0;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.promo-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.promo-input-group input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.promo-input-group button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+}
+
+.promo-applied {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #e8f5e9;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.promo-applied span {
+    font-size: 13px;
+    color: #2e7d32;
+}
+
+.promo-applied i {
+    cursor: pointer;
+    color: var(--gray);
+}
+
+.promo-applied i:hover {
+    color: #d32f2f;
+}
+
+.bonus-note {
+    font-size: 10px;
+    color: var(--gray);
+    margin-top: 8px;
+    text-align: center;
+}
+
+/* Модальное окно оплаты */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 24px;
+    padding: 30px;
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+}
+
+.modal-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 20px;
+}
+
+.modal-amount {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 20px 0;
+}
+
+.modal-card-input {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.modal-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.modal-row input {
+    flex: 1;
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+}
+
+.modal-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--gray);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .checkout-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<div class="checkout-page">
+    <div class="checkout-container">
+        <div class="checkout-title">
+            <i class="fas fa-clipboard-list"></i>
+            <span>Оформление заказа</span>
+        </div>
+
+        <div class="checkout-grid">
+            <!-- Левая колонка: форма -->
+            <div class="checkout-form">
+                <form id="checkout-form">
+                    <!-- Контактные данные -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-user"></i>
+                            <span>Контактные данные</span>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Имя *</label>
+                                <input type="text" id="first_name" name="first_name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Фамилия</label>
+                                <input type="text" id="last_name" name="last_name">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Email *</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Телефон *</label>
+                            <input type="tel" id="phone" name="phone" placeholder="+7 (___)-___-__-__" required>
+                        </div>
+                    </div>
+                    <!-- Способ доставки -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-truck"></i>
+                            <span>Способ доставки</span>
+                        </div>
+                        <div class="delivery-methods" id="delivery-methods">
+                            <div class="method-item selected" data-delivery="pickup" data-price="0">
+                                <input type="radio" name="delivery" value="pickup" checked>
+                                <div class="method-info">
+                                    <div class="method-name">Самовывоз</div>
+                                    <div class="method-price">Бесплатно</div>
+                                </div>
+                            </div>
+                            <div class="method-item" data-delivery="courier" data-price="300">
+                                <input type="radio" name="delivery" value="courier">
+                                <div class="method-info">
+                                    <div class="method-name">Курьерская доставка</div>
+                                    <div class="method-price">300 ₽</div>
+                                </div>
+                            </div>
+                            <div class="method-item" data-delivery="post" data-price="200">
+                                <input type="radio" name="delivery" value="post">
+                                <div class="method-info">
+                                    <div class="method-name">Почта России</div>
+                                    <div class="method-price">200 ₽</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Пункты самовывоза -->
+                        <div id="pickup-points" class="pickup-points">
+                            <div class="pickup-point" data-point="1">
+                                <div class="pickup-point-name">Пункт выдачи №1</div>
+                                <div class="pickup-point-address">Москва, ул. Тверская, д. 1 (ТЦ "Галерея")</div>
+                            </div>
+                            <div class="pickup-point" data-point="2">
+                                <div class="pickup-point-name">Пункт выдачи №2</div>
+                                <div class="pickup-point-address">Москва, м. Курская, ул. Земляной Вал, д. 33</div>
+                            </div>
+                            <div class="pickup-point" data-point="3">
+                                <div class="pickup-point-name">Пункт выдачи №3</div>
+                                <div class="pickup-point-address">Москва, м. Дмитровская, ул. Бутырская, д. 46</div>
+                            </div>
+                        </div>
+
+                        <!-- Отделения Почты России -->
+                        <div id="post-points" class="pickup-points">
+                            <div class="pickup-point" data-point="post1">
+                                <div class="pickup-point-name">Почта России №1</div>
+                                <div class="pickup-point-address">Москва, ул. Новый Арбат, д. 15</div>
+                            </div>
+                            <div class="pickup-point" data-point="post2">
+                                <div class="pickup-point-name">Почта России №2</div>
+                                <div class="pickup-point-address">Москва, Ленинградский пр-т, д. 80</div>
+                            </div>
+                            <div class="pickup-point" data-point="post3">
+                                <div class="pickup-point-name">Почта России №3</div>
+                                <div class="pickup-point-address">Москва, ул. Профсоюзная, д. 56</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Адрес доставки (только для курьера) -->
+                    <div class="form-section" id="address-section" style="display: none;">
+                        <div class="section-title">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Адрес доставки</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Город *</label>
+                            <input type="text" id="city" name="city" value="Москва" readonly>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Улица *</label>
+                                <input type="text" id="street" name="street">
+                            </div>
+                            <div class="form-group">
+                                <label>Дом *</label>
+                                <input type="text" id="house" name="house">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Квартира</label>
+                                <input type="text" id="apartment" name="apartment">
+                            </div>
+                            <div class="form-group">
+                                <label>Индекс</label>
+                                <input type="text" id="postal_code" name="postal_code" placeholder="123456">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Дата и время доставки -->
+                    <div class="form-section" id="delivery-date-section" style="display: none;">
+                        <div class="section-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Дата и время доставки</span>
+                        </div>
+                        <div id="delivery-date-content" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
+                    </div>
+                    <!-- Способ оплаты -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Способ оплаты</span>
+                        </div>
+                        <div class="payment-methods" id="payment-methods">
+                            <div class="method-item" data-payment="card">
+                                <input type="radio" name="payment" value="card" checked>
+                                <div class="method-info">
+                                    <div class="method-name">Банковская карта онлайн</div>
+                                    <div class="method-price">Visa, Mastercard, МИР</div>
+                                </div>
+                            </div>
+                            <div class="method-item" data-payment="sbp">
+                                <input type="radio" name="payment" value="sbp">
+                                <div class="method-info">
+                                    <div class="method-name">СБП</div>
+                                    <div class="method-price">Система быстрых платежей</div>
+                                </div>
+                            </div>
+                            <div class="method-item" data-payment="cash">
+                                <input type="radio" name="payment" value="cash">
+                                <div class="method-info">
+                                    <div class="method-name">Наличными при получении</div>
+                                    <div class="method-price">Оплата курьеру</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Подарочная упаковка -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-gift"></i>
+                            <span>Подарочная упаковка</span>
+                        </div>
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" id="gift_wrap">
+                                <span>Добавить подарочную упаковку (+150 ₽)</span>
+                            </label>
+                        </div>
+                        <div class="form-group" id="gift-message-group" style="display: none;">
+                            <label>Текст поздравления</label>
+                            <textarea id="gift_message" placeholder="С днём рождения! Люблю тебя!"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Правая колонка: итоги (sticky) -->
+            <div class="order-summary">
+                <div class="summary-title">Ваш заказ</div>
+                <div id="order-items" class="summary-items">
+                    <div class="text-center text-secondary py-3">Загрузка...</div>
+                </div>
+                <div id="order-totals">
+                    <div class="summary-row">
+                        <span>Товары</span>
+                        <span id="subtotal">0 ₽</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Скидка</span>
+                        <span id="discount">0 ₽</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Доставка</span>
+                        <span id="delivery-cost">0 ₽</span>
+                    </div>
+                    
+                    <!-- Промокод -->
+                    <div class="promo-section">
+                        <div class="promo-input-group">
+                            <input type="text" id="promo-code" placeholder="Промокод HELLOSILVER">
+                            <button onclick="applyPromo()">Применить</button>
+                        </div>
+                        <div id="promo-status"></div>
+                    </div>
+
+                    <!-- Бонусы -->
+                    <div class="bonus-row">
+                        <div class="bonus-check">
+                            <input type="checkbox" id="use-bonus">
+                            <span>Списать бонусы</span>
+                        </div>
+                        <span id="bonus-available">0 бонусов</span>
+                    </div>
+
+                    <div class="summary-row total">
+                        <span>Итого к оплате</span>
+                        <span id="total">0 ₽</span>
+                    </div>
+                    <div class="summary-row" style="font-size: 12px; color: var(--gray); margin-top: 5px;">
+                        <span>Начислим бонусов:</span>
+                        <span id="bonus-earn">0 бонусов</span>
+                    </div>
+                </div>
+                <button class="submit-btn" onclick="showPaymentModal()">Подтвердить заказ</button>
+                <div class="bonus-note">
+                    Нажимая «Подтвердить заказ», вы соглашаетесь с условиями оферты
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно оплаты -->
+<div id="payment-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closePaymentModal()">&times;</span>
+        <div class="modal-title">Оплата заказа</div>
+        <div class="modal-amount" id="payment-amount">0 ₽</div>
+        <div id="payment-fields">
+            <input type="text" class="modal-card-input" id="card-number" placeholder="Номер карты" maxlength="19">
+            <div class="modal-row">
+                <input type="text" id="card-expiry" placeholder="ММ/ГГ" maxlength="5">
+                <input type="text" id="card-cvv" placeholder="CVV" maxlength="3">
+            </div>
+        </div>
+        <button class="modal-btn" onclick="processPayment()">Оплатить</button>
+        <div style="font-size: 12px; color: var(--gray); margin-top: 15px;">
+            Для теста введите любые 16 цифр, срок ММ/ГГ и 3 цифры CVV
+        </div>
+    </div>
+</div>
+<!-- Модальное окно СБП -->
+<!-- Модальное окно СБП -->
+<div id="sbp-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeSbpModal()">&times;</span>
+        <div class="modal-title">Оплата через СБП</div>
+        <div class="modal-amount" id="sbp-amount">0 ₽</div>
+        <div style="text-align: left; margin: 20px 0;">
+            <p style="margin-bottom: 15px;">Выберите приложение для оплаты:</p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="sbp-app-btn" data-app="sbp" style="padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;">
+                    <i class="fas fa-mobile-alt" style="font-size: 24px;"></i>
+                    <span>СБПэй</span>
+                </button>
+                <button class="sbp-app-btn" data-app="tbank" style="padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;">
+                    <i class="fas fa-university" style="font-size: 24px;"></i>
+                    <span>Т-Банк</span>
+                </button>
+                <button class="sbp-app-btn" data-app="alfa" style="padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;">
+                    <i class="fas fa-building" style="font-size: 24px;"></i>
+                    <span>Альфа-Банк</span>
+                </button>
+                <button class="sbp-app-btn" data-app="sber" style="padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;">
+                    <i class="fas fa-piggy-bank" style="font-size: 24px;"></i>
+                    <span>СберБанк</span>
+                </button>
+            </div>
+        </div>
+        <div id="sbp-status" style="margin-top: 15px; font-size: 14px; text-align: center;"></div>
+        <button class="modal-btn" onclick="processSbpPayment()" style="margin-top: 20px;">Оплатить</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let cartData = null;
+let userData = null;
+let deliveryPrice = 0;
+let giftWrapPrice = 0;
+let useBonus = false;
+let userBonus = 0;
+let promoApplied = false;
+let selectedPickupPoint = null;
+let selectedPostPoint = null;
+let pendingOrderData = null;
+let selectedSbpApp = null;
+
+function loadFromStorage() {
+    const savedPromo = localStorage.getItem('checkout_promo_applied');
+    if (savedPromo === 'true') {
+        promoApplied = true;
+    }
+    const savedBonus = localStorage.getItem('checkout_bonus_applied');
+    if (savedBonus === 'true') {
+        useBonus = true;
+        const useBonusCheckbox = document.getElementById('use-bonus');
+        if (useBonusCheckbox) useBonusCheckbox.checked = true;
+    }
+}
+
+function saveToStorage() {
+    localStorage.setItem('checkout_promo_applied', promoApplied);
+    localStorage.setItem('checkout_bonus_applied', useBonus);
+}
+
+function loadCheckout() {
+    loadFromStorage();
+    
+    fetch('/api/cart/')
+        .then(r => r.json())
+        .then(cart => {
+            cartData = cart;
+            return fetch('/api/auth/me/')
+                .then(r => r.json())
+                .then(user => {
+                    userData = user;
+                    userBonus = user.bonus_points || 0;
+                    renderOrderSummary();
+                    fillUserData();
+                });
+        })
+        .catch(e => console.error('Error:', e));
+}
+
+function fillUserData() {
+    if (userData) {
+        const firstNameEl = document.getElementById('first_name');
+        const lastNameEl = document.getElementById('last_name');
+        const emailEl = document.getElementById('email');
+        const phoneEl = document.getElementById('phone');
+        
+        if (firstNameEl) firstNameEl.value = userData.first_name || '';
+        if (lastNameEl) lastNameEl.value = userData.last_name || '';
+        if (emailEl) emailEl.value = userData.email || '';
+        if (phoneEl) phoneEl.value = userData.phone || '';
+    }
+}
+
+function renderOrderSummary() {
+    if (!cartData || !cartData.items) return;
+    
+    let subtotal = 0;
+    let oldTotal = 0;
+    let itemsHtml = '';
+    
+    cartData.items.forEach(item => {
+        const price = parseFloat(item.product_price) || 0;
+        const oldPrice = parseFloat(item.old_price) || price;
+        const qty = parseInt(item.quantity) || 1;
+        const total = price * qty;
+        const old = oldPrice * qty;
+        
+        subtotal += total;
+        oldTotal += old;
+        
+        itemsHtml += `
+            <div class="summary-item">
+                <img src="${item.product_image || '/static/shop/images/placeholder.png'}" class="summary-item-image">
+                <div class="summary-item-info">
+                    <div class="summary-item-title">${escapeHtml(item.product_name)}</div>
+                    <div class="summary-item-size">Размер: ${item.size || '-'} • ${qty} шт</div>
+                    <div class="summary-item-price">${total.toFixed(0)} ₽</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    const discount = oldTotal - subtotal;
+    
+    const orderItemsEl = document.getElementById('order-items');
+    const subtotalEl = document.getElementById('subtotal');
+    const discountEl = document.getElementById('discount');
+    const bonusAvailableEl = document.getElementById('bonus-available');
+    
+    if (orderItemsEl) orderItemsEl.innerHTML = itemsHtml;
+    if (subtotalEl) subtotalEl.innerHTML = subtotal.toFixed(0) + ' ₽';
+    if (discountEl) discountEl.innerHTML = discount.toFixed(0) + ' ₽';
+    if (bonusAvailableEl) bonusAvailableEl.innerHTML = userBonus + ' бонусов';
+    
+    updateTotals();
+}
+
+function updateTotals() {
+    if (!cartData) return;
+    
+    let subtotal = 0;
+    cartData.items.forEach(item => {
+        subtotal += (parseFloat(item.product_price) || 0) * (parseInt(item.quantity) || 1);
+    });
+    
+    let discount = 0;
+    let promoDiscount = 0;
+    
+    if (promoApplied) {
+        promoDiscount = subtotal * 0.2;
+        discount += promoDiscount;
+    }
+    
+    let finalPrice = subtotal - discount;
+    
+    let bonusToUse = 0;
+    if (useBonus) {
+        const maxBonusToUse = Math.floor(finalPrice * 0.5);
+        bonusToUse = Math.min(userBonus, maxBonusToUse);
+        finalPrice -= bonusToUse;
+        discount += bonusToUse;
+    }
+    
+    finalPrice += deliveryPrice;
+    finalPrice += giftWrapPrice;
+    
+    // Бонусы, которые будут начислены (5% от итоговой суммы после списания бонусов и доставки)
+    const earnBonus = Math.floor(finalPrice * 0.05);
+    
+    const totalEl = document.getElementById('total');
+    const deliveryCostEl = document.getElementById('delivery-cost');
+    const promoStatusEl = document.getElementById('promo-status');
+    const bonusEarnEl = document.getElementById('bonus-earn');
+    
+    if (totalEl) totalEl.innerHTML = finalPrice.toFixed(0) + ' ₽';
+    if (deliveryCostEl) deliveryCostEl.innerHTML = deliveryPrice === 0 ? 'Бесплатно' : deliveryPrice + ' ₽';
+    if (bonusEarnEl) bonusEarnEl.innerHTML = earnBonus + ' бонусов';
+    
+    if (promoApplied && promoStatusEl) {
+        promoStatusEl.innerHTML = `
+            <div class="promo-applied">
+                <span>✓ Промокод HELLOSILVER применён. Скидка: -${promoDiscount.toFixed(0)} ₽</span>
+                <i class="fas fa-times" onclick="cancelPromo()"></i>
+            </div>
+        `;
+    } else if (promoStatusEl) {
+        promoStatusEl.innerHTML = '';
+    }
+}
+
+function checkUserHasOrders() {
+    return fetch('/api/orders/')
+        .then(r => r.json())
+        .then(orders => {
+            return orders.length > 0;
+        });
+}
+
+function applyPromo() {
+    const promoCodeEl = document.getElementById('promo-code');
+    if (!promoCodeEl) return;
+    const code = promoCodeEl.value;
+    
+    if (code && code.toUpperCase() === 'HELLOSILVER') {
+        checkUserHasOrders().then(hasOrders => {
+            if (hasOrders) {
+                showNotification('Промокод действует только для новых покупателей');
+                return;
+            }
+            promoApplied = true;
+            saveToStorage();
+            updateTotals();
+            showNotification('Промокод применён!');
+            promoCodeEl.value = '';
+        });
+    } else {
+        showNotification('Неверный промокод');
+    }
+}
+
+function cancelPromo() {
+    promoApplied = false;
+    saveToStorage();
+    updateTotals();
+    showNotification('Промокод отменён');
+}
+
+function initDeliveryMethods() {
+    const addressSection = document.getElementById('address-section');
+    const pickupPointsDiv = document.getElementById('pickup-points');
+    const postPointsDiv = document.getElementById('post-points');
+    
+    document.querySelectorAll('.method-item[data-delivery]').forEach(el => {
+        el.addEventListener('click', () => {
+            document.querySelectorAll('.method-item[data-delivery]').forEach(e => e.classList.remove('selected'));
+            el.classList.add('selected');
+            const radio = el.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+            deliveryPrice = parseInt(el.dataset.price) || 0;
+            
+            const deliveryType = el.dataset.delivery;
+            
+            if (deliveryType === 'courier') {
+                if (addressSection) addressSection.style.display = 'block';
+                if (pickupPointsDiv) pickupPointsDiv.classList.remove('active');
+                if (postPointsDiv) postPointsDiv.classList.remove('active');
+            } else {
+                if (addressSection) addressSection.style.display = 'none';
+                if (deliveryType === 'pickup') {
+                    if (pickupPointsDiv) pickupPointsDiv.classList.add('active');
+                    if (postPointsDiv) postPointsDiv.classList.remove('active');
+                } else if (deliveryType === 'post') {
+                    if (pickupPointsDiv) pickupPointsDiv.classList.remove('active');
+                    if (postPointsDiv) postPointsDiv.classList.add('active');
+                } else {
+                    if (pickupPointsDiv) pickupPointsDiv.classList.remove('active');
+                    if (postPointsDiv) postPointsDiv.classList.remove('active');
+                }
+                const streetEl = document.getElementById('street');
+                const houseEl = document.getElementById('house');
+                const apartmentEl = document.getElementById('apartment');
+                if (streetEl) streetEl.value = '';
+                if (houseEl) houseEl.value = '';
+                if (apartmentEl) apartmentEl.value = '';
+            }
+            
+            updateDeliveryDateTime();
+            updateTotals();
+        });
+    });
+    
+    document.querySelectorAll('.pickup-point').forEach(el => {
+        el.addEventListener('click', () => {
+            document.querySelectorAll('.pickup-point').forEach(e => e.classList.remove('selected'));
+            el.classList.add('selected');
+            if (el.parentElement && el.parentElement.id === 'pickup-points') {
+                selectedPickupPoint = el.dataset.point;
+            } else if (el.parentElement && el.parentElement.id === 'post-points') {
+                selectedPostPoint = el.dataset.point;
+            }
+        });
+    });
+    
+    updateDeliveryDateTime();
+}
+
+function initPaymentMethods() {
+    document.querySelectorAll('.method-item[data-payment]').forEach(el => {
+        el.addEventListener('click', () => {
+            document.querySelectorAll('.method-item[data-payment]').forEach(e => e.classList.remove('selected'));
+            el.classList.add('selected');
+            const radio = el.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+        });
+    });
+}
+
+function formatCardNumber(input) {
+    let value = input.value.replace(/\s/g, '').replace(/-/g, '');
+    if (value.length > 16) value = value.slice(0, 16);
+    
+    let formatted = '';
+    for (let i = 0; i < value.length; i++) {
+        if (i > 0 && i % 4 === 0) {
+            formatted += ' ';
+        }
+        formatted += value[i];
+    }
+    input.value = formatted;
+}
+
+function formatCardExpiry(input) {
+    let value = input.value.replace(/\//g, '').replace(/\s/g, '');
+    if (value.length > 4) value = value.slice(0, 4);
+    
+    if (value.length >= 2) {
+        const month = parseInt(value.slice(0, 2));
+        if (month > 12) {
+            input.value = '12/' + value.slice(2);
+            return;
+        }
+        input.value = value.slice(0, 2) + '/' + value.slice(2);
+    } else {
+        input.value = value;
+    }
+}
+
+function formatCardCvv(input) {
+    let value = input.value.replace(/\D/g, '');
+    if (value.length > 3) value = value.slice(0, 3);
+    input.value = value;
+}
+
+function initPaymentFormatters() {
+    const cardNumberInput = document.getElementById('card-number');
+    const cardExpiryInput = document.getElementById('card-expiry');
+    const cardCvvInput = document.getElementById('card-cvv');
+    
+    if (cardNumberInput) {
+        cardNumberInput.addEventListener('input', () => formatCardNumber(cardNumberInput));
+        cardNumberInput.addEventListener('keypress', (e) => {
+            if (!/\d/.test(e.key)) e.preventDefault();
+        });
+    }
+    
+    if (cardExpiryInput) {
+        cardExpiryInput.addEventListener('input', () => formatCardExpiry(cardExpiryInput));
+        cardExpiryInput.addEventListener('keypress', (e) => {
+            if (!/\d/.test(e.key)) e.preventDefault();
+        });
+    }
+    
+    if (cardCvvInput) {
+        cardCvvInput.addEventListener('input', () => formatCardCvv(cardCvvInput));
+        cardCvvInput.addEventListener('keypress', (e) => {
+            if (!/\d/.test(e.key)) e.preventDefault();
+        });
+    }
+}
+
+const giftWrapCheckbox = document.getElementById('gift_wrap');
+const giftMessageGroup = document.getElementById('gift-message-group');
+
+if (giftWrapCheckbox) {
+    giftWrapCheckbox.addEventListener('change', () => {
+        giftWrapPrice = giftWrapCheckbox.checked ? 150 : 0;
+        if (giftMessageGroup) {
+            giftMessageGroup.style.display = giftWrapCheckbox.checked ? 'block' : 'none';
+        }
+        updateTotals();
+    });
+}
+
+const useBonusCheckbox = document.getElementById('use-bonus');
+if (useBonusCheckbox) {
+    useBonusCheckbox.addEventListener('change', () => {
+        useBonus = useBonusCheckbox.checked;
+        saveToStorage();
+        updateTotals();
+    });
+}
+
+function getSelectedDelivery() {
+    const selected = document.querySelector('input[name="delivery"]:checked');
+    return selected ? selected.value : 'pickup';
+}
+
+function getSelectedPayment() {
+    const selected = document.querySelector('input[name="payment"]:checked');
+    return selected ? selected.value : 'card';
+}
+
+function getDeliveryAddress() {
+    const deliveryType = getSelectedDelivery();
+    
+    if (deliveryType === 'courier') {
+        const cityEl = document.getElementById('city');
+        const streetEl = document.getElementById('street');
+        const houseEl = document.getElementById('house');
+        const apartmentEl = document.getElementById('apartment');
+        
+        const city = cityEl ? cityEl.value : 'Москва';
+        const street = streetEl ? streetEl.value : '';
+        const house = houseEl ? houseEl.value : '';
+        const apartment = apartmentEl ? apartmentEl.value : '';
+        
+        if (!street || !house) return null;
+        let address = `${city}, ул. ${street}, д. ${house}`;
+        if (apartment) address += `, кв. ${apartment}`;
+        return address;
+    } else if (deliveryType === 'pickup') {
+        if (!selectedPickupPoint) return null;
+        const selected = document.querySelector('#pickup-points .pickup-point.selected');
+        return selected ? selected.querySelector('.pickup-point-address').innerText : null;
+    } else if (deliveryType === 'post') {
+        if (!selectedPostPoint) return null;
+        const selected = document.querySelector('#post-points .pickup-point.selected');
+        return selected ? selected.querySelector('.pickup-point-address').innerText : null;
+    }
+    return null;
+}
+
+// ========== ФУНКЦИИ ДАТЫ И ВРЕМЕНИ ДОСТАВКИ ==========
+
+function formatDate(daysToAdd = 0) {
+    const date = new Date();
+    date.setDate(date.getDate() + daysToAdd);
+    const day = date.getDate();
+    const month = date.toLocaleString('ru-RU', { month: 'long' });
+    return `${day} ${month}`;
+}
+
+function updateDeliveryDateTime() {
+    const deliveryType = getSelectedDelivery();
+    const container = document.getElementById('delivery-date-content');
+    const section = document.getElementById('delivery-date-section');
+    
+    if (!container || !section) return;
+    
+    const today = formatDate(0);
+    const tomorrow = formatDate(1);
+    const inThreeDays = formatDate(3);
+    
+    section.style.display = 'none';
+    container.innerHTML = '';
+    
+    if (deliveryType === 'pickup') {
+        section.style.display = 'block';
+        const now = new Date();
+        const currentHour = now.getHours();
+        
+        const allTimes = [
+            { time: '10:00', active: currentHour < 10 },
+            { time: '12:00', active: currentHour < 12 },
+            { time: '14:00', active: currentHour < 14 },
+            { time: '16:00', active: currentHour < 16 },
+            { time: '18:00', active: currentHour < 18 }
+        ];
+        
+        let buttonsHtml = `<div style="margin-bottom: 8px; font-size: 13px; color: var(--brown);">📅 ${today}</div><div style="display: flex; flex-wrap: wrap; gap: 8px;">`;
+        
+        allTimes.forEach(t => {
+            if (t.active) {
+                buttonsHtml += `<button type="button" class="delivery-time-btn" data-time="${t.time}" style="padding: 8px 16px; border: 1px solid var(--accent); border-radius: 30px; background: white; color: var(--accent); cursor: pointer;">${t.time}</button>`;
+            }
+        });
+        
+        if (currentHour >= 18) {
+            buttonsHtml += `<div style="width: 100%; padding: 8px; background: #f0f0f0; border-radius: 8px; text-align: center; color: var(--gray);">Заказы после 18:00 будут доступны к самовывозу завтра с 10:00</div>`;
+        }
+        
+        buttonsHtml += `</div>`;
+        container.innerHTML = buttonsHtml;
+        
+        document.querySelectorAll('.delivery-time-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.querySelectorAll('.delivery-time-btn').forEach(b => {
+                    b.style.background = 'white';
+                    b.style.color = 'var(--accent)';
+                });
+                this.style.background = 'var(--accent)';
+                this.style.color = 'white';
+            });
+        });
+    } 
+    else if (deliveryType === 'courier') {
+        section.style.display = 'block';
+        container.innerHTML = `
+            <div style="margin-bottom: 8px; font-size: 13px; color: var(--brown);">📅 ${tomorrow}</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <button type="button" class="delivery-time-btn" data-time="10:00-14:00" style="padding: 8px 16px; border: 1px solid var(--accent); border-radius: 30px; background: white; color: var(--accent); cursor: pointer;">10:00 - 14:00</button>
+                <button type="button" class="delivery-time-btn" data-time="14:00-18:00" style="padding: 8px 16px; border: 1px solid var(--accent); border-radius: 30px; background: white; color: var(--accent); cursor: pointer;">14:00 - 18:00</button>
+                <button type="button" class="delivery-time-btn" data-time="18:00-22:00" style="padding: 8px 16px; border: 1px solid var(--accent); border-radius: 30px; background: white; color: var(--accent); cursor: pointer;">18:00 - 22:00</button>
+            </div>
+        `;
+        
+        document.querySelectorAll('.delivery-time-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.querySelectorAll('.delivery-time-btn').forEach(b => {
+                    b.style.background = 'white';
+                    b.style.color = 'var(--accent)';
+                });
+                this.style.background = 'var(--accent)';
+                this.style.color = 'white';
+            });
+        });
+    }
+    else if (deliveryType === 'post') {
+        section.style.display = 'block';
+        container.innerHTML = `
+            <div style="padding: 10px; background: #f8f9fa; border-radius: 12px; font-size: 13px;">
+                <i class="fas fa-envelope"></i> Ожидаемая дата получения: <strong>${inThreeDays}</strong>
+            </div>
+        `;
+    }
+}
+
+function getDeliveryDateTime() {
+    const deliveryType = getSelectedDelivery();
+    const today = formatDate(0);
+    const tomorrow = formatDate(1);
+    const inThreeDays = formatDate(3);
+    
+    let date = '';
+    let time = '';
+    
+    if (deliveryType === 'pickup') {
+        date = today;
+        const selectedBtn = document.querySelector('.delivery-time-btn[style*="background: var(--accent)"]');
+        if (selectedBtn) {
+            time = selectedBtn.getAttribute('data-time');
+        } else {
+            const firstBtn = document.querySelector('.delivery-time-btn');
+            if (firstBtn) {
+                time = firstBtn.getAttribute('data-time');
+                firstBtn.style.background = 'var(--accent)';
+                firstBtn.style.color = 'white';
+            } else {
+                time = 'не выбрано';
+            }
+        }
+    } 
+    else if (deliveryType === 'courier') {
+        date = tomorrow;
+        const selectedBtn = document.querySelector('.delivery-time-btn[style*="background: var(--accent)"]');
+        if (selectedBtn) {
+            time = selectedBtn.getAttribute('data-time');
+        } else {
+            const firstBtn = document.querySelector('.delivery-time-btn');
+            if (firstBtn) {
+                time = firstBtn.getAttribute('data-time');
+                firstBtn.style.background = 'var(--accent)';
+                firstBtn.style.color = 'white';
+            } else {
+                time = 'не выбран';
+            }
+        }
+    }
+    else if (deliveryType === 'post') {
+        date = inThreeDays;
+        time = 'по получении';
+    }
+    
+    return { date, time };
+}
+
+// ========== ФУНКЦИИ СБП ==========
+
+function showSbpModal() {
+    const totalEl = document.getElementById('total');
+    if (!totalEl) return;
+    const total = totalEl.innerText;
+    const sbpAmountEl = document.getElementById('sbp-amount');
+    if (sbpAmountEl) sbpAmountEl.innerHTML = total;
+    
+    document.getElementById('sbp-modal').classList.add('active');
+    document.getElementById('sbp-status').innerHTML = '';
+    selectedSbpApp = null;
+    
+    document.querySelectorAll('.sbp-app-btn').forEach(btn => {
+        btn.style.background = 'white';
+        btn.style.color = 'var(--accent)';
+    });
+}
+
+function closeSbpModal() {
+    document.getElementById('sbp-modal').classList.remove('active');
+}
+
+function initSbpButtons() {
+    document.querySelectorAll('.sbp-app-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Убираем выделение со всех кнопок
+            document.querySelectorAll('.sbp-app-btn').forEach(b => {
+                b.style.background = 'white';
+                b.style.color = 'var(--accent)';
+                b.style.border = '1px solid var(--accent)';
+            });
+            // Выделяем нажатую кнопку
+            this.style.background = 'var(--accent)';
+            this.style.color = 'white';
+            this.style.border = '1px solid var(--accent)';
+            selectedSbpApp = this.dataset.app;
+            document.getElementById('sbp-status').innerHTML = '';
+            
+            // Показываем уведомление о выборе
+            const appName = this.querySelector('span').innerText;
+            document.getElementById('sbp-status').innerHTML = `<span style="color: green;">✓ Выбран ${appName}</span>`;
+        });
+    });
+}
+
+function processSbpPayment() {
+    if (!selectedSbpApp) {
+        document.getElementById('sbp-status').innerHTML = '<span style="color: red;">Выберите приложение для оплаты</span>';
+        return;
+    }
+    
+    const statusDiv = document.getElementById('sbp-status');
+    statusDiv.innerHTML = '<span style="color: var(--accent);">Обработка платежа...</span>';
+    
+    // Сохраняем способ оплаты как СБП
+    if (pendingOrderData) {
+        pendingOrderData.payment_method = 'sbp';
+    }
+    
+    setTimeout(function() {
+        statusDiv.innerHTML = '<span style="color: green;">✅ Оплата успешна! Заказ оплачен через СБП</span>';
+        
+        setTimeout(function() {
+            closeSbpModal();
+            // Отправляем заказ на сервер
+            submitOrderToServer();
+        }, 1500);
+    }, 1000);
+}
+
+// ========== ОСНОВНЫЕ ФУНКЦИИ ОФОРМЛЕНИЯ ==========
+function submitOrderToServer() {
+    const deliveryDateTime = getDeliveryDateTime();
+    
+    // Проверяем, что данные заказа существуют
+    if (!pendingOrderData) {
+        showNotification('Ошибка: данные заказа не найдены');
+        return;
+    }
+    
+    const orderData = {
+        delivery_address: pendingOrderData.delivery_address,
+        delivery_method: pendingOrderData.delivery_method,
+        delivery_date: deliveryDateTime.date,
+        delivery_time: deliveryDateTime.time,
+        payment_method: pendingOrderData.payment_method,
+        gift_wrap: pendingOrderData.gift_wrap,
+        gift_message: pendingOrderData.gift_message,
+        comment: pendingOrderData.comment,
+        use_bonus: pendingOrderData.use_bonus
+    };
+    
+    console.log('Отправка заказа:', orderData); // Для отладки
+    
+    fetch('/api/orders/create_order/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(orderData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.error || 'Ошибка сервера'); });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Ответ сервера:', data); // Для отладки
+        if (data.id) {
+            // Очищаем сохранённые данные
+            localStorage.removeItem('checkout_promo_applied');
+            localStorage.removeItem('checkout_bonus_applied');
+            
+            // Показываем уведомление
+            showNotification(`✅ Заказ успешно оформлен! Номер заказа: ${data.order_number}`);
+            
+            // Обновляем счётчик корзины
+            updateCartCount();
+            
+            // Перенаправляем на страницу заказов через 2 секунды
+            setTimeout(function() {
+                window.location.href = '/orders/';
+            }, 2000);
+        } else {
+            showNotification(data.error || 'Ошибка при оформлении заказа');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        showNotification(error.message || 'Ошибка при оформлении заказа');
+    });
+}
+
+function updateCartCount() {
+    fetch('/api/cart/')
+        .then(response => response.json())
+        .then(data => {
+            const count = data.total_items || 0;
+            const cartCount = document.getElementById('cart-count');
+            if (cartCount) cartCount.textContent = count;
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function showPaymentModal() {
+    const firstNameEl = document.getElementById('first_name');
+    const emailEl = document.getElementById('email');
+    const phoneEl = document.getElementById('phone');
+    
+    if (!firstNameEl || !emailEl || !phoneEl) {
+        showNotification('Ошибка загрузки формы');
+        return;
+    }
+    
+    const firstName = firstNameEl.value;
+    const email = emailEl.value;
+    const phone = phoneEl.value;
+    const deliveryAddress = getDeliveryAddress();
+    
+    if (!firstName) { showNotification('Введите имя'); return; }
+    if (!email) { showNotification('Введите email'); return; }
+    if (!phone) { showNotification('Введите телефон'); return; }
+    
+    const deliveryType = getSelectedDelivery();
+    
+    if (deliveryType === 'courier') {
+        const streetEl = document.getElementById('street');
+        const houseEl = document.getElementById('house');
+        if (!streetEl || !houseEl) return;
+        const street = streetEl.value;
+        const house = houseEl.value;
+        if (!street) { showNotification('Введите улицу'); return; }
+        if (!house) { showNotification('Введите номер дома'); return; }
+    }
+    
+    if (deliveryType === 'pickup' && !selectedPickupPoint) {
+        showNotification('Выберите пункт выдачи');
+        return;
+    }
+    
+    if (deliveryType === 'post' && !selectedPostPoint) {
+        showNotification('Выберите отделение почты');
+        return;
+    }
+    
+    if (!deliveryAddress) {
+        showNotification('Укажите адрес доставки');
+        return;
+    }
+    
+    if (deliveryType === 'pickup') {
+        const selectedBtn = document.querySelector('.delivery-time-btn[style*="background: var(--accent)"]');
+        if (!selectedBtn) {
+            showNotification('Выберите время самовывоза');
+            return;
+        }
+    }
+
+    if (deliveryType === 'courier') {
+        const selectedBtn = document.querySelector('.delivery-time-btn[style*="background: var(--accent)"]');
+        if (!selectedBtn) {
+            showNotification('Выберите временной интервал доставки');
+            return;
+        }
+    }
+    
+    const totalEl = document.getElementById('total');
+    if (!totalEl) return;
+    
+    const total = totalEl.innerText;
+    const paymentMethod = getSelectedPayment();
+    
+    const deliveryDateTime = getDeliveryDateTime();
+
+    pendingOrderData = {
+        delivery_address: deliveryAddress,
+        delivery_method: deliveryType,
+        delivery_date: deliveryDateTime.date,
+        delivery_time: deliveryDateTime.time,
+        payment_method: paymentMethod,
+        gift_wrap: giftWrapCheckbox ? giftWrapCheckbox.checked : false,
+        gift_message: document.getElementById('gift_message') ? document.getElementById('gift_message').value : '',
+        comment: document.getElementById('comment') ? document.getElementById('comment').value : '',
+        use_bonus: useBonus,
+        first_name: firstName,
+        last_name: document.getElementById('last_name') ? document.getElementById('last_name').value : '',
+        email: email,
+        phone: phone
+    };
+    
+    if (paymentMethod === 'sbp') {
+        closePaymentModal();
+        showSbpModal();
+        return;
+    }
+    
+    const paymentAmountEl = document.getElementById('payment-amount');
+    if (paymentAmountEl) paymentAmountEl.innerHTML = total;
+    
+    const modal = document.getElementById('payment-modal');
+    if (modal) {
+        modal.classList.add('active');
+        initPaymentFormatters();
+        const cardNumberInput = document.getElementById('card-number');
+        const cardExpiryInput = document.getElementById('card-expiry');
+        const cardCvvInput = document.getElementById('card-cvv');
+        if (cardNumberInput) cardNumberInput.value = '';
+        if (cardExpiryInput) cardExpiryInput.value = '';
+        if (cardCvvInput) cardCvvInput.value = '';
+    } else {
+        showNotification('Ошибка: окно оплаты не найдено');
+    }
+}
+
+function closePaymentModal() {
+    const modal = document.getElementById('payment-modal');
+    if (modal) modal.classList.remove('active');
+    
+    const cardNumberInput = document.getElementById('card-number');
+    const cardExpiryInput = document.getElementById('card-expiry');
+    const cardCvvInput = document.getElementById('card-cvv');
+    
+    if (cardNumberInput) cardNumberInput.value = '';
+    if (cardExpiryInput) cardExpiryInput.value = '';
+    if (cardCvvInput) cardCvvInput.value = '';
+
+}
+function processPayment() {
+    // Получаем значения полей карты
+    let cardNumber = document.getElementById('card-number').value;
+    let cardExpiry = document.getElementById('card-expiry').value;
+    let cardCvv = document.getElementById('card-cvv').value;
+    
+    // Удаляем пробелы и тире из номера карты
+    cardNumber = cardNumber.replace(/\s/g, '').replace(/-/g, '');
+    
+    // 1. Валидация номера карты (16 цифр)
+    const cardNumberRegex = /^\d{16}$/;
+    if (!cardNumberRegex.test(cardNumber)) {
+        showNotification('Введите корректный номер карты (16 цифр)');
+        return;
+    }
+    
+    // 2. Валидация срока действия
+    let month, year;
+    if (cardExpiry.includes('/')) {
+        const parts = cardExpiry.split('/');
+        month = parts[0].trim();
+        year = parts[1].trim();
+    } else if (cardExpiry.length === 4) {
+        month = cardExpiry.substring(0, 2);
+        year = cardExpiry.substring(2, 4);
+    } else {
+        showNotification('Введите срок действия в формате ММ/ГГ');
+        return;
+    }
+    
+    if (!/^\d{2}$/.test(month) || !/^\d{2,4}$/.test(year)) {
+        showNotification('Введите корректный срок действия (ММ/ГГ)');
+        return;
+    }
+    
+    let yearFull = year.length === 2 ? 2000 + parseInt(year) : parseInt(year);
+    month = parseInt(month);
+    
+    if (month < 1 || month > 12) {
+        showNotification('Введите корректный месяц (01-12)');
+        return;
+    }
+    
+    // Проверка, что карта не просрочена
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    
+    if (yearFull < currentYear || (yearFull === currentYear && month < currentMonth)) {
+        showNotification('Срок действия карты истёк');
+        return;
+    }
+    
+    // 3. Валидация CVV (3 цифры)
+    const cvvRegex = /^\d{3}$/;
+    if (!cvvRegex.test(cardCvv)) {
+        showNotification('Введите корректный CVV код (3 цифры)');
+        return;
+    }
+    
+    // Маскируем номер карты для отображения
+    const maskedCard = '**** **** **** ' + cardNumber.slice(-4);
+    showNotification(`Обработка платежа... Карта: ${maskedCard}`);
+    
+    // Имитация обработки платежа
+    setTimeout(function() {
+        // Закрываем модальное окно
+        closePaymentModal();
+        // Отправляем заказ на сервер
+        submitOrderToServer();
+    }, 1500);
+}
+
+function showNotification(message) {
+    const notif = document.createElement('div');
+    notif.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;';
+    notif.innerText = message;
+    document.body.appendChild(notif);
+    setTimeout(() => notif.remove(), 2000);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Инициализация
+initDeliveryMethods();
+initPaymentMethods();
+initSbpButtons();
+updateDeliveryDateTime();
+loadCheckout();
+</script>
+{% endblock %}
