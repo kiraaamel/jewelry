@@ -190,14 +190,10 @@ class CartViewSet(viewsets.GenericViewSet):
         return Response(self.get_serializer(cart).data)
     @action(detail=False, methods=['post'])
     def remove_item(self, request):
-        """
-        Удаление товара из корзины.
-        """
         cart = self.get_object()
         cart_item_id = request.data.get('cart_item_id')
-
         CartItem.objects.filter(id=cart_item_id, cart=cart).delete()
-        return Response(self.get_serializer(cart).data)
+        return Response({'status': 'ok'})
     @action(detail=False, methods=['post'])
     def clear(self, request):
         """

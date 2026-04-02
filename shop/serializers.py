@@ -113,20 +113,16 @@ class ProductSerializer(serializers.ModelSerializer):
         return False
 
 class CartItemSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор для элемента корзины.
-    """
     product_name = serializers.CharField(source='product.name', read_only=True)
     product_price = serializers.DecimalField(source='product.price', read_only=True, max_digits=10, decimal_places=2)
+    old_price = serializers.DecimalField(source='product.old_price', read_only=True, max_digits=10, decimal_places=2)  # ← добавить
     product_image = serializers.ImageField(source='product.image', read_only=True)
     total_price = serializers.DecimalField(read_only=True, max_digits=10, decimal_places=2)
 
     class Meta:
         model = CartItem
-        fields = ('id', 'product', 'product_name', 'product_price', 'product_image', 
+        fields = ('id', 'product', 'product_name', 'product_price', 'old_price', 'product_image', 
                   'quantity', 'size', 'added_at', 'total_price')
-        read_only_fields = ('id', 'added_at', 'total_price')
-
 class CartSerializer(serializers.ModelSerializer):
     """
     Сериализатор для корзины.
