@@ -1,0 +1,149 @@
+[
+{
+  "model": "shop.order",
+  "pk": 7,
+  "fields": {
+    "user": [
+      "fomka@gmail.com"
+    ],
+    "order_number": "ORD-20260403-5B3A",
+    "created_at": "2026-04-03T06:35:44.247Z",
+    "status": "delivered",
+    "total_price": "24866.00",
+    "bonus_earned": 1243,
+    "delivery_address": "Москва, м. Курская, ул. Земляной Вал, д. 33",
+    "delivery_method": "pickup",
+    "payment_method": "sbp",
+    "gift_wrap": false,
+    "gift_message": "",
+    "comment": "",
+    "delivered_at": null
+  }
+},
+{
+  "model": "shop.order",
+  "pk": 6,
+  "fields": {
+    "user": [
+      "fomka@gmail.com"
+    ],
+    "order_number": "ORD-20260403-DF67",
+    "created_at": "2026-04-03T06:34:12.131Z",
+    "status": "new",
+    "total_price": "24866.00",
+    "bonus_earned": 1243,
+    "delivery_address": "Москва, ул. Новый Арбат, д. 15",
+    "delivery_method": "post",
+    "payment_method": "sbp",
+    "gift_wrap": false,
+    "gift_message": "",
+    "comment": "",
+    "delivered_at": null
+  }
+},
+{
+  "model": "shop.order",
+  "pk": 5,
+  "fields": {
+    "user": [
+      "fomka@gmail.com"
+    ],
+    "order_number": "ORD-20260403-164C",
+    "created_at": "2026-04-03T06:15:19.091Z",
+    "status": "cancelled",
+    "total_price": "12433.00",
+    "bonus_earned": 621,
+    "delivery_address": "Москва, ул. Профсоюзная, д. 56",
+    "delivery_method": "post",
+    "payment_method": "sbp",
+    "gift_wrap": false,
+    "gift_message": "",
+    "comment": "",
+    "delivered_at": null
+  }
+},
+{
+  "model": "shop.order",
+  "pk": 4,
+  "fields": {
+    "user": [
+      "fomka@gmail.com"
+    ],
+    "order_number": "ORD-20260402-60A9",
+    "created_at": "2026-04-02T11:34:10.543Z",
+    "status": "new",
+    "total_price": "24866.00",
+    "bonus_earned": 0,
+    "delivery_address": "Москва, ул. Тверская, д. 1 (ТЦ \"Галерея\")",
+    "delivery_method": "pickup",
+    "payment_method": "sbp",
+    "gift_wrap": false,
+    "gift_message": "",
+    "comment": "",
+    "delivered_at": null
+  }
+},
+{
+  "model": "shop.order",
+  "pk": 3,
+  "fields": {
+    "user": [
+      "fomka@gmail.com"
+    ],
+    "order_number": "ORD-20260402-697B",
+    "created_at": "2026-04-02T11:29:52.944Z",
+    "status": "new",
+    "total_price": "12433.00",
+    "bonus_earned": 0,
+    "delivery_address": "Москва, м. Курская, ул. Земляной Вал, д. 33",
+    "delivery_method": "pickup",
+    "payment_method": "sbp",
+    "gift_wrap": false,
+    "gift_message": "",
+    "comment": "",
+    "delivered_at": null
+  }
+},
+{
+  "model": "shop.order",
+  "pk": 2,
+  "fields": {
+    "user": [
+      "fomka@gmail.com"
+    ],
+    "order_number": "ORD-20260402-867E",
+    "created_at": "2026-04-02T09:54:24.857Z",
+    "status": "new",
+    "total_price": "37299.00",
+    "bonus_earned": 0,
+    "delivery_address": "Москва, ул. Новый Арбат, д. 15",
+    "delivery_method": "post",
+    "payment_method": "card",
+    "gift_wrap": false,
+    "gift_message": "",
+    "comment": "",
+    "delivered_at": null
+  }
+},
+{
+  "model": "shop.order",
+  "pk": 1,
+  "fields": {
+    "user": [
+      "kiraaamel@gmail.com"
+    ],
+    "order_number": "ORD-20260325-1D1C",
+    "created_at": "2026-03-25T17:50:39.800Z",
+    "status": "delivered",
+    "total_price": "24866.00",
+    "bonus_earned": 0,
+    "delivery_address": "цуауц",
+    "delivery_method": "уаца",
+    "payment_method": "мори",
+    "gift_wrap": false,
+    "gift_message": "",
+    "comment": "",
+    "delivered_at": "2026-03-25T17:49:46Z"
+  }
+}
+]

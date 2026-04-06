@@ -1,8 +1,703 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="container py-5">
-    <h1>Профиль пользователя</h1>
-    <p>Страница в разработке</p>
+<style>
+:root {
+    --bg-cream: #F7F2EB;
+    --accent: #5D6E80;
+    --brown: #7A6B5B;
+    --gray: #808E92;
+    --green: #28a745;
+}
+
+.profile-page {
+    background: var(--bg-cream);
+    padding: 40px 0;
+    min-height: 70vh;
+}
+
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 30px;
+}
+
+/* Боковое меню */
+.profile-sidebar {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 20px;
+}
+
+.profile-avatar {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.profile-avatar i {
+    font-size: 80px;
+    color: var(--accent);
+}
+
+.profile-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--brown);
+    text-align: center;
+    margin-top: 10px;
+}
+
+.profile-email {
+    font-size: 13px;
+    color: var(--gray);
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu li {
+    margin-bottom: 8px;
+}
+
+.sidebar-menu a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    border-radius: 12px;
+    color: var(--brown);
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.sidebar-menu a i {
+    width: 22px;
+    color: var(--gray);
+}
+
+.sidebar-menu a:hover {
+    background: #f8f9fa;
+    color: var(--accent);
+}
+
+.sidebar-menu a.active {
+    background: var(--accent);
+    color: white;
+}
+
+.sidebar-menu a.active i {
+    color: white;
+}
+
+/* Основной контент */
+.profile-content {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+.content-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--accent);
+}
+
+/* Форма профиля */
+.profile-form {
+    max-width: 500px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--brown);
+    margin-bottom: 8px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(93,110,128,0.1);
+}
+
+.form-group input:read-only {
+    background: #f8f9fa;
+    cursor: not-allowed;
+}
+
+.btn-save {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-save:hover {
+    background: #4a5a6a;
+    transform: translateY(-2px);
+}
+
+/* Бонусы */
+.bonus-card {
+    background: linear-gradient(135deg, var(--accent), #4a5a6a);
+    border-radius: 16px;
+    padding: 25px;
+    color: white;
+    margin-bottom: 30px;
+}
+
+.bonus-card h3 {
+    font-size: 14px;
+    opacity: 0.8;
+    margin-bottom: 10px;
+}
+
+.bonus-card .bonus-value {
+    font-size: 48px;
+    font-weight: 700;
+}
+
+.bonus-card .bonus-note {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 10px;
+}
+
+/* Адреса */
+.addresses-list {
+    margin-top: 20px;
+}
+
+.address-card {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    transition: all 0.3s;
+}
+
+.address-card:hover {
+    background: #f0f4f8;
+}
+
+.address-info {
+    flex: 1;
+}
+
+.address-type {
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 8px;
+}
+
+.address-text {
+    color: var(--brown);
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.address-delivery-method {
+    font-size: 12px;
+    color: var(--gray);
+    margin-top: 6px;
+}
+
+.address-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.address-actions button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--gray);
+    transition: all 0.3s;
+    padding: 5px;
+}
+
+.address-actions button:hover {
+    color: var(--red);
+}
+
+/* Кнопка перехода к заказам */
+.btn-orders {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    margin-bottom: 20px;
+}
+
+.btn-orders:hover {
+    background: #4a5a6a;
+    transform: translateY(-2px);
+}
+
+/* Модальное окно */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 24px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+}
+
+.modal-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 20px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--gray);
+}
+
+.modal-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-sidebar {
+        position: static;
+    }
+    
+    .sidebar-menu {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .sidebar-menu li {
+        margin-bottom: 0;
+    }
+    
+    .sidebar-menu a {
+        padding: 8px 16px;
+    }
+}
+</style>
+
+<div class="profile-page">
+    <div class="profile-container">
+        <div class="profile-grid">
+            <!-- Боковое меню -->
+            <div class="profile-sidebar">
+                <div class="profile-avatar">
+                    <i class="fas fa-user-circle"></i>
+                    <div class="profile-name" id="profile-name-display">Загрузка...</div>
+                    <div class="profile-email" id="profile-email-display"></div>
+                </div>
+                <ul class="sidebar-menu">
+                    <li><a href="#" class="active" data-tab="profile"><i class="fas fa-user"></i> Профиль</a></li>
+                    <li><a href="#" data-tab="addresses"><i class="fas fa-map-marker-alt"></i> Мои адреса</a></li>
+                    <li><a href="#" data-tab="bonus"><i class="fas fa-coins"></i> Бонусы</a></li>
+                </ul>
+            </div>
+
+            <!-- Основной контент -->
+            <div class="profile-content">
+                <!-- Кнопка перехода к заказам -->
+                <a href="/orders/" class="btn-orders">
+                    <i class="fas fa-list-alt"></i> Мои заказы
+                </a>
+
+                <!-- Вкладка Профиль -->
+                <div id="profile-tab" class="tab-content active">
+                    <div class="content-title">Личные данные</div>
+                    <form class="profile-form" id="profile-form">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="profile-email" readonly disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Имя</label>
+                            <input type="text" id="profile-first-name">
+                        </div>
+                        <div class="form-group">
+                            <label>Фамилия</label>
+                            <input type="text" id="profile-last-name">
+                        </div>
+                        <div class="form-group">
+                            <label>Телефон</label>
+                            <input type="tel" id="profile-phone" placeholder="+7 (___) ___-__-__">
+                        </div>
+                        <button type="submit" class="btn-save">Сохранить изменения</button>
+                    </form>
+                </div>
+
+                <!-- Вкладка Адреса -->
+                <div id="addresses-tab" class="tab-content" style="display: none;">
+                    <div class="content-title">Мои адреса доставки</div>
+                    <div id="addresses-list">
+                        <div class="text-center py-3 text-secondary">Загрузка адресов...</div>
+                    </div>
+                </div>
+
+                <!-- Вкладка Бонусы -->
+                <div id="bonus-tab" class="tab-content" style="display: none;">
+                    <div class="content-title">Мои бонусы</div>
+                    <div class="bonus-card">
+                        <h3>Доступно бонусов</h3>
+                        <div class="bonus-value" id="bonus-points">0</div>
+                        <div class="bonus-note">1 бонус = 1 рубль. Можно списать до 50% от суммы заказа</div>
+                    </div>
+                    <div class="bonus-history">
+                        <h3 style="font-size: 16px; color: var(--brown); margin-bottom: 15px;">История начисления</h3>
+                        <div id="bonus-history-list">
+                            <div class="text-center py-3 text-secondary">Загрузка...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Модальное окно редактирования адреса -->
+<div id="edit-address-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeAddressModal()">&times;</span>
+        <div class="modal-title">Редактировать адрес</div>
+        <div class="form-group">
+            <label>Адрес</label>
+            <textarea id="edit-address-text" rows="3" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px;"></textarea>
+        </div>
+        <button class="modal-btn" onclick="saveAddressEdit()">Сохранить</button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentUser = null;
+let currentAddresses = [];
+let currentEditAddressIndex = null;
+
+function loadProfile() {
+    fetch('/api/auth/me/')
+        .then(response => response.json())
+        .then(user => {
+            currentUser = user;
+            renderProfile(user);
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function renderProfile(user) {
+    document.getElementById('profile-name-display').textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email;
+    document.getElementById('profile-email-display').textContent = user.email;
+    document.getElementById('profile-email').value = user.email;
+    document.getElementById('profile-first-name').value = user.first_name || '';
+    document.getElementById('profile-last-name').value = user.last_name || '';
+    document.getElementById('profile-phone').value = user.phone || '';
+    document.getElementById('bonus-points').innerHTML = user.bonus_points || 0;
+}
+
+function loadAddresses() {
+    // Получаем уникальные адреса из заказов пользователя
+    fetch('/api/orders/')
+        .then(response => response.json())
+        .then(orders => {
+            const addressesMap = new Map();
+            orders.forEach(order => {
+                if (order.delivery_address && !addressesMap.has(order.delivery_address)) {
+                    addressesMap.set(order.delivery_address, {
+                        address: order.delivery_address,
+                        delivery_method: order.delivery_method,
+                        last_used: order.created_at
+                    });
+                }
+            });
+            currentAddresses = Array.from(addressesMap.values());
+            renderAddresses();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('addresses-list').innerHTML = '<div class="text-center py-3 text-secondary">Ошибка загрузки адресов</div>';
+        });
+}
+
+function renderAddresses() {
+    const container = document.getElementById('addresses-list');
+    if (currentAddresses.length === 0) {
+        container.innerHTML = '<div class="text-center py-3 text-secondary">У вас пока нет сохранённых адресов</div>';
+        return;
+    }
+    
+    let html = '';
+    currentAddresses.forEach((addr, index) => {
+        const methodText = getDeliveryMethodText(addr.delivery_method);
+        const date = new Date(addr.last_used).toLocaleDateString('ru-RU');
+        html += `
+            <div class="address-card" data-index="${index}">
+                <div class="address-info">
+                    <div class="address-type">${methodText}</div>
+                    <div class="address-text">${escapeHtml(addr.address)}</div>
+                    <div class="address-delivery-method">Последний раз использован: ${date}</div>
+                </div>
+                <div class="address-actions">
+                    <button onclick="editAddress(${index})" title="Редактировать">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+function getDeliveryMethodText(method) {
+    const methods = {
+        'pickup': 'Самовывоз',
+        'courier': 'Курьерская доставка',
+        'post': 'Почта России'
+    };
+    return methods[method] || method;
+}
+
+function editAddress(index) {
+    currentEditAddressIndex = index;
+    document.getElementById('edit-address-text').value = currentAddresses[index].address;
+    document.getElementById('edit-address-modal').classList.add('active');
+}
+
+function closeAddressModal() {
+    document.getElementById('edit-address-modal').classList.remove('active');
+    currentEditAddressIndex = null;
+}
+
+function saveAddressEdit() {
+    const newAddress = document.getElementById('edit-address-text').value;
+    if (!newAddress.trim()) {
+        showNotification('Введите адрес');
+        return;
+    }
+    
+    // Обновляем адрес в локальном списке
+    if (currentEditAddressIndex !== null) {
+        currentAddresses[currentEditAddressIndex].address = newAddress;
+        renderAddresses();
+        showNotification('Адрес обновлён');
+    }
+    closeAddressModal();
+}
+
+function loadBonusHistory() {
+    fetch('/api/orders/')
+        .then(response => response.json())
+        .then(orders => {
+            const container = document.getElementById('bonus-history-list');
+            const ordersWithBonuses = orders.filter(o => o.bonus_earned > 0);
+            
+            if (ordersWithBonuses.length === 0) {
+                container.innerHTML = '<div class="text-center py-3 text-secondary">Пока нет начислений</div>';
+                return;
+            }
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+            ordersWithBonuses.forEach(order => {
+                const date = new Date(order.created_at).toLocaleDateString('ru-RU');
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8f9fa; border-radius: 12px;">
+                        <div>
+                            <div style="font-weight: 500; color: var(--brown);">Заказ №${order.order_number}</div>
+                            <div style="font-size: 12px; color: var(--gray);">от ${date}</div>
+                        </div>
+                        <div style="color: var(--green); font-weight: 600;">+${order.bonus_earned} бонусов</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('bonus-history-list').innerHTML = '<div class="text-center py-3 text-secondary">Ошибка загрузки истории</div>';
+        });
+}
+
+// Сохранение профиля
+document.getElementById('profile-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        first_name: document.getElementById('profile-first-name').value,
+        last_name: document.getElementById('profile-last-name').value,
+        phone: document.getElementById('profile-phone').value
+    };
+    
+    fetch('/api/auth/me/', {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.id) {
+            currentUser = data;
+            renderProfile(data);
+            showNotification('Профиль успешно обновлён');
+        } else {
+            showNotification('Ошибка при обновлении профиля');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при обновлении профиля');
+    });
+});
+
+// Переключение вкладок
+function initTabs() {
+    document.querySelectorAll('.sidebar-menu a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tab = link.dataset.tab;
+            
+            document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+            link.classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            if (tab === 'profile') {
+                document.getElementById('profile-tab').style.display = 'block';
+            } else if (tab === 'addresses') {
+                document.getElementById('addresses-tab').style.display = 'block';
+                loadAddresses();
+            } else if (tab === 'bonus') {
+                document.getElementById('bonus-tab').style.display = 'block';
+                loadBonusHistory();
+            }
+        });
+    });
+}
+
+function showNotification(message) {
+    const notif = document.createElement('div');
+    notif.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;';
+    notif.innerText = message;
+    document.body.appendChild(notif);
+    setTimeout(() => notif.remove(), 2000);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+loadProfile();
+initTabs();
+</script>
 {% endblock %}

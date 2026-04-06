@@ -1,0 +1,13 @@
+[
+{
+  "model": "shop.wishlist",
+  "pk": 12,
+  "fields": {
+    "user": [
+      "fomka@gmail.com"
+    ],
+    "product": 1,
+    "added_at": "2026-04-03T06:35:29.022Z"
+  }
+}
+]

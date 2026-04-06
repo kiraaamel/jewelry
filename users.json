@@ -1,0 +1,192 @@
+[
+{
+  "model": "shop.user",
+  "pk": 1,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$9rchV0ETxqVQT7aoLHKuCQ$qQ1aN+vVi89FUeDsicYBzul+a9IKJmq5wSeGDtXPVlM=",
+    "last_login": "2026-03-25T15:55:00.702Z",
+    "is_superuser": true,
+    "first_name": "",
+    "last_name": "",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-03-25T15:47:14.021Z",
+    "email": "kiraaamel@gmail.com",
+    "phone": "",
+    "bonus_points": 0,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "shop.user",
+  "pk": 2,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$b9XSo8UhzIEzOPeO7Q9v2c$IrWWMYyzfbu6SICd7szzjBlOAYZS3BmtPz6lR2agKuE=",
+    "last_login": null,
+    "is_superuser": true,
+    "first_name": "",
+    "last_name": "",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-03-25T15:54:52.464Z",
+    "email": "arslomakin@yandex.ru",
+    "phone": "",
+    "bonus_points": 0,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "shop.user",
+  "pk": 3,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$m50Dx0pllvOTn82xsUw2jz$splODVDX1tSdMqBqMe6fIhWvwe+VuWKgWDR3WBMmiCw=",
+    "last_login": "2026-04-06T09:57:01.692Z",
+    "is_superuser": true,
+    "first_name": "",
+    "last_name": "",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-03-31T17:31:04.851Z",
+    "email": "kiraaamel@yandex.ru",
+    "phone": "",
+    "bonus_points": 0,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "shop.user",
+  "pk": 4,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$UJaUsVdYMt5ukjzBhTJWyM$t+mZUKOq1Imi/P8am6FoSgg+q8H9WWcBh5VNlm4ewsw=",
+    "last_login": null,
+    "is_superuser": false,
+    "first_name": "",
+    "last_name": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-03-31T17:47:22.806Z",
+    "email": "ptica66@yandex.ru",
+    "phone": "",
+    "bonus_points": 0,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "shop.user",
+  "pk": 5,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$7nwzIIxkGBLUku8NRz48BO$nwHNaz0DsNcBL+ctN2lT24cS9I+N8Fyjyz5Gyr0oarM=",
+    "last_login": null,
+    "is_superuser": false,
+    "first_name": "Арсений",
+    "last_name": "Ломакин",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-03-31T18:13:42.694Z",
+    "email": "ars.lomakin@gmail.com",
+    "phone": "89807456328",
+    "bonus_points": 0,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "shop.user",
+  "pk": 6,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$GTfdc0ceSB2h6E2klRVQnC$6hB5699mpKNlWeWmxNLWS1GYWcH8yTSrv+gnCUCd+iM=",
+    "last_login": "2026-03-31T18:24:42.503Z",
+    "is_superuser": false,
+    "first_name": "Валерия",
+    "last_name": "Петрова",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-03-31T18:17:35.413Z",
+    "email": "lera@yandex.ru",
+    "phone": "89806557422",
+    "bonus_points": 0,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "shop.user",
+  "pk": 7,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$T4iKoKs81st8f4XmsGP5gV$D9isXOACzJjF8H5y7vJjYmM2sAEW6/t3Xj/uhE6q45U=",
+    "last_login": null,
+    "is_superuser": false,
+    "first_name": "Петя",
+    "last_name": "Фомин",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-03-31T18:21:49.846Z",
+    "email": "petr@yandex.ru",
+    "phone": "89802625141",
+    "bonus_points": 0,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "shop.user",
+  "pk": 8,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$1nJMVx73mtVGLeqFjSK0RR$rjP/fC14vtGqGV3YSg/sl22N9JTIhgFMl9Zxnukvi6k=",
+    "last_login": "2026-03-31T18:27:45.666Z",
+    "is_superuser": false,
+    "first_name": "Егор",
+    "last_name": "Голубев",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-03-31T18:27:08.207Z",
+    "email": "egor@yandex.ru",
+    "phone": "89675463212",
+    "bonus_points": 0,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "shop.user",
+  "pk": 9,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$LcDCAzdjTdKzPe1icVpZ5w$gvqHU8DFLr35lS8QTL18HvBXy3kMn0x7eIjaURRduc0=",
+    "last_login": "2026-04-06T09:58:07.964Z",
+    "is_superuser": false,
+    "first_name": "Михаил",
+    "last_name": "Измаилов",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-04-01T12:52:01.956Z",
+    "email": "fomka@gmail.com",
+    "phone": "85932374422",
+    "bonus_points": 3350,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "shop.user",
+  "pk": 10,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$L9ccHZyG4mNVyKnNQH3qNB$KeH/CfiNE4Pqrk6yKvn8lQG9EgT1n1mCNcYic6+CO4w=",
+    "last_login": null,
+    "is_superuser": false,
+    "first_name": "Лиза",
+    "last_name": "Галова",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-04-03T06:18:13.689Z",
+    "email": "liza@gmail.com",
+    "phone": "82439274621",
+    "bonus_points": 0,
+    "groups": [],
+    "user_permissions": []
+  }
+}
+]

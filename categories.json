@@ -1,0 +1,13 @@
+[
+{
+  "model": "shop.category",
+  "pk": 1,
+  "fields": {
+    "name": "Кольца",
+    "slug": "rings",
+    "description": "-",
+    "parent": null,
+    "image": "categories/i.webp"
+  }
+}
+]

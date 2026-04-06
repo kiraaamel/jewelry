@@ -2,6 +2,97 @@
 {% load static %}
 
 {% block content %}
+<style>
+    /* Дополнительные стили для модального окна выбора размера */
+    .size-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .size-modal.active {
+        display: flex;
+    }
+    
+    .size-modal-content {
+        background: white;
+        border-radius: 24px;
+        padding: 30px;
+        max-width: 350px;
+        width: 90%;
+        text-align: center;
+    }
+    
+    .size-modal-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 20px;
+    }
+    
+    .size-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        margin: 20px 0;
+    }
+    
+    .size-btn-modal {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        border: 1px solid var(--accent);
+        background: white;
+        color: var(--accent);
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 16px;
+    }
+    
+    .size-btn-modal:hover, .size-btn-modal.selected {
+        background: var(--accent);
+        color: white;
+    }
+    
+    .modal-close {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--gray);
+    }
+    
+    .quantity-input {
+        width: 60px;
+        text-align: center;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin: 10px 0;
+    }
+    
+    .add-to-cart-btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 30px;
+        cursor: pointer;
+        font-weight: 600;
+        width: 100%;
+        margin-top: 10px;
+    }
+</style>
+
 <div class="container py-4">
     <div class="row">
         <!-- Боковая панель с фильтрами -->
@@ -21,6 +112,29 @@
                             </div>
                             <div id="categories-list">
                                 <div class="text-secondary">Загрузка...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Фильтр по типу серебра -->
+                    <div class="mb-4">
+                        <label class="fw-bold mb-2">Тип серебра</label>
+                        <div id="silver-type-filter">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="silver_type" value="" id="silver-all" checked>
+                                <label class="form-check-label" for="silver-all">Все</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="silver_type" value="sterling" id="silver-sterling">
+                                <label class="form-check-label" for="silver-sterling">Стерлинговое (925)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="silver_type" value="fine" id="silver-fine">
+                                <label class="form-check-label" for="silver-fine">Чистое (999)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="silver_type" value="oxidized" id="silver-oxidized">
+                                <label class="form-check-label" for="silver-oxidized">Черненое</label>
                             </div>
                         </div>
                     </div>
@@ -88,6 +202,12 @@
         
         <!-- Список товаров -->
         <div class="col-md-9">
+            <!-- Информация о поиске -->
+            <div id="search-info" class="alert alert-info mb-3" style="display: none; background-color: #e8f4f8; border-color: var(--accent); color: var(--accent);">
+                <i class="fas fa-search"></i> <span id="search-query-text"></span>
+                <button type="button" class="btn-close float-end" onclick="clearSearch()"></button>
+            </div>
+            
             <!-- Сортировка и информация -->
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                 <div>
@@ -114,12 +234,28 @@
         </div>
     </div>
 </div>
+
+<!-- Модальное окно выбора размера -->
+<div id="size-modal" class="size-modal">
+    <div class="size-modal-content">
+        <span class="modal-close" onclick="closeSizeModal()">&times;</span>
+        <div class="size-modal-title">Выберите размер</div>
+        <div id="size-options" class="size-buttons"></div>
+        <div>
+            <label>Количество:</label>
+            <input type="number" id="modal-quantity" class="quantity-input" value="1" min="1">
+        </div>
+        <button class="add-to-cart-btn" onclick="confirmAddToCart()">Добавить в корзину</button>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
     let currentPage = 1;
     let totalPages = 1;
+    let selectedProductId = null;
+    let selectedProductSizes = [];
     
     // Загрузка категорий
     function loadCategories() {
@@ -146,10 +282,33 @@
         let url = '/api/products/?';
         const params = [];
         
+        // Поиск из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchQuery = urlParams.get('search');
+        if (searchQuery) {
+            params.push(`search=${encodeURIComponent(searchQuery)}`);
+            // Показываем информацию о поиске
+            const searchInfo = document.getElementById('search-info');
+            const searchQueryText = document.getElementById('search-query-text');
+            if (searchInfo && searchQueryText) {
+                searchInfo.style.display = 'block';
+                searchQueryText.innerHTML = `Результаты поиска: "${searchQuery}"`;
+            }
+        } else {
+            const searchInfo = document.getElementById('search-info');
+            if (searchInfo) searchInfo.style.display = 'none';
+        }
+        
         // Категория
         const selectedCategory = document.querySelector('input[name="category"]:checked');
         if (selectedCategory && selectedCategory.value) {
             params.push(`category=${selectedCategory.value}`);
+        }
+        
+        // Тип серебра
+        const selectedSilverType = document.querySelector('input[name="silver_type"]:checked');
+        if (selectedSilverType && selectedSilverType.value) {
+            params.push(`silver_type=${selectedSilverType.value}`);
         }
         
         // Проба
@@ -168,7 +327,7 @@
         const stonesFilter = document.getElementById('stones-filter').checked;
         if (stonesFilter) params.push(`stones=true`);
         
-        // Акция (товары со скидкой)
+        // Акция
         const discountFilter = document.getElementById('discount-filter').checked;
         if (discountFilter) params.push(`has_discount=true`);
         
@@ -194,16 +353,25 @@
                <span class="text-secondary text-decoration-line-through ms-2">${product.old_price} ₽</span>`
             : `<span class="text-gold fw-bold fs-4">${product.price} ₽</span>`;
         
-        const imageHtml = product.image 
-            ? `<img src="${product.image}" alt="${product.name}" class="card-img-top" style="height: 250px; object-fit: cover;">`
+        // Получаем первое доступное изображение
+        let imageUrl = product.image;
+        if (!imageUrl && product.image_2) imageUrl = product.image_2;
+        if (!imageUrl && product.image_3) imageUrl = product.image_3;
+        
+        const imageHtml = imageUrl 
+            ? `<img src="${imageUrl}" alt="${product.name}" class="card-img-top" style="height: 250px; object-fit: cover;">`
             : `<div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 250px;">
                  <i class="fas fa-gem fa-4x text-gold"></i>
                </div>`;
         
-        const finenessInfo = product.fineness ? `${product.fineness} проба` : '';
+        const silverTypeText = product.silver_type_display || '';
+        const finenessText = product.fineness_display || '';
         const ratingStars = product.average_rating > 0 
             ? '★'.repeat(Math.round(product.average_rating)) + '☆'.repeat(5 - Math.round(product.average_rating)) 
             : '☆'.repeat(5);
+        
+        // Получаем размеры из товара (если есть)
+        const sizes = product.size ? product.size.split(',').map(s => s.trim()) : [];
         
         return `
             <div class="col-md-4 mb-4">
@@ -215,19 +383,107 @@
                         <h5 class="card-title">
                             <a href="/product/${product.id}/" class="text-dark text-decoration-none">${product.name}</a>
                         </h5>
-                        <div class="text-muted small mb-2">Серебро ${finenessInfo}</div>
+                        <div class="text-muted small mb-2">${silverTypeText} ${finenessText}</div>
                         <div class="mb-2">
                             <small class="text-warning">${ratingStars}</small>
-                            <small class="text-secondary ms-2">(${product.reviews_count})</small>
+                            <small class="text-secondary ms-2">(${product.reviews_count || 0})</small>
                         </div>
                         <div class="mb-3">${priceHtml}</div>
-                        <button class="btn btn-gold w-100" onclick="addToCart(${product.id})">
+                        <button class="btn btn-gold w-100" onclick="openSizeModal(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${JSON.stringify(sizes).replace(/"/g, '&quot;')})">
                             <i class="fas fa-shopping-cart"></i> В корзину
                         </button>
                     </div>
                 </div>
             </div>
         `;
+    }
+    
+    // Открыть модальное окно выбора размера
+    function openSizeModal(productId, productName, sizes) {
+        selectedProductId = productId;
+        selectedProductSizes = sizes;
+        
+        const sizeContainer = document.getElementById('size-options');
+        if (!sizeContainer) return;
+        
+        if (sizes.length === 0) {
+            sizeContainer.innerHTML = '<div class="text-secondary">Размер не указан</div>';
+        } else {
+            let sizesHtml = '';
+            sizes.forEach(size => {
+                sizesHtml += `<button class="size-btn-modal" data-size="${size}" onclick="selectSize(this, '${size}')">${size}</button>`;
+            });
+            sizeContainer.innerHTML = sizesHtml;
+        }
+        
+        document.getElementById('modal-quantity').value = 1;
+        document.getElementById('size-modal').classList.add('active');
+    }
+    
+    function selectSize(element, size) {
+        document.querySelectorAll('.size-btn-modal').forEach(btn => {
+            btn.classList.remove('selected');
+        });
+        element.classList.add('selected');
+        window.selectedSize = size;
+    }
+    
+    function closeSizeModal() {
+        document.getElementById('size-modal').classList.remove('active');
+        window.selectedSize = null;
+        selectedProductId = null;
+    }
+    
+    function confirmAddToCart() {
+        const selectedSizeBtn = document.querySelector('.size-btn-modal.selected');
+        const selectedSize = selectedSizeBtn ? selectedSizeBtn.getAttribute('data-size') : null;
+        const quantity = parseInt(document.getElementById('modal-quantity').value) || 1;
+        
+        // Проверка авторизации
+        const isAuth = document.body.classList.contains('user-authenticated');
+        
+        if (!isAuth) {
+            closeSizeModal();
+            showNotification('Войдите, чтобы добавить товар в корзину');
+            setTimeout(() => {
+                window.location.href = '/accounts/login/';
+            }, 1500);
+            return;
+        }
+        
+        if (selectedProductSizes.length > 0 && !selectedSize) {
+            showNotification('Пожалуйста, выберите размер');
+            return;
+        }
+        
+        // Отправляем запрос на добавление в корзину
+        fetch('/api/cart/add_item/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                product_id: selectedProductId,
+                quantity: quantity,
+                size: selectedSize || ''
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.error || 'Ошибка'); });
+            }
+            return response.json();
+        })
+        .then(() => {
+            closeSizeModal();
+            updateCartCount();
+            showNotification('Товар добавлен в корзину!');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification(error.message || 'Ошибка при добавлении в корзину');
+        });
     }
     
     // Загрузка товаров
@@ -246,7 +502,13 @@
                 
                 const countElement = document.getElementById('products-count');
                 if (countElement) {
-                    countElement.textContent = `Найдено товаров: ${data.count || products.length}`;
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const searchQuery = urlParams.get('search');
+                    if (searchQuery) {
+                        countElement.innerHTML = `Найдено товаров по запросу "${searchQuery}": ${data.count || products.length}`;
+                    } else {
+                        countElement.innerHTML = `Найдено товаров: ${data.count || products.length}`;
+                    }
                 }
                 
                 if (products.length === 0) {
@@ -306,6 +568,12 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
+    function clearSearch() {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('search');
+        window.location.href = url.toString();
+    }
+    
     // События
     const applyBtn = document.getElementById('apply-filters');
     if (applyBtn) {
@@ -321,6 +589,9 @@
             document.querySelectorAll('input[name="category"]').forEach(r => r.checked = false);
             const catAll = document.getElementById('cat-all');
             if (catAll) catAll.checked = true;
+            document.querySelectorAll('input[name="silver_type"]').forEach(r => r.checked = false);
+            const silverAll = document.getElementById('silver-all');
+            if (silverAll) silverAll.checked = true;
             document.querySelectorAll('input[name="fineness"]').forEach(r => r.checked = false);
             const finenessAll = document.getElementById('fineness-all');
             if (finenessAll) finenessAll.checked = true;
@@ -345,6 +616,40 @@
             currentPage = 1;
             loadProducts();
         });
+    }
+    
+    function showNotification(message) {
+        const notif = document.createElement('div');
+        notif.className = 'notification';
+        notif.textContent = message;
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 2000);
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function updateCartCount() {
+        fetch('/api/cart/')
+            .then(response => response.json())
+            .then(data => {
+                const count = data.total_items || 0;
+                const cartCount = document.getElementById('cart-count');
+                if (cartCount) cartCount.textContent = count;
+            })
+            .catch(error => console.error('Error:', error));
     }
     
     // Инициализация

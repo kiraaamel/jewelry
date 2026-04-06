@@ -1,0 +1,122 @@
+[
+{
+  "model": "shop.cart",
+  "pk": 1,
+  "fields": {
+    "user": [
+      "kiraaamel@gmail.com"
+    ],
+    "session_key": null,
+    "created_at": "2026-03-25T15:47:14.184Z",
+    "updated_at": "2026-03-25T15:47:14.184Z"
+  }
+},
+{
+  "model": "shop.cart",
+  "pk": 2,
+  "fields": {
+    "user": [
+      "arslomakin@yandex.ru"
+    ],
+    "session_key": null,
+    "created_at": "2026-03-25T15:54:52.639Z",
+    "updated_at": "2026-03-25T15:54:52.639Z"
+  }
+},
+{
+  "model": "shop.cart",
+  "pk": 3,
+  "fields": {
+    "user": [
+      "kiraaamel@yandex.ru"
+    ],
+    "session_key": null,
+    "created_at": "2026-03-31T17:31:05.019Z",
+    "updated_at": "2026-03-31T17:31:05.019Z"
+  }
+},
+{
+  "model": "shop.cart",
+  "pk": 4,
+  "fields": {
+    "user": [
+      "ptica66@yandex.ru"
+    ],
+    "session_key": null,
+    "created_at": "2026-03-31T17:47:22.972Z",
+    "updated_at": "2026-03-31T17:47:22.972Z"
+  }
+},
+{
+  "model": "shop.cart",
+  "pk": 5,
+  "fields": {
+    "user": [
+      "ars.lomakin@gmail.com"
+    ],
+    "session_key": null,
+    "created_at": "2026-03-31T18:13:42.861Z",
+    "updated_at": "2026-03-31T18:13:42.861Z"
+  }
+},
+{
+  "model": "shop.cart",
+  "pk": 6,
+  "fields": {
+    "user": [
+      "lera@yandex.ru"
+    ],
+    "session_key": null,
+    "created_at": "2026-03-31T18:17:35.579Z",
+    "updated_at": "2026-03-31T18:17:35.579Z"
+  }
+},
+{
+  "model": "shop.cart",
+  "pk": 7,
+  "fields": {
+    "user": [
+      "petr@yandex.ru"
+    ],
+    "session_key": null,
+    "created_at": "2026-03-31T18:21:50.021Z",
+    "updated_at": "2026-03-31T18:21:50.021Z"
+  }
+},
+{
+  "model": "shop.cart",
+  "pk": 8,
+  "fields": {
+    "user": [
+      "egor@yandex.ru"
+    ],
+    "session_key": null,
+    "created_at": "2026-03-31T18:27:08.383Z",
+    "updated_at": "2026-03-31T18:27:08.383Z"
+  }
+},
+{
+  "model": "shop.cart",
+  "pk": 9,
+  "fields": {
+    "user": [
+      "fomka@gmail.com"
+    ],
+    "session_key": null,
+    "created_at": "2026-04-01T12:52:02.129Z",
+    "updated_at": "2026-04-01T12:52:02.129Z"
+  }
+},
+{
+  "model": "shop.cart",
+  "pk": 10,
+  "fields": {
+    "user": [
+      "liza@gmail.com"
+    ],
+    "session_key": null,
+    "created_at": "2026-04-03T06:18:13.856Z",
+    "updated_at": "2026-04-03T06:18:13.856Z"
+  }
+}
+]

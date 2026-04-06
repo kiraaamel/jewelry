@@ -1,0 +1,79 @@
+[
+{
+  "model": "shop.orderitem",
+  "pk": 1,
+  "fields": {
+    "order": 1,
+    "product": 1,
+    "product_name": "Кольцо серебряное с алмазом",
+    "price": "12433.00",
+    "quantity": 2
+  }
+},
+{
+  "model": "shop.orderitem",
+  "pk": 2,
+  "fields": {
+    "order": 2,
+    "product": 1,
+    "product_name": "Кольцо серебряное с алмазом",
+    "price": "12433.00",
+    "quantity": 3
+  }
+},
+{
+  "model": "shop.orderitem",
+  "pk": 3,
+  "fields": {
+    "order": 3,
+    "product": 1,
+    "product_name": "Кольцо серебряное с алмазом",
+    "price": "12433.00",
+    "quantity": 1
+  }
+},
+{
+  "model": "shop.orderitem",
+  "pk": 4,
+  "fields": {
+    "order": 4,
+    "product": 1,
+    "product_name": "Кольцо серебряное с алмазом",
+    "price": "12433.00",
+    "quantity": 2
+  }
+},
+{
+  "model": "shop.orderitem",
+  "pk": 5,
+  "fields": {
+    "order": 5,
+    "product": 1,
+    "product_name": "Кольцо серебряное с алмазом",
+    "price": "12433.00",
+    "quantity": 1
+  }
+},
+{
+  "model": "shop.orderitem",
+  "pk": 6,
+  "fields": {
+    "order": 6,
+    "product": 1,
+    "product_name": "Кольцо серебряное с алмазом",
+    "price": "12433.00",
+    "quantity": 2
+  }
+},
+{
+  "model": "shop.orderitem",
+  "pk": 7,
+  "fields": {
+    "order": 7,
+    "product": 1,
+    "product_name": "Кольцо серебряное с алмазом",
+    "price": "12433.00",
+    "quantity": 2
+  }
+}
+]

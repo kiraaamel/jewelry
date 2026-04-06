@@ -276,7 +276,12 @@ class Product(models.Model):
         related_name='products_created',
         verbose_name='Создал'
     )
-    
+    name_lower = models.CharField(
+        max_length=255,
+        blank=True,
+        editable=False,
+        verbose_name='Название (нижний регистр)'
+    )
     # Активность (мягкое удаление)
     is_active = models.BooleanField(default=True, verbose_name='Активен')
 
@@ -394,11 +399,13 @@ class Product(models.Model):
             raise ValidationError({'stock_quantity': 'Количество на складе не может быть отрицательным'})
     
     def save(self, *args, **kwargs):
-        """Создаём slug, если не указан"""
+        """Создаём slug, если не указан, и заполняем name_lower"""
         if not self.slug:
             self.slug = slugify(self.name)
+        # Заполняем name_lower для поиска
+        self.name_lower = self.name.lower()
         super().save(*args, **kwargs)
-    
+        
     def delete(self, *args, **kwargs):
         """Удаляем файлы изображений при удалении товара"""
         if self.image and self.image.name and os.path.isfile(self.image.path):

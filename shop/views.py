@@ -14,6 +14,8 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from django.shortcuts import get_object_or_404
 from .filters import ProductFilter
 from decimal import Decimal
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from .models import (
     Category, Product, Cart, CartItem, 
@@ -78,17 +80,25 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]  # доступно всем
 
+from django.db import models
+
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet для товаров (только чтение, фильтрация).
-    """
     queryset = Product.objects.select_related('category').prefetch_related('reviews').all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.AllowAny]
-    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
-    filterset_class = ProductFilter  # ← используем кастомный фильтр
-    search_fields = ['name', 'description']
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_class = ProductFilter
     ordering_fields = ['price', 'created_at', 'average_rating']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search = self.request.query_params.get('search', None)
+        if search:
+            # Приводим поисковый запрос к нижнему регистру
+            search_lower = search.lower()
+            # Ищем в name_lower (там уже всё в нижнем регистре)
+            queryset = queryset.filter(name_lower__icontains=search_lower)
+        return queryset
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -97,17 +107,11 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     
     @action(detail=True, methods=['get'])
     def reviews(self, request, pk=None):
-        """
-        Получить все отзывы для конкретного товара.
-        """
         product = self.get_object()
         reviews = product.reviews.filter(moderated=True).order_by('-created_at')
         serializer = ReviewSerializer(reviews, many=True, context={'request': request})
         return Response(serializer.data)
-
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import ensure_csrf_cookie
-
+    
 class CartViewSet(viewsets.GenericViewSet):
     """
     ViewSet для корзины.

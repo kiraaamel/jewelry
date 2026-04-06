@@ -1,0 +1,30 @@
+import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'jewelryproject.settings')
+django.setup()
+
+import json
+from django.core import serializers
+from shop.models import User, Category, Product, Cart, CartItem, Order, OrderItem, Review, Wishlist
+
+def export_model(model, filename):
+    data = serializers.serialize('json', model.objects.all(), indent=2, use_natural_foreign_keys=True)
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(data)
+    print(f'Экспортировано {model.__name__}: {model.objects.count()} записей')
+
+print("Начинаю экспорт данных...")
+
+# Экспортируем все модели
+export_model(User, 'users.json')
+export_model(Category, 'categories.json')
+export_model(Product, 'products.json')
+export_model(Cart, 'carts.json')
+export_model(CartItem, 'cart_items.json')
+export_model(Order, 'orders.json')
+export_model(OrderItem, 'order_items.json')
+export_model(Review, 'reviews.json')
+export_model(Wishlist, 'wishlists.json')
+
+print("\nГотово! Все данные экспортированы в JSON файлы.")

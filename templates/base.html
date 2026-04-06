@@ -465,22 +465,22 @@
         // Поиск
         const searchBtn = document.getElementById('search-btn');
         const searchInput = document.getElementById('search-input');
-        
+
         if (searchBtn) {
             searchBtn.addEventListener('click', () => {
-                const query = searchInput.value;
+                const query = searchInput.value.trim();
                 if (query) {
-                    window.location.href = `{% url 'catalog' %}?search=${encodeURIComponent(query)}`;
+                    window.location.href = `/catalog/?search=${encodeURIComponent(query)}`;
                 }
             });
         }
-        
+
         if (searchInput) {
             searchInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
-                    const query = e.target.value;
+                    const query = searchInput.value.trim();
                     if (query) {
-                        window.location.href = `{% url 'catalog' %}?search=${encodeURIComponent(query)}`;
+                        window.location.href = `/catalog/?search=${encodeURIComponent(query)}`;
                     }
                 }
             });
