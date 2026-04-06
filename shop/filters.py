@@ -17,6 +17,11 @@ class ProductFilter(filters.FilterSet):
         choices=Product.FINENESS_CHOICES,
         lookup_expr='exact'
     )
+    stone_type = filters.ChoiceFilter(  # ← добавить этот фильтр
+        field_name='stone_type',
+        choices=Product.STONE_TYPE_CHOICES,
+        lookup_expr='exact'
+    )
     has_discount = filters.BooleanFilter(method='filter_has_discount')
     
     def filter_has_discount(self, queryset, name, value):
@@ -27,6 +32,6 @@ class ProductFilter(filters.FilterSet):
     class Meta:
         model = Product
         fields = [
-            'category', 'silver_type', 'fineness', 'stones', 
+            'category', 'silver_type', 'fineness', 'stones', 'stone_type',
             'collection', 'is_active', 'price_min', 'price_max', 'has_discount'
         ]

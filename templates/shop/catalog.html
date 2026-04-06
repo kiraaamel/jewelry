@@ -3,8 +3,189 @@
 
 {% block content %}
 <style>
-    /* Дополнительные стили для модального окна выбора размера */
-    .size-modal {
+    .filter-section {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .filter-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .filter-group {
+        margin-bottom: 20px;
+    }
+    .filter-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--brown);
+        margin-bottom: 8px;
+        display: block;
+    }
+    .filter-select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        font-size: 13px;
+        background: white;
+        color: var(--brown);
+    }
+    .price-inputs {
+        display: flex;
+        gap: 10px;
+        width: 100%;
+    }
+    .price-inputs input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        font-size: 13px;
+        min-width: 0;
+    }
+    .btn-apply {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-size: 14px;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 10px;
+    }
+    .btn-reset {
+        background: transparent;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-size: 14px;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 8px;
+    }
+    .products-count {
+        font-size: 14px;
+        color: var(--gray);
+        margin-bottom: 15px;
+    }
+    .sort-select {
+        padding: 8px 16px;
+        border: 1px solid #ddd;
+        border-radius: 30px;
+        font-size: 13px;
+        background: white;
+    }
+    .product-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        transition: transform 0.3s;
+        height: 100%;
+        position: relative;
+    }
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .product-image {
+        height: 250px;
+        object-fit: cover;
+        width: 100%;
+    }
+    .product-info {
+        padding: 15px;
+    }
+    .product-category {
+        font-size: 11px;
+        color: var(--gray);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .product-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--brown);
+        margin: 8px 0;
+    }
+    .product-price {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--accent);
+        margin: 10px 0;
+    }
+    .old-price {
+        font-size: 13px;
+        color: var(--gray);
+        text-decoration: line-through;
+        margin-left: 8px;
+        font-weight: normal;
+    }
+    .discount-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #ff4444;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: bold;
+    }
+    .rating {
+        margin: 8px 0;
+    }
+    .rating-stars {
+        color: #ffc107;
+        font-size: 12px;
+    }
+    .btn-cart {
+        width: 100%;
+        padding: 10px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 30px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 10px;
+    }
+    .btn-cart:hover {
+        background: #4a5a6a;
+        transform: translateY(-2px);
+    }
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+    }
+    .page-link {
+        padding: 8px 14px;
+        border: 1px solid #ddd;
+        border-radius: 30px;
+        color: var(--brown);
+        text-decoration: none;
+        font-size: 13px;
+        cursor: pointer;
+    }
+    .page-link.active {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+    }
+    .modal {
         display: none;
         position: fixed;
         top: 0;
@@ -16,12 +197,10 @@
         align-items: center;
         justify-content: center;
     }
-    
-    .size-modal.active {
+    .modal.active {
         display: flex;
     }
-    
-    .size-modal-content {
+    .modal-content {
         background: white;
         border-radius: 24px;
         padding: 30px;
@@ -29,14 +208,6 @@
         width: 90%;
         text-align: center;
     }
-    
-    .size-modal-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: var(--accent);
-        margin-bottom: 20px;
-    }
-    
     .size-buttons {
         display: flex;
         flex-wrap: wrap;
@@ -44,52 +215,16 @@
         justify-content: center;
         margin: 20px 0;
     }
-    
-    .size-btn-modal {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
+    .size-btn {
+        padding: 10px 20px;
         border: 1px solid var(--accent);
-        background: white;
-        color: var(--accent);
-        cursor: pointer;
-        transition: all 0.3s;
-        font-size: 16px;
-    }
-    
-    .size-btn-modal:hover, .size-btn-modal.selected {
-        background: var(--accent);
-        color: white;
-    }
-    
-    .modal-close {
-        position: absolute;
-        top: 15px;
-        right: 20px;
-        font-size: 24px;
-        cursor: pointer;
-        color: var(--gray);
-    }
-    
-    .quantity-input {
-        width: 60px;
-        text-align: center;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        margin: 10px 0;
-    }
-    
-    .add-to-cart-btn {
-        background: var(--accent);
-        color: white;
-        border: none;
-        padding: 12px 24px;
         border-radius: 30px;
+        background: white;
         cursor: pointer;
-        font-weight: 600;
-        width: 100%;
-        margin-top: 10px;
+    }
+    .size-btn.selected {
+        background: var(--accent);
+        color: white;
     }
 </style>
 
@@ -97,563 +232,456 @@
     <div class="row">
         <!-- Боковая панель с фильтрами -->
         <div class="col-md-3">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header" style="background-color: var(--accent); color: white;">
-                    <h5 class="mb-0">Фильтры</h5>
+            <div class="filter-section">
+                <div class="filter-title">Фильтры</div>
+                
+                <!-- Категория -->
+                <div class="filter-group">
+                    <label class="filter-label">Категория</label>
+                    <select id="filter-category" class="filter-select">
+                        <option value="">Все категории</option>
+                    </select>
                 </div>
-                <div class="card-body">
-                    <!-- Фильтр по категории -->
-                    <div class="mb-4">
-                        <label class="fw-bold mb-2">Категория</label>
-                        <div id="category-filter">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="category" value="" id="cat-all" checked>
-                                <label class="form-check-label" for="cat-all">Все категории</label>
-                            </div>
-                            <div id="categories-list">
-                                <div class="text-secondary">Загрузка...</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Фильтр по типу серебра -->
-                    <div class="mb-4">
-                        <label class="fw-bold mb-2">Тип серебра</label>
-                        <div id="silver-type-filter">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="silver_type" value="" id="silver-all" checked>
-                                <label class="form-check-label" for="silver-all">Все</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="silver_type" value="sterling" id="silver-sterling">
-                                <label class="form-check-label" for="silver-sterling">Стерлинговое (925)</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="silver_type" value="fine" id="silver-fine">
-                                <label class="form-check-label" for="silver-fine">Чистое (999)</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="silver_type" value="oxidized" id="silver-oxidized">
-                                <label class="form-check-label" for="silver-oxidized">Черненое</label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Фильтр по пробе -->
-                    <div class="mb-4">
-                        <label class="fw-bold mb-2">Проба серебра</label>
-                        <div id="fineness-filter">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="fineness" value="" id="fineness-all" checked>
-                                <label class="form-check-label" for="fineness-all">Все</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="fineness" value="925" id="fineness-925">
-                                <label class="form-check-label" for="fineness-925">925 проба</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="fineness" value="875" id="fineness-875">
-                                <label class="form-check-label" for="fineness-875">875 проба</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="fineness" value="830" id="fineness-830">
-                                <label class="form-check-label" for="fineness-830">830 проба</label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Фильтр по цене -->
-                    <div class="mb-4">
-                        <label class="fw-bold mb-2">Цена (₽)</label>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <input type="number" class="form-control form-control-sm" id="price-min" placeholder="От">
-                            </div>
-                            <div class="col-6">
-                                <input type="number" class="form-control form-control-sm" id="price-max" placeholder="До">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Фильтр по наличию камней -->
-                    <div class="mb-4">
-                        <label class="fw-bold mb-2">Драгоценные камни</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="stones-filter">
-                            <label class="form-check-label" for="stones-filter">С камнями</label>
-                        </div>
-                    </div>
-                    
-                    <!-- Фильтр по акции (скидка) -->
-                    <div class="mb-4">
-                        <label class="fw-bold mb-2">Акция</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="discount-filter">
-                            <label class="form-check-label" for="discount-filter">Товары со скидкой</label>
-                        </div>
-                    </div>
-                    
-                    <!-- Кнопки -->
-                    <button class="btn btn-gold w-100 mb-2" id="apply-filters" style="background-color: var(--accent); color: white;">Применить</button>
-                    <button class="btn btn-outline-secondary w-100" id="reset-filters">Сбросить</button>
+                
+                <!-- Тип серебра (выпадающий список) -->
+                <div class="filter-group">
+                    <label class="filter-label">Тип серебра</label>
+                    <select id="filter-silver-type" class="filter-select">
+                        <option value="">Все</option>
+                        <option value="sterling">Стерлинговое серебро (925)</option>
+                        <option value="fine">Чистое серебро (999)</option>
+                        <option value="argentium">Аргентиум серебро</option>
+                        <option value="mexican">Мексиканское серебро</option>
+                        <option value="oxidized">Оксидированное серебро</option>
+                        <option value="rhodium_plated">Серебро с родиевым покрытием</option>
+                        <option value="black">Черненое серебро</option>
+                        <option value="matte">Матовое серебро</option>
+                    </select>
                 </div>
+                
+                <!-- Проба (выпадающий список) -->
+                <div class="filter-group">
+                    <label class="filter-label">Проба</label>
+                    <select id="filter-fineness" class="filter-select">
+                        <option value="">Все</option>
+                        <option value="800">800 проба</option>
+                        <option value="830">830 проба</option>
+                        <option value="875">875 проба</option>
+                        <option value="900">900 проба</option>
+                        <option value="916">916 проба</option>
+                        <option value="925">925 проба</option>
+                        <option value="960">960 проба</option>
+                        <option value="999">999 проба</option>
+                    </select>
+                </div>
+                
+                <!-- Цена -->
+                <div class="filter-group">
+                    <label class="filter-label">Цена (₽)</label>
+                    <div class="price-inputs">
+                        <input type="number" id="price-min" placeholder="От">
+                        <input type="number" id="price-max" placeholder="До">
+                    </div>
+                </div>
+                
+                <!-- Наличие камней -->
+                <div class="filter-group">
+                    <label class="filter-label">Камни</label>
+                    <select id="filter-stones" class="filter-select">
+                        <option value="">Все</option>
+                        <option value="true">С камнями</option>
+                        <option value="false">Без камней</option>
+                    </select>
+                </div>
+                
+                <!-- Тип камня -->
+                <div class="filter-group">
+                    <label class="filter-label">Тип камня</label>
+                    <select id="filter-stone-type" class="filter-select">
+                        <option value="">Любой</option>
+                        <option value="diamond">Бриллиант</option>
+                        <option value="ruby">Рубин</option>
+                        <option value="sapphire">Сапфир</option>
+                        <option value="emerald">Изумруд</option>
+                        <option value="topaz">Топаз</option>
+                        <option value="amethyst">Аметист</option>
+                        <option value="garnet">Гранат</option>
+                        <option value="peridot">Перидот</option>
+                        <option value="citrine">Цитрин</option>
+                        <option value="aquamarine">Аквамарин</option>
+                        <option value="tourmaline">Турмалин</option>
+                        <option value="opal">Опал</option>
+                        <option value="pearl">Жемчуг</option>
+                        <option value="cubic_zirconia">Фианит</option>
+                        <option value="moonstone">Лунный камень</option>
+                    </select>
+                </div>
+                
+                <!-- Акция -->
+                <div class="filter-group">
+                    <label class="filter-label">Акция</label>
+                    <select id="filter-discount" class="filter-select">
+                        <option value="">Все</option>
+                        <option value="true">Со скидкой</option>
+                    </select>
+                </div>
+                
+                <button class="btn-apply" id="apply-filters">Применить</button>
+                <button class="btn-reset" id="reset-filters">Сбросить</button>
             </div>
         </div>
         
         <!-- Список товаров -->
         <div class="col-md-9">
-            <!-- Информация о поиске -->
-            <div id="search-info" class="alert alert-info mb-3" style="display: none; background-color: #e8f4f8; border-color: var(--accent); color: var(--accent);">
-                <i class="fas fa-search"></i> <span id="search-query-text"></span>
-                <button type="button" class="btn-close float-end" onclick="clearSearch()"></button>
-            </div>
-            
-            <!-- Сортировка и информация -->
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                <div>
-                    <span class="text-secondary" id="products-count">Загрузка...</span>
-                </div>
-                <div class="d-flex gap-2">
-                    <label class="fw-bold me-2">Сортировка:</label>
-                    <select class="form-select form-select-sm w-auto" id="sort-select">
-                        <option value="-created_at">По новизне</option>
-                        <option value="price">Цена (по возрастанию)</option>
-                        <option value="-price">Цена (по убыванию)</option>
-                        <option value="-average_rating">По популярности (рейтинг)</option>
-                    </select>
-                </div>
+                <div class="products-count" id="products-count">Загрузка...</div>
+                <select class="sort-select" id="sort-select">
+                    <option value="-created_at">По новизне</option>
+                    <option value="price">Цена (по возрастанию)</option>
+                    <option value="-price">Цена (по убыванию)</option>
+                    <option value="-average_rating">По популярности</option>
+                </select>
             </div>
             
-            <!-- Результаты -->
-            <div id="products-container" class="row">
-                <div class="col-12 text-center text-secondary py-5">Загрузка...</div>
+            <div class="row" id="products-container">
+                <div class="col-12 text-center py-5 text-secondary">Загрузка...</div>
             </div>
             
-            <!-- Пагинация -->
-            <div id="pagination" class="d-flex justify-content-center mt-4"></div>
+            <div id="pagination" class="pagination"></div>
         </div>
     </div>
 </div>
 
 <!-- Модальное окно выбора размера -->
-<div id="size-modal" class="size-modal">
-    <div class="size-modal-content">
-        <span class="modal-close" onclick="closeSizeModal()">&times;</span>
-        <div class="size-modal-title">Выберите размер</div>
+<div id="size-modal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-bottom:20px; color:var(--accent);">Выберите размер</h3>
         <div id="size-options" class="size-buttons"></div>
         <div>
             <label>Количество:</label>
-            <input type="number" id="modal-quantity" class="quantity-input" value="1" min="1">
+            <input type="number" id="modal-quantity" value="1" min="1" style="width:80px; padding:8px; margin-left:10px; border:1px solid #ddd; border-radius:8px;">
         </div>
-        <button class="add-to-cart-btn" onclick="confirmAddToCart()">Добавить в корзину</button>
+        <button id="confirm-add-to-cart" style="margin-top:20px; padding:12px 24px; background:var(--accent); color:white; border:none; border-radius:30px; cursor:pointer;">Добавить в корзину</button>
+        <button onclick="closeSizeModal()" style="margin-top:10px; padding:8px 20px; background:transparent; border:none; cursor:pointer;">Отмена</button>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    let currentPage = 1;
-    let totalPages = 1;
-    let selectedProductId = null;
-    let selectedProductSizes = [];
+let currentPage = 1;
+let totalPages = 1;
+let selectedProductId = null;
+let selectedProductSizes = [];
+let selectedSize = null;
+
+function buildUrl() {
+    let url = '/api/products/?';
+    const params = [];
     
-    // Загрузка категорий
-    function loadCategories() {
-        fetch('/api/categories/')
-            .then(response => response.json())
-            .then(categories => {
-                const container = document.getElementById('categories-list');
-                if (!container) return;
-                container.innerHTML = '';
-                categories.forEach(cat => {
-                    container.innerHTML += `
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="category" value="${cat.id}" id="cat-${cat.id}">
-                            <label class="form-check-label" for="cat-${cat.id}">${cat.name}</label>
-                        </div>
-                    `;
-                });
-            })
-            .catch(error => console.error('Error loading categories:', error));
+    // Поиск из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchQuery = urlParams.get('search');
+    if (searchQuery) {
+        params.push(`search=${encodeURIComponent(searchQuery)}`);
     }
     
-    // Построение URL с параметрами
-    function buildUrl() {
-        let url = '/api/products/?';
-        const params = [];
-        
-        // Поиск из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const searchQuery = urlParams.get('search');
-        if (searchQuery) {
-            params.push(`search=${encodeURIComponent(searchQuery)}`);
-            // Показываем информацию о поиске
-            const searchInfo = document.getElementById('search-info');
-            const searchQueryText = document.getElementById('search-query-text');
-            if (searchInfo && searchQueryText) {
-                searchInfo.style.display = 'block';
-                searchQueryText.innerHTML = `Результаты поиска: "${searchQuery}"`;
-            }
-        } else {
-            const searchInfo = document.getElementById('search-info');
-            if (searchInfo) searchInfo.style.display = 'none';
-        }
-        
-        // Категория
-        const selectedCategory = document.querySelector('input[name="category"]:checked');
-        if (selectedCategory && selectedCategory.value) {
-            params.push(`category=${selectedCategory.value}`);
-        }
-        
-        // Тип серебра
-        const selectedSilverType = document.querySelector('input[name="silver_type"]:checked');
-        if (selectedSilverType && selectedSilverType.value) {
-            params.push(`silver_type=${selectedSilverType.value}`);
-        }
-        
-        // Проба
-        const selectedFineness = document.querySelector('input[name="fineness"]:checked');
-        if (selectedFineness && selectedFineness.value) {
-            params.push(`fineness=${selectedFineness.value}`);
-        }
-        
-        // Цена
-        const priceMin = document.getElementById('price-min').value;
-        const priceMax = document.getElementById('price-max').value;
-        if (priceMin) params.push(`price_min=${priceMin}`);
-        if (priceMax) params.push(`price_max=${priceMax}`);
-        
-        // Камни
-        const stonesFilter = document.getElementById('stones-filter').checked;
-        if (stonesFilter) params.push(`stones=true`);
-        
-        // Акция
-        const discountFilter = document.getElementById('discount-filter').checked;
-        if (discountFilter) params.push(`has_discount=true`);
-        
-        // Сортировка
-        const sort = document.getElementById('sort-select').value;
-        params.push(`ordering=${sort}`);
-        
-        // Пагинация
-        params.push(`page=${currentPage}`);
-        params.push(`page_size=9`);
-        
-        return url + params.join('&');
+    // Категория
+    const category = document.getElementById('filter-category').value;
+    if (category) params.push(`category=${category}`);
+    
+    // Тип серебра
+    const silverType = document.getElementById('filter-silver-type').value;
+    if (silverType) params.push(`silver_type=${silverType}`);
+    
+    // Проба
+    const fineness = document.getElementById('filter-fineness').value;
+    if (fineness) params.push(`fineness=${fineness}`);
+    
+    // Цена (с валидацией - не даём отрицательные значения)
+    let priceMin = document.getElementById('price-min').value;
+    let priceMax = document.getElementById('price-max').value;
+    
+    if (priceMin && parseFloat(priceMin) < 0) {
+        priceMin = 0;
+        document.getElementById('price-min').value = 0;
+    }
+    if (priceMax && parseFloat(priceMax) < 0) {
+        priceMax = 0;
+        document.getElementById('price-max').value = 0;
     }
     
-    // Отрисовка карточки товара
-    function renderProductCard(product) {
-        const discountBadge = product.discount_percent > 0 
-            ? `<span class="badge bg-danger position-absolute top-0 start-0 m-2">-${product.discount_percent}%</span>`
-            : '';
-        
-        const priceHtml = product.old_price 
-            ? `<span class="text-gold fw-bold fs-4">${product.price} ₽</span>
-               <span class="text-secondary text-decoration-line-through ms-2">${product.old_price} ₽</span>`
-            : `<span class="text-gold fw-bold fs-4">${product.price} ₽</span>`;
-        
-        // Получаем первое доступное изображение
-        let imageUrl = product.image;
-        if (!imageUrl && product.image_2) imageUrl = product.image_2;
-        if (!imageUrl && product.image_3) imageUrl = product.image_3;
-        
-        const imageHtml = imageUrl 
-            ? `<img src="${imageUrl}" alt="${product.name}" class="card-img-top" style="height: 250px; object-fit: cover;">`
-            : `<div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 250px;">
-                 <i class="fas fa-gem fa-4x text-gold"></i>
-               </div>`;
-        
-        const silverTypeText = product.silver_type_display || '';
-        const finenessText = product.fineness_display || '';
-        const ratingStars = product.average_rating > 0 
-            ? '★'.repeat(Math.round(product.average_rating)) + '☆'.repeat(5 - Math.round(product.average_rating)) 
-            : '☆'.repeat(5);
-        
-        // Получаем размеры из товара (если есть)
-        const sizes = product.size ? product.size.split(',').map(s => s.trim()) : [];
-        
-        return `
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 position-relative product-card shadow-sm">
-                    ${discountBadge}
-                    ${imageHtml}
-                    <div class="card-body">
-                        <div class="text-muted small mb-1">${product.category_name || 'Украшение'}</div>
-                        <h5 class="card-title">
-                            <a href="/product/${product.id}/" class="text-dark text-decoration-none">${product.name}</a>
-                        </h5>
-                        <div class="text-muted small mb-2">${silverTypeText} ${finenessText}</div>
-                        <div class="mb-2">
-                            <small class="text-warning">${ratingStars}</small>
-                            <small class="text-secondary ms-2">(${product.reviews_count || 0})</small>
-                        </div>
-                        <div class="mb-3">${priceHtml}</div>
-                        <button class="btn btn-gold w-100" onclick="openSizeModal(${product.id}, '${product.name.replace(/'/g, "\\'")}', ${JSON.stringify(sizes).replace(/"/g, '&quot;')})">
-                            <i class="fas fa-shopping-cart"></i> В корзину
-                        </button>
+    if (priceMin && priceMin !== '') params.push(`price_min=${priceMin}`);
+    if (priceMax && priceMax !== '') params.push(`price_max=${priceMax}`);
+    
+    // Камни (наличие)
+    const stones = document.getElementById('filter-stones').value;
+    if (stones === 'true') params.push(`stones=true`);
+    if (stones === 'false') params.push(`stones=false`);
+    
+    // Тип камня (ВАЖНО: правильное имя поля в API)
+    const stoneType = document.getElementById('filter-stone-type').value;
+    if (stoneType && stoneType !== '') {
+        // В API поле называется stone_type (с подчёркиванием)
+        params.push(`stone_type=${stoneType}`);
+    }
+    
+    // Акция
+    const discount = document.getElementById('filter-discount').value;
+    if (discount === 'true') params.push(`has_discount=true`);
+    
+    // Сортировка
+    const sort = document.getElementById('sort-select').value;
+    params.push(`ordering=${sort}`);
+    
+    // Пагинация
+    params.push(`page=${currentPage}`);
+    params.push(`page_size=9`);
+    
+    console.log('URL:', url + params.join('&')); // Для отладки
+    return url + params.join('&');
+}
+
+function loadCategories() {
+    fetch('/api/categories/')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('filter-category');
+            data.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.id;
+                option.textContent = cat.name;
+                select.appendChild(option);
+            });
+        });
+}
+
+function renderProductCard(product) {
+    const discount = product.discount_percent > 0 ? `<span class="discount-badge">-${product.discount_percent}%</span>` : '';
+    const oldPrice = product.old_price ? `<span class="old-price">${product.old_price} ₽</span>` : '';
+    const imageUrl = product.image || '/static/shop/images/placeholder.png';
+    const rating = product.average_rating || 0;
+    const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
+    const sizes = product.size ? product.size.split(',').map(s => s.trim()) : [];
+    
+    return `
+        <div class="col-md-4 mb-4">
+            <div class="product-card">
+                ${discount}
+                <a href="/product/${product.id}/" class="text-decoration-none">
+                    <img src="${imageUrl}" class="product-image" onerror="this.src='/static/shop/images/placeholder.png'">
+                </a>
+                <div class="product-info">
+                    <div class="product-category">${product.category_name || 'Украшение'}</div>
+                    <a href="/product/${product.id}/" class="text-decoration-none">
+                        <div class="product-name">${escapeHtml(product.name)}</div>
+                    </a>
+                    <div class="rating">
+                        <span class="rating-stars">${stars}</span>
+                        <span class="text-secondary ms-1">(${product.reviews_count || 0})</span>
                     </div>
+                    <div class="product-price">
+                        ${product.price} ₽ ${oldPrice}
+                    </div>
+                    <button class="btn-cart" onclick="openSizeModal(${product.id}, '${escapeHtml(product.name)}', ${JSON.stringify(sizes)})">В корзину</button>
                 </div>
             </div>
-        `;
-    }
+        </div>
+    `;
+}
+function loadProducts() {
+    const url = buildUrl();
+    const container = document.getElementById('products-container');
+    container.innerHTML = '<div class="col-12 text-center py-5 text-secondary">Загрузка...</div>';
     
-    // Открыть модальное окно выбора размера
-    function openSizeModal(productId, productName, sizes) {
-        selectedProductId = productId;
-        selectedProductSizes = sizes;
-        
-        const sizeContainer = document.getElementById('size-options');
-        if (!sizeContainer) return;
-        
-        if (sizes.length === 0) {
-            sizeContainer.innerHTML = '<div class="text-secondary">Размер не указан</div>';
-        } else {
-            let sizesHtml = '';
-            sizes.forEach(size => {
-                sizesHtml += `<button class="size-btn-modal" data-size="${size}" onclick="selectSize(this, '${size}')">${size}</button>`;
-            });
-            sizeContainer.innerHTML = sizesHtml;
-        }
-        
-        document.getElementById('modal-quantity').value = 1;
-        document.getElementById('size-modal').classList.add('active');
-    }
-    
-    function selectSize(element, size) {
-        document.querySelectorAll('.size-btn-modal').forEach(btn => {
-            btn.classList.remove('selected');
-        });
-        element.classList.add('selected');
-        window.selectedSize = size;
-    }
-    
-    function closeSizeModal() {
-        document.getElementById('size-modal').classList.remove('active');
-        window.selectedSize = null;
-        selectedProductId = null;
-    }
-    
-    function confirmAddToCart() {
-        const selectedSizeBtn = document.querySelector('.size-btn-modal.selected');
-        const selectedSize = selectedSizeBtn ? selectedSizeBtn.getAttribute('data-size') : null;
-        const quantity = parseInt(document.getElementById('modal-quantity').value) || 1;
-        
-        // Проверка авторизации
-        const isAuth = document.body.classList.contains('user-authenticated');
-        
-        if (!isAuth) {
-            closeSizeModal();
-            showNotification('Войдите, чтобы добавить товар в корзину');
-            setTimeout(() => {
-                window.location.href = '/accounts/login/';
-            }, 1500);
-            return;
-        }
-        
-        if (selectedProductSizes.length > 0 && !selectedSize) {
-            showNotification('Пожалуйста, выберите размер');
-            return;
-        }
-        
-        // Отправляем запрос на добавление в корзину
-        fetch('/api/cart/add_item/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({
-                product_id: selectedProductId,
-                quantity: quantity,
-                size: selectedSize || ''
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.error || 'Ошибка'); });
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            const products = data.results || data;
+            totalPages = Math.ceil((data.count || products.length) / 9);
+            document.getElementById('products-count').textContent = `Найдено товаров: ${data.count || products.length}`;
+            
+            if (products.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center py-5 text-secondary">Товаров не найдено</div>';
+                return;
             }
-            return response.json();
-        })
-        .then(() => {
-            closeSizeModal();
-            updateCartCount();
-            showNotification('Товар добавлен в корзину!');
+            
+            container.innerHTML = '';
+            products.forEach(product => {
+                container.innerHTML += renderProductCard(product);
+            });
+            renderPagination();
         })
         .catch(error => {
             console.error('Error:', error);
-            showNotification(error.message || 'Ошибка при добавлении в корзину');
+            container.innerHTML = '<div class="col-12 text-center py-5 text-danger">Ошибка загрузки</div>';
         });
+}
+
+function renderPagination() {
+    const container = document.getElementById('pagination');
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
     }
     
-    // Загрузка товаров
-    function loadProducts() {
-        const url = buildUrl();
-        const container = document.getElementById('products-container');
-        if (!container) return;
-        container.innerHTML = '<div class="col-12 text-center text-secondary py-5">Загрузка...</div>';
-        
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                container.innerHTML = '';
-                const products = data.results || data;
-                totalPages = Math.ceil((data.count || products.length) / 9);
-                
-                const countElement = document.getElementById('products-count');
-                if (countElement) {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const searchQuery = urlParams.get('search');
-                    if (searchQuery) {
-                        countElement.innerHTML = `Найдено товаров по запросу "${searchQuery}": ${data.count || products.length}`;
-                    } else {
-                        countElement.innerHTML = `Найдено товаров: ${data.count || products.length}`;
-                    }
-                }
-                
-                if (products.length === 0) {
-                    container.innerHTML = '<div class="col-12 text-center text-secondary py-5">Товаров не найдено</div>';
-                    return;
-                }
-                
-                products.forEach(product => {
-                    container.innerHTML += renderProductCard(product);
-                });
-                
-                renderPagination();
-            })
-            .catch(error => {
-                console.error('Error loading products:', error);
-                container.innerHTML = '<div class="col-12 text-center text-danger py-5">Ошибка загрузки товаров</div>';
-            });
+    let html = '';
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<a href="#" class="page-link ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i}); return false;">${i}</a>`;
     }
-    
-    // Пагинация
-    function renderPagination() {
-        const container = document.getElementById('pagination');
-        if (!container) return;
-        if (totalPages <= 1) {
-            container.innerHTML = '';
-            return;
-        }
-        
-        let html = '<nav><ul class="pagination">';
-        
-        html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="#" onclick="goToPage(${currentPage - 1}); return false;">«</a>
-                 </li>`;
-        
-        for (let i = 1; i <= totalPages; i++) {
-            if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
-                html += `<li class="page-item ${currentPage === i ? 'active' : ''}">
-                            <a class="page-link" href="#" onclick="goToPage(${i}); return false;">${i}</a>
-                         </li>`;
-            } else if (i === currentPage - 3 || i === currentPage + 3) {
-                html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
-            }
-        }
-        
-        html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                    <a class="page-link" href="#" onclick="goToPage(${currentPage + 1}); return false;">»</a>
-                 </li>`;
-        
-        html += '</ul></nav>';
-        container.innerHTML = html;
-    }
-    
-    function goToPage(page) {
-        if (page < 1 || page > totalPages) return;
-        currentPage = page;
-        loadProducts();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    
-    function clearSearch() {
-        const url = new URL(window.location.href);
-        url.searchParams.delete('search');
-        window.location.href = url.toString();
-    }
-    
-    // События
-    const applyBtn = document.getElementById('apply-filters');
-    if (applyBtn) {
-        applyBtn.addEventListener('click', () => {
-            currentPage = 1;
-            loadProducts();
-        });
-    }
-    
-    const resetBtn = document.getElementById('reset-filters');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', () => {
-            document.querySelectorAll('input[name="category"]').forEach(r => r.checked = false);
-            const catAll = document.getElementById('cat-all');
-            if (catAll) catAll.checked = true;
-            document.querySelectorAll('input[name="silver_type"]').forEach(r => r.checked = false);
-            const silverAll = document.getElementById('silver-all');
-            if (silverAll) silverAll.checked = true;
-            document.querySelectorAll('input[name="fineness"]').forEach(r => r.checked = false);
-            const finenessAll = document.getElementById('fineness-all');
-            if (finenessAll) finenessAll.checked = true;
-            const priceMin = document.getElementById('price-min');
-            const priceMax = document.getElementById('price-max');
-            if (priceMin) priceMin.value = '';
-            if (priceMax) priceMax.value = '';
-            const stonesFilter = document.getElementById('stones-filter');
-            if (stonesFilter) stonesFilter.checked = false;
-            const discountFilter = document.getElementById('discount-filter');
-            if (discountFilter) discountFilter.checked = false;
-            const sortSelect = document.getElementById('sort-select');
-            if (sortSelect) sortSelect.value = '-created_at';
-            currentPage = 1;
-            loadProducts();
-        });
-    }
-    
-    const sortSelect = document.getElementById('sort-select');
-    if (sortSelect) {
-        sortSelect.addEventListener('change', () => {
-            currentPage = 1;
-            loadProducts();
-        });
-    }
-    
-    function showNotification(message) {
-        const notif = document.createElement('div');
-        notif.className = 'notification';
-        notif.textContent = message;
-        document.body.appendChild(notif);
-        setTimeout(() => notif.remove(), 2000);
-    }
-    
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    
-    function updateCartCount() {
-        fetch('/api/cart/')
-            .then(response => response.json())
-            .then(data => {
-                const count = data.total_items || 0;
-                const cartCount = document.getElementById('cart-count');
-                if (cartCount) cartCount.textContent = count;
-            })
-            .catch(error => console.error('Error:', error));
-    }
-    
-    // Инициализация
-    loadCategories();
+    container.innerHTML = html;
+}
+
+function goToPage(page) {
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
     loadProducts();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openSizeModal(productId, productName, sizes) {
+    selectedProductId = productId;
+    selectedProductSizes = sizes;
+    selectedSize = null;
+    
+    const container = document.getElementById('size-options');
+    if (sizes.length === 0) {
+        container.innerHTML = '<div class="text-secondary">Размер не указан</div>';
+    } else {
+        let html = '';
+        sizes.forEach(size => {
+            html += `<button class="size-btn" data-size="${size}">${size}</button>`;
+        });
+        container.innerHTML = html;
+        
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.onclick = function() {
+                document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedSize = this.dataset.size;
+            };
+        });
+    }
+    
+    document.getElementById('size-modal').classList.add('active');
+}
+
+function closeSizeModal() {
+    document.getElementById('size-modal').classList.remove('active');
+}
+
+function addToCart() {
+    const quantity = document.getElementById('modal-quantity').value;
+    
+    if (selectedProductSizes.length > 0 && !selectedSize) {
+        alert('Выберите размер');
+        return;
+    }
+    
+    fetch('/api/cart/add_item/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            product_id: selectedProductId,
+            quantity: parseInt(quantity),
+            size: selectedSize || ''
+        })
+    })
+    .then(r => r.json())
+    .then(() => {
+        closeSizeModal();
+        updateCartCount();
+        alert('Товар добавлен в корзину!');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ошибка при добавлении');
+    });
+}
+
+function getCookie(name) {
+    let value = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                value = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return value;
+}
+
+function updateCartCount() {
+    fetch('/api/cart/')
+        .then(r => r.json())
+        .then(data => {
+            const count = data.total_items || 0;
+            const cartCount = document.getElementById('cart-count');
+            if (cartCount) cartCount.textContent = count;
+        });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+document.getElementById('apply-filters').addEventListener('click', () => {
+    currentPage = 1;
+    loadProducts();
+});
+
+document.getElementById('reset-filters').addEventListener('click', () => {
+    document.getElementById('filter-category').value = '';
+    document.getElementById('filter-silver-type').value = '';
+    document.getElementById('filter-fineness').value = '';
+    document.getElementById('price-min').value = '';
+    document.getElementById('price-max').value = '';
+    document.getElementById('filter-stones').value = '';
+    document.getElementById('filter-stone-type').value = '';
+    document.getElementById('filter-discount').value = '';
+    document.getElementById('sort-select').value = '-created_at';
+    currentPage = 1;
+    loadProducts();
+});
+
+document.getElementById('sort-select').addEventListener('change', () => {
+    currentPage = 1;
+    loadProducts();
+});
+
+document.getElementById('confirm-add-to-cart').addEventListener('click', addToCart);
+
+loadCategories();
+loadProducts();
+// ========== ВАЛИДАЦИЯ ПОЛЕЙ ЦЕНЫ ==========
+// Этот код нужно добавить после загрузки всех функций
+
+const priceMinInput = document.getElementById('price-min');
+const priceMaxInput = document.getElementById('price-max');
+
+if (priceMinInput) {
+    priceMinInput.addEventListener('input', function() {
+        if (this.value && parseFloat(this.value) < 0) {
+            this.value = 0;
+        }
+    });
+}
+
+if (priceMaxInput) {
+    priceMaxInput.addEventListener('input', function() {
+        if (this.value && parseFloat(this.value) < 0) {
+            this.value = 0;
+        }
+    });
+}
 </script>
 {% endblock %}
