@@ -457,23 +457,25 @@ function loadCategories() {
 }
 
 function renderProductCard(product) {
+    const sizes = product.size ? product.size.split(',').map(s => s.trim()) : [];
     const discount = product.discount_percent > 0 ? `<span class="discount-badge">-${product.discount_percent}%</span>` : '';
     const oldPrice = product.old_price ? `<span class="old-price">${product.old_price} ₽</span>` : '';
     const imageUrl = product.image || '/static/shop/images/placeholder.png';
     const rating = product.average_rating || 0;
     const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
-    const sizes = product.size ? product.size.split(',').map(s => s.trim()) : [];
+    // Экранируем для безопасной вставки в data-атрибут
+    const sizesJson = JSON.stringify(sizes).replace(/"/g, '&quot;');
     
     return `
         <div class="col-md-4 mb-4">
             <div class="product-card">
                 ${discount}
-                <a href="/product/${product.id}/" class="text-decoration-none">
+                <a href="/product/${product.id}/">
                     <img src="${imageUrl}" class="product-image" onerror="this.src='/static/shop/images/placeholder.png'">
                 </a>
                 <div class="product-info">
                     <div class="product-category">${product.category_name || 'Украшение'}</div>
-                    <a href="/product/${product.id}/" class="text-decoration-none">
+                    <a href="/product/${product.id}/">
                         <div class="product-name">${escapeHtml(product.name)}</div>
                     </a>
                     <div class="rating">
@@ -483,12 +485,16 @@ function renderProductCard(product) {
                     <div class="product-price">
                         ${product.price} ₽ ${oldPrice}
                     </div>
-                    <button class="btn-cart" onclick="openSizeModal(${product.id}, '${escapeHtml(product.name)}', ${JSON.stringify(sizes)})">В корзину</button>
+                    <div style="font-size: 12px; color: gray; margin: 5px 0;">
+                        ${sizes.length > 0 ? `Размеры: ${sizes.join(', ')}` : 'Без размера'}
+                    </div>
+                    <button class="btn-cart" data-product-id="${product.id}" data-sizes='${sizesJson}'>В корзину</button>
                 </div>
             </div>
         </div>
     `;
 }
+
 function loadProducts() {
     const url = buildUrl();
     const container = document.getElementById('products-container');
@@ -539,13 +545,16 @@ function goToPage(page) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function openSizeModal(productId, productName, sizes) {
+function openSizeModal(productId, sizes) {
+    console.log('openSizeModal вызван', productId, sizes);
     selectedProductId = productId;
-    selectedProductSizes = sizes;
+    selectedProductSizes = sizes || [];
     selectedSize = null;
     
     const container = document.getElementById('size-options');
-    if (sizes.length === 0) {
+    if (!container) return;
+    
+    if (!sizes || sizes.length === 0) {
         container.innerHTML = '<div class="text-secondary">Размер не указан</div>';
     } else {
         let html = '';
@@ -563,6 +572,7 @@ function openSizeModal(productId, productName, sizes) {
         });
     }
     
+    document.getElementById('modal-quantity').value = 1;
     document.getElementById('size-modal').classList.add('active');
 }
 
@@ -683,5 +693,15 @@ if (priceMaxInput) {
         }
     });
 }
+// Обработчик кнопок "В корзину" (делегирование)
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-cart');
+    if (btn && btn.classList.contains('btn-cart')) {
+        const productId = parseInt(btn.dataset.productId);
+        const sizes = JSON.parse(btn.dataset.sizes);
+        openSizeModal(productId, sizes);
+    }
+});
+
 </script>
 {% endblock %}

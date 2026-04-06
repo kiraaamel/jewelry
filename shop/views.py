@@ -143,33 +143,43 @@ class CartViewSet(viewsets.GenericViewSet):
         """
         Добавление товара в корзину.
         """
-        cart = self.get_object()
-        product_id = request.data.get('product_id')
-        quantity = request.data.get('quantity', 1)
-        size = request.data.get('size', '')  # ← получаем размер из запроса
+        try:
+            cart = self.get_object()
+            product_id = request.data.get('product_id')
+            quantity = request.data.get('quantity', 1)
+            size = request.data.get('size', '')
 
-        product = get_object_or_404(Product, id=product_id)
+            if not product_id:
+                return Response({'error': 'product_id обязателен'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Проверяем наличие товара на складе
-        if quantity > product.available_quantity:
-            return Response(
-                {'error': f'Доступно только {product.available_quantity} единиц'},
-                status=status.HTTP_400_BAD_REQUEST
+            product = get_object_or_404(Product, id=product_id)
+
+            # Проверяем наличие товара на складе
+            if quantity > product.available_quantity:
+                return Response(
+                    {'error': f'Доступно только {product.available_quantity} единиц'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Ищем товар с таким же размером в корзине
+            cart_item, created = CartItem.objects.get_or_create(
+                cart=cart,
+                product=product,
+                size=size,
+                defaults={'quantity': quantity}
             )
 
-        # Ищем товар с таким же размером в корзине
-        cart_item, created = CartItem.objects.get_or_create(
-            cart=cart, 
-            product=product, 
-            size=size,  # ← добавляем размер в поиск
-            defaults={'quantity': quantity}
-        )
-        
-        if not created:
-            cart_item.quantity += quantity
-            cart_item.save()
+            if not created:
+                cart_item.quantity += quantity
+                cart_item.save()
 
-        return Response(self.get_serializer(cart).data)
+            serializer = self.get_serializer(cart)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print("Ошибка в add_item:", str(e))
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
     @action(detail=False, methods=['post'])
     def update_item(self, request):
         """

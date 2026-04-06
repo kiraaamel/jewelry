@@ -839,7 +839,7 @@
         starsHtml += '☆'.repeat(emptyStars);
         
         // Размеры из БД
-        const sizes = product.size ? product.size.split(',').map(s => s.trim()) : ['15', '16', '17', '18', '19', '20'];
+        const sizes = product.size ? product.size.split(',').map(s => s.trim()) : [];
         
         // Даты доставки (автоматический расчёт)
         // Даты доставки
@@ -934,12 +934,18 @@
                             <span>Размер:</span>
                             <a href="#" id="size-guide-link">Определить</a>
                         </div>
-                        <div class="size-buttons" id="size-buttons">
-                            ${sizes.map(s => `<button class="size-btn" data-size="${s}">${s}</button>`).join('')}
-                        </div>
-                        <button class="no-size-btn" onclick="openModal()">
-                            <i class="fas fa-bell"></i> Нет нужного размера?
-                        </button>
+                        ${sizes.length > 0 ? `
+                            <div class="size-buttons" id="size-buttons">
+                                ${sizes.map(s => `<button class="size-btn" data-size="${s}">${s}</button>`).join('')}
+                            </div>
+                            <button class="no-size-btn" onclick="openModal()">
+                                <i class="fas fa-bell"></i> Нет нужного размера?
+                            </button>
+                        ` : `
+                            <div style="padding: 10px 0; color: var(--gray);">
+                                <i class="fas fa-times-circle"></i> Без размера (универсальный)
+                            </div>
+                        `}
                     </div>
                     
                     <div class="quantity-section">
@@ -1216,8 +1222,7 @@
     }
     
     function addToCartWithQuantity(productId) {
-    // Проверяем авторизацию
-        console.log('🔵 Кнопка нажата! productId:', productId);
+        // Проверяем авторизацию
         if (!isAuthenticated()) {
             showNotification('Войдите, чтобы добавить товар в корзину');
             setTimeout(() => {
@@ -1226,13 +1231,16 @@
             return;
         }
         
-        // Проверяем выбор размера
-        if (!selectedSize) {
+        const quantity = parseInt(document.getElementById('quantity').value);
+        
+        // Получаем размеры товара
+        const sizes = currentProduct.size ? currentProduct.size.split(',').map(s => s.trim()) : [];
+        
+        // Если есть размеры, проверяем что выбран
+        if (sizes.length > 0 && !selectedSize) {
             showNotification('Пожалуйста, выберите размер');
             return;
         }
-        
-        const quantity = parseInt(document.getElementById('quantity').value);
         
         // Проверяем наличие на складе
         if (quantity > currentProduct.available_quantity) {
@@ -1240,39 +1248,27 @@
             return;
         }
         
-        // Отправляем запрос с размером
+        // Отправляем запрос
         fetch('/api/cart/add_item/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
             },
-            body: JSON.stringify({ 
-                product_id: productId, 
+            body: JSON.stringify({
+                product_id: productId,
                 quantity: quantity,
-                size: selectedSize
+                size: selectedSize || ''
             })
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.error || 'Ошибка'); });
-            }
-            return response.json();
-        })
-        .then(data => {
+        .then(response => response.json())
+        .then(() => {
             updateCartCount();
-            showNotification(`✅ Товар добавлен в корзину! Размер: ${selectedSize}, количество: ${quantity}`);
-            
-            // Выводим полную информацию о корзине в консоль
-            console.log('✅ Успешно добавлено!');
-            console.log('Ответ сервера:', data);
-            
-            // Проверяем корзину
-            checkCart();
+            showNotification('Товар добавлен в корзину!');
         })
         .catch(error => {
-            console.error('❌ Ошибка:', error);
-            showNotification(error.message || 'Ошибка при добавлении в корзину');
+            console.error('Error:', error);
+            showNotification('Ошибка при добавлении в корзину');
         });
     }
     // Функция для проверки корзины (вызовите её после добавления)

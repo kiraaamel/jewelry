@@ -1,8 +1,491 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="container py-5">
-    <h1>Профиль пользователя</h1>
-    <p>Страница в разработке</p>
+<style>
+:root {
+    --bg-cream: #F7F2EB;
+    --accent: #5D6E80;
+    --brown: #7A6B5B;
+    --gray: #808E92;
+}
+.favorites-page {
+    background: var(--bg-cream);
+    padding: 40px 0;
+    min-height: 70vh;
+}
+.favorites-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+.favorites-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.favorites-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+}
+@media (max-width: 992px) {
+    .favorites-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+    .favorites-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+    .favorites-grid { grid-template-columns: 1fr; }
+}
+.favorite-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    transition: transform 0.3s;
+    position: relative;
+}
+.favorite-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+.favorite-image {
+    position: relative;
+    cursor: pointer;
+}
+.favorite-image img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+}
+.remove-favorite {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255,255,255,0.9);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray);
+}
+.remove-favorite:hover {
+    background: var(--accent);
+    color: white;
+    transform: scale(1.05);
+}
+.discount-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #ff4444;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+}
+.favorite-info {
+    padding: 15px;
+}
+.favorite-category {
+    font-size: 11px;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+.favorite-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--brown);
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+.favorite-name:hover {
+    color: var(--accent);
+}
+.rating {
+    margin: 8px 0;
+}
+.rating-stars {
+    color: #ffc107;
+    font-size: 12px;
+}
+.favorite-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 10px 0;
+}
+.old-price {
+    font-size: 13px;
+    color: var(--gray);
+    text-decoration: line-through;
+    margin-left: 8px;
+    font-weight: normal;
+}
+.btn-add-to-cart {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+.btn-add-to-cart:hover {
+    background: #4a5a6a;
+    transform: translateY(-2px);
+}
+.empty-favorites {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 20px;
+}
+.empty-favorites i {
+    font-size: 64px;
+    color: var(--gray);
+    margin-bottom: 20px;
+}
+.empty-favorites h3 {
+    font-size: 20px;
+    color: var(--brown);
+    margin-bottom: 10px;
+}
+.empty-favorites p {
+    color: var(--gray);
+    margin-bottom: 25px;
+}
+.btn-catalog {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 30px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+.modal.active {
+    display: flex;
+}
+.modal-content {
+    background: white;
+    border-radius: 24px;
+    padding: 30px;
+    max-width: 350px;
+    width: 90%;
+    text-align: center;
+}
+.size-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
+}
+.size-btn {
+    padding: 10px 20px;
+    border: 1px solid var(--accent);
+    border-radius: 30px;
+    background: white;
+    cursor: pointer;
+}
+.size-btn:hover, .size-btn.selected {
+    background: var(--accent);
+    color: white;
+}
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--accent);
+    color: var(--bg-cream);
+    padding: 12px 24px;
+    border-radius: 30px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+}
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0%); opacity: 1; }
+}
+</style>
+
+<div class="favorites-page">
+    <div class="favorites-container">
+        <div class="favorites-title">
+            <i class="far fa-heart"></i>
+            <span>Избранное</span>
+        </div>
+        <div id="favorites-content">
+            <div class="text-center py-5">
+                <div class="spinner-border text-secondary" role="status"></div>
+                <p class="mt-2 text-secondary">Загрузка...</p>
+            </div>
+        </div>
+    </div>
 </div>
+
+<div id="size-modal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-bottom:20px; color:var(--accent);">Выберите размер</h3>
+        <div id="size-options" class="size-buttons"></div>
+        <div>
+            <label>Количество:</label>
+            <input type="number" id="modal-quantity" value="1" min="1" style="width:80px; padding:8px; margin-left:10px; border:1px solid #ddd; border-radius:8px;">
+        </div>
+        <button id="confirm-add-to-cart" style="margin-top:20px; padding:12px 24px; background:var(--accent); color:white; border:none; border-radius:30px; cursor:pointer;">Добавить в корзину</button>
+        <button onclick="closeSizeModal()" style="margin-top:10px; padding:8px 20px; background:transparent; border:none; cursor:pointer;">Отмена</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let favoritesList = [];
+let selectedProductId = null;
+let selectedProductSizes = [];
+let selectedSize = null;
+
+function loadFavorites() {
+    fetch('/api/favorites/')
+        .then(response => {
+            if (response.status === 401) {
+                document.getElementById('favorites-content').innerHTML = `
+                    <div class="empty-favorites">
+                        <i class="fas fa-lock"></i>
+                        <h3>Войдите, чтобы увидеть избранное</h3>
+                        <p>Войдите в свой аккаунт или зарегистрируйтесь</p>
+                        <a href="/accounts/login/" class="btn-catalog">Войти</a>
+                    </div>
+                `;
+                return null;
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data) {
+                favoritesList = data;
+                renderFavorites();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('favorites-content').innerHTML = `
+                <div class="empty-favorites">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Ошибка загрузки</h3>
+                    <p>Попробуйте обновить страницу</p>
+                    <button onclick="location.reload()" class="btn-catalog">Обновить</button>
+                </div>
+            `;
+        });
+}
+
+function renderFavorites() {
+    const container = document.getElementById('favorites-content');
+    if (favoritesList.length === 0) {
+        container.innerHTML = `
+            <div class="empty-favorites">
+                <i class="far fa-heart"></i>
+                <h3>В избранном пока пусто</h3>
+                <p>Добавляйте понравившиеся товары, чтобы не потерять их</p>
+                <a href="/catalog/" class="btn-catalog">Перейти в каталог</a>
+            </div>
+        `;
+        return;
+    }
+    let html = '<div class="favorites-grid">';
+    favoritesList.forEach(fav => {
+        const product = fav.product;
+        const discount = product.discount_percent > 0 ? `<span class="discount-badge">-${product.discount_percent}%</span>` : '';
+        const oldPrice = product.old_price ? `<span class="old-price">${product.old_price} ₽</span>` : '';
+        const imageUrl = product.image || '/static/shop/images/placeholder.png';
+        const rating = product.average_rating || 0;
+        const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
+        const sizes = product.size ? product.size.split(',').map(s => s.trim()) : [];
+        html += `
+            <div class="favorite-card" data-favorite-id="${fav.id}" data-product-id="${product.id}">
+                <div class="favorite-image">
+                    <a href="/product/${product.id}/">
+                        <img src="${imageUrl}" alt="${escapeHtml(product.name)}" onerror="this.src='/static/shop/images/placeholder.png'">
+                    </a>
+                    <button class="remove-favorite" onclick="removeFromFavorites(${fav.id}, ${product.id})" title="Удалить из избранного">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    ${discount}
+                </div>
+                <div class="favorite-info">
+                    <div class="favorite-category">${product.category_name || 'Украшение'}</div>
+                    <a href="/product/${product.id}/" class="text-decoration-none">
+                        <div class="favorite-name">${escapeHtml(product.name)}</div>
+                    </a>
+                    <div class="rating">
+                        <span class="rating-stars">${stars}</span>
+                        <span class="text-secondary ms-1">(${product.reviews_count || 0})</span>
+                    </div>
+                    <div class="favorite-price">
+                        ${product.price} ₽ ${oldPrice}
+                    </div>
+                    <button class="btn-add-to-cart" onclick="openSizeModal(${product.id}, '${escapeHtml(product.name)}', ${JSON.stringify(sizes)})">
+                        <i class="fas fa-shopping-cart"></i> В корзину
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function removeFromFavorites(favoriteId, productId) {
+    fetch(`/api/favorites/${favoriteId}/`, {
+        method: 'DELETE',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    })
+    .then(() => {
+        favoritesList = favoritesList.filter(f => f.id !== favoriteId);
+        renderFavorites();
+        showNotification('Товар удалён из избранного');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при удалении');
+    });
+}
+
+function openSizeModal(productId, productName, sizes) {
+    selectedProductId = productId;
+    selectedProductSizes = sizes;
+    selectedSize = null;
+    const container = document.getElementById('size-options');
+    if (!container) return;
+    if (sizes.length === 0) {
+        container.innerHTML = '<div class="text-secondary">Размер не указан</div>';
+    } else {
+        let html = '';
+        sizes.forEach(size => {
+            html += `<button class="size-btn" data-size="${size}">${size}</button>`;
+        });
+        container.innerHTML = html;
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.onclick = function() {
+                document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedSize = this.dataset.size;
+            };
+        });
+    }
+    document.getElementById('modal-quantity').value = 1;
+    document.getElementById('size-modal').classList.add('active');
+}
+
+function closeSizeModal() {
+    document.getElementById('size-modal').classList.remove('active');
+    selectedProductId = null;
+    selectedSize = null;
+}
+
+function addToCart() {
+    const quantity = document.getElementById('modal-quantity').value;
+    if (selectedProductSizes.length > 0 && !selectedSize) {
+        alert('Выберите размер');
+        return;
+    }
+    fetch('/api/cart/add_item/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            product_id: selectedProductId,
+            quantity: parseInt(quantity),
+            size: selectedSize || ''
+        })
+    })
+    .then(response => response.json())
+    .then(() => {
+        closeSizeModal();
+        updateCartCount();
+        showNotification('Товар добавлен в корзину!');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при добавлении в корзину');
+    });
+}
+
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 2000);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function updateCartCount() {
+    fetch('/api/cart/')
+        .then(response => response.json())
+        .then(data => {
+            const count = data.total_items || 0;
+            const cartCount = document.getElementById('cart-count');
+            if (cartCount) cartCount.textContent = count;
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+document.getElementById('confirm-add-to-cart').addEventListener('click', addToCart);
+loadFavorites();
+</script>
 {% endblock %}
