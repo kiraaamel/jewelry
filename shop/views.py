@@ -204,6 +204,8 @@ class CartViewSet(viewsets.GenericViewSet):
         cart.items.all().delete()
         return Response(self.get_serializer(cart).data)
 
+from decimal import Decimal
+
 class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet для просмотра заказов.
@@ -221,7 +223,6 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
             order = serializer.save()
             
             # Начисляем бонусы (5% от суммы заказа)
-            # Используем Decimal для умножения
             bonus_earned = int(order.total_price * Decimal('0.05'))
             order.bonus_earned = bonus_earned
             order.save()
@@ -233,7 +234,57 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
             
             return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'])
+    def update_address(self, request, pk=None):
+        """
+        Изменение адреса доставки (только для новых и подтверждённых заказов).
+        """
+        order = self.get_object()
         
+        # Проверяем, можно ли изменять адрес
+        if order.status not in [Order.Status.NEW, Order.Status.CONFIRMED]:
+            return Response(
+                {'error': 'Нельзя изменить адрес для заказа в текущем статусе'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        new_address = request.data.get('delivery_address')
+        if not new_address:
+            return Response(
+                {'error': 'Укажите новый адрес доставки'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        order.delivery_address = new_address
+        order.save()
+        
+        return Response({'status': 'ok', 'delivery_address': new_address})
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        """
+        Отмена заказа (только для новых и подтверждённых заказов).
+        """
+        order = self.get_object()
+        
+        # Проверяем, можно ли отменить заказ
+        if order.status not in [Order.Status.NEW, Order.Status.CONFIRMED]:
+            return Response(
+                {'error': 'Нельзя отменить заказ в текущем статусе'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        order.status = Order.Status.CANCELLED
+        order.save()
+        
+        # Возвращаем товары на склад
+        for item in order.items.all():
+            if item.product:
+                item.product.stock_quantity += item.quantity
+                item.product.save()
+        
+        return Response({'status': 'ok'})
+
 class ReviewViewSet(viewsets.ModelViewSet):
     """
     ViewSet для отзывов.

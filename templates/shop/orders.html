@@ -1,38 +1,870 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="container py-5">
-    <h1>Мои заказы</h1>
-    <div id="orders-list">
-        <p class="text-secondary">Загрузка...</p>
+<style>
+:root {
+    --bg-cream: #F7F2EB;
+    --accent: #5D6E80;
+    --brown: #7A6B5B;
+    --gray: #808E92;
+    --green: #28a745;
+    --orange: #ff9800;
+    --red: #dc3545;
+    --blue: #007bff;
+}
+
+.orders-page {
+    background: var(--bg-cream);
+    padding: 40px 0;
+    min-height: 70vh;
+}
+
+.orders-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.orders-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Табы */
+.orders-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 10px;
+}
+
+.tab-btn {
+    padding: 10px 24px;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--gray);
+    cursor: pointer;
+    border-radius: 30px;
+    transition: all 0.3s;
+}
+
+.tab-btn:hover {
+    color: var(--accent);
+}
+
+.tab-btn.active {
+    background: var(--accent);
+    color: white;
+}
+
+/* Карточка заказа */
+.order-card {
+    background: white;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.order-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 25px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.order-number {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.order-number span {
+    color: var(--brown);
+    font-weight: normal;
+}
+
+.order-date {
+    font-size: 13px;
+    color: var(--gray);
+}
+
+.order-status {
+    padding: 5px 12px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-new { background: var(--blue); color: white; }
+.status-confirmed { background: var(--orange); color: white; }
+.status-shipped { background: var(--green); color: white; }
+.status-delivered { background: var(--green); color: white; }
+.status-cancelled { background: var(--red); color: white; }
+
+.order-total {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+/* Тело заказа */
+.order-body {
+    padding: 20px 25px;
+}
+
+.order-items {
+    margin-bottom: 20px;
+}
+
+.order-item {
+    display: flex;
+    gap: 15px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.order-item-image {
+    width: 70px;
+    height: 70px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.order-item-info {
+    flex: 1;
+}
+
+.order-item-title {
+    font-weight: 600;
+    color: var(--brown);
+    margin-bottom: 4px;
+}
+
+.order-item-size {
+    font-size: 12px;
+    color: var(--gray);
+}
+
+.order-item-price {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.order-delivery {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 12px;
+    margin-top: 15px;
+}
+
+.delivery-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.delivery-label {
+    color: var(--gray);
+}
+
+.delivery-value {
+    color: var(--brown);
+    font-weight: 500;
+}
+
+/* Кнопки действий */
+.order-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.btn-edit {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s;
+}
+
+.btn-edit:hover {
+    background: #4a5a6a;
+    transform: translateY(-2px);
+}
+
+.btn-cancel {
+    background: transparent;
+    border: 1px solid var(--red);
+    color: var(--red);
+    padding: 10px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s;
+}
+
+.btn-cancel:hover {
+    background: var(--red);
+    color: white;
+}
+
+.btn-repeat {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 10px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s;
+}
+
+.btn-repeat:hover {
+    background: var(--accent);
+    color: white;
+}
+
+/* Модальное окно */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 24px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+}
+
+.modal-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 20px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--gray);
+}
+
+.modal-form-group {
+    margin-bottom: 15px;
+}
+
+.modal-form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--brown);
+    margin-bottom: 6px;
+}
+
+.modal-form-group input, .modal-form-group textarea, .modal-form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    font-size: 14px;
+}
+
+.pickup-point {
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid #e9ecef;
+}
+
+.pickup-point:hover {
+    background: #f8f9fa;
+    border-color: var(--accent);
+}
+
+.pickup-point.selected {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.pickup-point-name {
+    font-weight: 500;
+}
+
+.pickup-point-address {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+
+.modal-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.empty-orders {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 20px;
+}
+
+.empty-orders i {
+    font-size: 64px;
+    color: var(--gray);
+    margin-bottom: 20px;
+}
+
+.empty-orders h3 {
+    font-size: 20px;
+    color: var(--brown);
+    margin-bottom: 10px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .order-actions {
+        width: 100%;
+    }
+    
+    .btn-edit, .btn-cancel, .btn-repeat {
+        flex: 1;
+        justify-content: center;
+    }
+}
+</style>
+
+<div class="orders-page">
+    <div class="orders-container">
+        <div class="orders-title">
+            <i class="fas fa-list-alt"></i>
+            <span>Мои заказы</span>
+        </div>
+
+        <!-- Табы -->
+        <div class="orders-tabs">
+            <button class="tab-btn active" data-status="all">Все</button>
+            <button class="tab-btn" data-status="new">Новые</button>
+            <button class="tab-btn" data-status="confirmed">Подтверждённые</button>
+            <button class="tab-btn" data-status="shipped">Отправленные</button>
+            <button class="tab-btn" data-status="delivered">Доставленные</button>
+            <button class="tab-btn" data-status="cancelled">Отменённые</button>
+        </div>
+
+        <!-- Список заказов -->
+        <div id="orders-list">
+            <div class="text-center py-5">
+                <div class="spinner-border text-secondary" role="status"></div>
+                <p class="mt-2 text-secondary">Загрузка заказов...</p>
+            </div>
+        </div>
     </div>
 </div>
 
+<!-- Модальное окно изменения адреса -->
+<div id="edit-address-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeEditModal()">&times;</span>
+        <div class="modal-title">Изменить адрес доставки</div>
+        <div id="address-edit-content"></div>
+        <button class="modal-btn" onclick="saveAddress()">Сохранить</button>
+    </div>
+</div>
+
+<!-- Модальное окно отмены заказа -->
+<div id="cancel-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeCancelModal()">&times;</span>
+        <div class="modal-title">Отмена заказа</div>
+        <p>Вы уверены, что хотите отменить этот заказ?</p>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="modal-btn" onclick="closeCancelModal()" style="background: var(--gray);">Нет</button>
+            <button class="modal-btn" onclick="confirmCancel()" style="background: var(--red);">Да, отменить</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
 <script>
+let currentOrders = [];
+let currentFilter = 'all';
+let currentOrderId = null;
+let currentOrderDeliveryMethod = null;
+
+// Пункты выдачи
+const pickupPoints = [
+    { name: "Пункт выдачи №1", address: "Москва, ул. Тверская, д. 1 (ТЦ 'Галерея')" },
+    { name: "Пункт выдачи №2", address: "Москва, м. Курская, ул. Земляной Вал, д. 33" },
+    { name: "Пункт выдачи №3", address: "Москва, м. Дмитровская, ул. Бутырская, д. 46" }
+];
+
+const postPoints = [
+    { name: "Почта России №1", address: "Москва, ул. Новый Арбат, д. 15" },
+    { name: "Почта России №2", address: "Москва, Ленинградский пр-т, д. 80" },
+    { name: "Почта России №3", address: "Москва, ул. Профсоюзная, д. 56" }
+];
+
+function loadOrders() {
     fetch('/api/orders/')
-        .then(r => r.json())
+        .then(response => response.json())
         .then(orders => {
-            const container = document.getElementById('orders-list');
-            if (orders.length === 0) {
-                container.innerHTML = '<p>У вас пока нет заказов</p>';
-                return;
-            }
-            let html = '<div class="list-group">';
-            orders.forEach(order => {
-                html += `
-                    <div class="list-group-item">
-                        <div class="d-flex justify-content-between">
-                            <h5>Заказ №${order.order_number}</h5>
-                            <span class="badge bg-secondary">${order.status}</span>
+            currentOrders = orders;
+            renderOrders();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('orders-list').innerHTML = `
+                <div class="empty-orders">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Ошибка загрузки заказов</h3>
+                    <p>Попробуйте обновить страницу</p>
+                </div>
+            `;
+        });
+}
+
+function getStatusText(status) {
+    const statuses = {
+        'new': 'Новый',
+        'confirmed': 'Подтверждён',
+        'shipped': 'Отправлен',
+        'delivered': 'Доставлен',
+        'cancelled': 'Отменён'
+    };
+    return statuses[status] || status;
+}
+
+function getStatusClass(status) {
+    return `status-${status}`;
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+}
+
+function canCancel(status) {
+    return ['new', 'confirmed'].includes(status);
+}
+
+function canEditAddress(status) {
+    return ['new', 'confirmed'].includes(status);
+}
+
+function renderOrders() {
+    const container = document.getElementById('orders-list');
+    let filteredOrders = currentOrders;
+    
+    if (currentFilter !== 'all') {
+        filteredOrders = currentOrders.filter(order => order.status === currentFilter);
+    }
+    
+    if (filteredOrders.length === 0) {
+        container.innerHTML = `
+            <div class="empty-orders">
+                <i class="fas fa-shopping-bag"></i>
+                <h3>У вас пока нет заказов</h3>
+                <p>Перейдите в каталог, чтобы сделать первый заказ</p>
+                <a href="/catalog/" class="btn-gold" style="display: inline-block; margin-top: 15px; padding: 10px 30px; background: var(--accent); color: white; border-radius: 30px; text-decoration: none;">Перейти в каталог</a>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    filteredOrders.forEach(order => {
+        const statusText = getStatusText(order.status);
+        const statusClass = getStatusClass(order.status);
+        const canCancelOrder = canCancel(order.status);
+        const canEdit = canEditAddress(order.status);
+        
+        let itemsHtml = '';
+        if (order.items && order.items.length > 0) {
+            order.items.forEach(item => {
+                const imageUrl = item.product_image || '/static/shop/images/placeholder.png';
+                itemsHtml += `
+                    <div class="order-item">
+                        <img src="${imageUrl}" class="order-item-image" onerror="this.src='/static/shop/images/placeholder.png'">
+                        <div class="order-item-info">
+                            <div class="order-item-title">${escapeHtml(item.product_name)}</div>
+                            <div class="order-item-size">Размер: ${item.size || '-'} • ${item.quantity} шт</div>
+                            <div class="order-item-price">${(item.price * item.quantity).toFixed(0)} ₽</div>
                         </div>
-                        <p>Дата: ${new Date(order.created_at).toLocaleDateString()}</p>
-                        <p>Сумма: ${order.total_price} ₽</p>
-                        <p>Доставка: ${order.delivery_address}</p>
                     </div>
                 `;
             });
-            html += '</div>';
-            container.innerHTML = html;
+        }
+        
+        html += `
+            <div class="order-card" data-order-id="${order.id}">
+                <div class="order-header">
+                    <div class="order-number">
+                        Заказ №${order.order_number}
+                        <span>от ${formatDate(order.created_at)}</span>
+                    </div>
+                    <div class="order-status ${statusClass}">${statusText}</div>
+                    <div class="order-total">${order.total_price} ₽</div>
+                </div>
+                <div class="order-body">
+                    <div class="order-items">
+                        ${itemsHtml}
+                    </div>
+                    <div class="order-delivery">
+                        <div class="delivery-row">
+                            <span class="delivery-label">Способ доставки:</span>
+                            <span class="delivery-value">${getDeliveryMethodText(order.delivery_method)}</span>
+                        </div>
+                        <div class="delivery-row">
+                            <span class="delivery-label">Способ оплаты:</span>
+                            <span class="delivery-value">${getPaymentMethodText(order.payment_method)}</span>
+                        </div>
+                        <div class="delivery-row">
+                            <span class="delivery-label">Адрес доставки:</span>
+                            <span class="delivery-value" id="address-${order.id}">${escapeHtml(order.delivery_address)}</span>
+                        </div>
+                        ${order.gift_wrap ? `
+                        <div class="delivery-row">
+                            <span class="delivery-label">Подарочная упаковка:</span>
+                            <span class="delivery-value">Да ${order.gift_message ? `(«${escapeHtml(order.gift_message)}») ` : ''}</span>
+                        </div>
+                        ` : ''}
+                        ${order.comment ? `
+                        <div class="delivery-row">
+                            <span class="delivery-label">Комментарий:</span>
+                            <span class="delivery-value">${escapeHtml(order.comment)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="order-actions">
+                        ${canEdit ? `<button class="btn-edit" onclick="openEditModal(${order.id}, '${escapeHtml(order.delivery_address)}', '${order.delivery_method}')"><i class="fas fa-edit"></i> Изменить адрес</button>` : ''}
+                        ${canCancelOrder ? `<button class="btn-cancel" onclick="openCancelModal(${order.id})"><i class="fas fa-times"></i> Отменить заказ</button>` : ''}
+                        <button class="btn-repeat" onclick="repeatOrder(${order.id})"><i class="fas fa-redo"></i> Повторить заказ</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function getDeliveryMethodText(method) {
+    const methods = {
+        'pickup': 'Самовывоз',
+        'courier': 'Курьерская доставка',
+        'post': 'Почта России'
+    };
+    return methods[method] || method;
+}
+
+function getPaymentMethodText(method) {
+    const methods = {
+        'card': 'Банковская карта',
+        'sbp': 'СБП',
+        'cash': 'Наличные при получении'
+    };
+    return methods[method] || method;
+}
+
+function openEditModal(orderId, currentAddress, deliveryMethod) {
+    currentOrderId = orderId;
+    currentOrderDeliveryMethod = deliveryMethod;
+    
+    const container = document.getElementById('address-edit-content');
+    
+    if (deliveryMethod === 'pickup') {
+        // Самовывоз: выбор пункта выдачи
+        let pointsHtml = `<div class="modal-form-group">
+            <label>Выберите пункт выдачи</label>
+            <div id="pickup-points-list">`;
+        pickupPoints.forEach((point, index) => {
+            const isSelected = currentAddress === point.address;
+            pointsHtml += `
+                <div class="pickup-point ${isSelected ? 'selected' : ''}" data-address="${escapeHtml(point.address)}" onclick="selectPickupPoint(this, '${escapeHtml(point.address)}')">
+                    <div class="pickup-point-name">${escapeHtml(point.name)}</div>
+                    <div class="pickup-point-address">${escapeHtml(point.address)}</div>
+                </div>
+            `;
         });
+        pointsHtml += `</div></div>
+            <input type="hidden" id="selected-address" value="${escapeHtml(currentAddress)}">
+        `;
+        container.innerHTML = pointsHtml;
+    } 
+    else if (deliveryMethod === 'post') {
+        // Почта России: выбор отделения
+        let pointsHtml = `<div class="modal-form-group">
+            <label>Выберите отделение Почты России</label>
+            <div id="post-points-list">`;
+        postPoints.forEach((point, index) => {
+            const isSelected = currentAddress === point.address;
+            pointsHtml += `
+                <div class="pickup-point ${isSelected ? 'selected' : ''}" data-address="${escapeHtml(point.address)}" onclick="selectPickupPoint(this, '${escapeHtml(point.address)}')">
+                    <div class="pickup-point-name">${escapeHtml(point.name)}</div>
+                    <div class="pickup-point-address">${escapeHtml(point.address)}</div>
+                </div>
+            `;
+        });
+        pointsHtml += `</div></div>
+            <input type="hidden" id="selected-address" value="${escapeHtml(currentAddress)}">
+        `;
+        container.innerHTML = pointsHtml;
+    }
+    else {
+        // Курьер: ввод адреса
+        container.innerHTML = `
+            <div class="modal-form-group">
+                <label>Новый адрес доставки</label>
+                <textarea id="new-address" rows="3" placeholder="Город, улица, дом, квартира">${escapeHtml(currentAddress)}</textarea>
+            </div>
+            <input type="hidden" id="selected-address" value="">
+        `;
+    }
+    
+    document.getElementById('edit-address-modal').classList.add('active');
+}
+
+function selectPickupPoint(element, address) {
+    document.querySelectorAll('.pickup-point').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+    document.getElementById('selected-address').value = address;
+}
+
+function closeEditModal() {
+    document.getElementById('edit-address-modal').classList.remove('active');
+    currentOrderId = null;
+    currentOrderDeliveryMethod = null;
+}
+
+function saveAddress() {
+    let newAddress;
+    
+    if (currentOrderDeliveryMethod === 'pickup' || currentOrderDeliveryMethod === 'post') {
+        newAddress = document.getElementById('selected-address').value;
+        if (!newAddress) {
+            showNotification('Выберите пункт выдачи');
+            return;
+        }
+    } else {
+        newAddress = document.getElementById('new-address').value;
+        if (!newAddress.trim()) {
+            showNotification('Введите адрес доставки');
+            return;
+        }
+    }
+    
+    fetch(`/api/orders/${currentOrderId}/update_address/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ delivery_address: newAddress })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            showNotification('Адрес успешно изменён');
+            closeEditModal();
+            loadOrders();
+        } else {
+            showNotification(data.error || 'Ошибка при изменении адреса');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при изменении адреса');
+    });
+}
+
+function openCancelModal(orderId) {
+    currentOrderId = orderId;
+    document.getElementById('cancel-modal').classList.add('active');
+}
+
+function closeCancelModal() {
+    document.getElementById('cancel-modal').classList.remove('active');
+    currentOrderId = null;
+}
+
+function confirmCancel() {
+    fetch(`/api/orders/${currentOrderId}/cancel/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            showNotification('Заказ успешно отменён');
+            closeCancelModal();
+            loadOrders();
+        } else {
+            showNotification(data.error || 'Ошибка при отмене заказа');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при отмене заказа');
+    });
+}
+
+function repeatOrder(orderId) {
+    const order = currentOrders.find(o => o.id === orderId);
+    if (!order || !order.items) return;
+    
+    let promises = [];
+    order.items.forEach(item => {
+        promises.push(
+            fetch('/api/cart/add_item/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    product_id: item.product,
+                    quantity: item.quantity,
+                    size: item.size || ''
+                })
+            })
+        );
+    });
+    
+    Promise.all(promises)
+        .then(() => {
+            showNotification('Товары добавлены в корзину');
+            setTimeout(() => {
+                window.location.href = '/cart/';
+            }, 1500);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Ошибка при добавлении в корзину');
+        });
+}
+
+function initTabs() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.status;
+            renderOrders();
+        });
+    });
+}
+
+function showNotification(message) {
+    const notif = document.createElement('div');
+    notif.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;';
+    notif.innerText = message;
+    document.body.appendChild(notif);
+    setTimeout(() => notif.remove(), 2000);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+loadOrders();
+initTabs();
 </script>
 {% endblock %}

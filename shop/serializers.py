@@ -140,11 +140,13 @@ class OrderItemSerializer(serializers.ModelSerializer):
     Сериализатор для позиции заказа.
     """
     total_price = serializers.DecimalField(read_only=True, max_digits=10, decimal_places=2)
+    product_image = serializers.ImageField(source='product.image', read_only=True)  # ← добавить
+    size = serializers.CharField(source='product.size', read_only=True)  # ← добавить (если нужно)
 
     class Meta:
         model = OrderItem
-        fields = ('id', 'product', 'product_name', 'price', 'quantity', 'total_price')
-
+        fields = ('id', 'product', 'product_name', 'price', 'quantity', 'total_price', 'product_image', 'size')
+        
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
