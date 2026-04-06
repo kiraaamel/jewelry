@@ -23,6 +23,7 @@ urlpatterns = [
     path('favorites/', views.favorites, name='favorites'),
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
     path('about/', views.about, name='about'),
+    path('stores/', views.stores, name='stores'),
     # ========== АУТЕНТИФИКАЦИЯ (allauth) ==========
     path('accounts/login/', allauth_views.LoginView.as_view(), name='account_login'),
     path('accounts/logout/', allauth_views.LogoutView.as_view(), name='account_logout'),

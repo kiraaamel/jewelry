@@ -371,3 +371,7 @@ def orders(request):
 def about(request):
     """Страница О нас"""
     return render(request, 'shop/about.html')
+
+def stores(request):
+    """Страница магазинов и пунктов самовывоза"""
+    return render(request, 'shop/stores.html')

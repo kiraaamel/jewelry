@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+:root {
+    --bg-cream: #F7F2EB;
+    --accent: #5D6E80;
+    --brown: #7A6B5B;
+    --gray: #808E92;
+}
+
+.stores-page {
+    background: var(--bg-cream);
+    padding: 40px 0;
+    min-height: 70vh;
+}
+
+.stores-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* хлебные крошки */
+.breadcrumbs {
+    font-size: 14px;
+    color: var(--gray);
+    margin-bottom: 30px;
+}
+
+.breadcrumbs a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+    text-decoration: underline;
+}
+
+/* заголовок */
+.page-title {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 10px;
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: var(--gray);
+    margin-bottom: 40px;
+}
+
+/* карточка магазина */
+.store-card {
+    display: flex;
+    gap: 30px;
+    background: white;
+    border-radius: 24px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.store-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+/* фото магазина */
+.store-image {
+    flex: 0 0 300px;
+}
+
+.store-image img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 16px;
+}
+
+/* информация */
+.store-info {
+    flex: 1;
+}
+
+.store-name {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 5px;
+}
+
+.store-address {
+    font-size: 14px;
+    color: var(--brown);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.store-address i {
+    color: var(--accent);
+    width: 20px;
+}
+
+.store-schedule {
+    font-size: 14px;
+    color: var(--gray);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.store-schedule i {
+    color: var(--accent);
+    width: 20px;
+}
+
+.store-phone {
+    font-size: 14px;
+    color: var(--gray);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.store-phone i {
+    color: var(--accent);
+    width: 20px;
+}
+
+.store-description {
+    font-size: 14px;
+    color: var(--brown);
+    line-height: 1.5;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef;
+}
+
+/* кнопка построить маршрут */
+.btn-route {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 15px;
+    transition: all 0.3s;
+}
+
+.btn-route:hover {
+    background: #4a5a6a;
+    transform: translateY(-2px);
+    color: white;
+}
+
+/* карта */
+.map-container {
+    margin-top: 50px;
+    background: white;
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+.map-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.map-wrapper {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.map-wrapper iframe {
+    width: 100%;
+    height: 400px;
+    border: none;
+}
+
+/* адаптивность */
+@media (max-width: 768px) {
+    .store-card {
+        flex-direction: column;
+    }
+    
+    .store-image {
+        flex: 0 0 auto;
+    }
+    
+    .store-image img {
+        height: 180px;
+    }
+    
+    .page-title {
+        font-size: 28px;
+    }
+}
+</style>
+
+<div class="stores-page">
+    <div class="stores-container">
+        
+        <!-- хлебные крошки -->
+        <div class="breadcrumbs">
+            <a href="/">Главная</a> / <span>Магазины</span>
+        </div>
+
+        <!-- заголовок -->
+        <h1 class="page-title">Наши магазины</h1>
+        <p class="page-subtitle">Выберите удобный пункт самовывоза в Москве</p>
+
+        <!-- карточки магазинов -->
+        
+        <!-- Магазин №1 - Тверская -->
+        <div class="store-card">
+            <div class="store-image">
+                <img src="{% static 'shop/images/store1.jpg' %}" alt="Магазин на Тверской" onerror="this.src='https://via.placeholder.com/300x200?text=Магазин+на+Тверской'">
+            </div>
+            <div class="store-info">
+                <h2 class="store-name">Argentic Jewelry — Тверская</h2>
+                <div class="store-address">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>г. Москва, ул. Тверская, д. 1 (ТЦ "Галерея"), 2 этаж</span>
+                </div>
+                <div class="store-schedule">
+                    <i class="fas fa-clock"></i>
+                    <span>Ежедневно: 10:00 — 22:00</span>
+                </div>
+                <div class="store-phone">
+                    <i class="fas fa-phone"></i>
+                    <span>+7 (495) 123-45-67</span>
+                </div>
+                <div class="store-description">
+                    <strong>Как пройти:</strong> Вход со стороны ул. Тверская, подняться на 2 этаж, 
+                    направо от эскалатора. Рядом с кофейней "Кофе Хауз".
+                </div>
+                <a href="https://yandex.ru/maps/?text=Москва, Тверская, 1" target="_blank" class="btn-route">
+                    <i class="fas fa-directions"></i> Построить маршрут
+                </a>
+            </div>
+        </div>
+
+        <!-- Магазин №2 - Курская -->
+        <div class="store-card">
+            <div class="store-image">
+                <img src="{% static 'shop/images/store2.jpg' %}" alt="Магазин на Курской" onerror="this.src='https://via.placeholder.com/300x200?text=Магазин+на+Курской'">
+            </div>
+            <div class="store-info">
+                <h2 class="store-name">Argentic Jewelry — Курская</h2>
+                <div class="store-address">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>г. Москва, м. Курская, ул. Земляной Вал, д. 33</span>
+                </div>
+                <div class="store-schedule">
+                    <i class="fas fa-clock"></i>
+                    <span>Пн-Сб: 11:00 — 21:00, Вс: 11:00 — 20:00</span>
+                </div>
+                <div class="store-phone">
+                    <i class="fas fa-phone"></i>
+                    <span>+7 (495) 234-56-78</span>
+                </div>
+                <div class="store-description">
+                    <strong>Как пройти:</strong> Выход из метро №5, прямо 50 метров, вход в бизнес-центр, 
+                    1 этаж, напротив стойки ресепшн.
+                </div>
+                <a href="https://yandex.ru/maps/?text=Москва, Земляной Вал, 33" target="_blank" class="btn-route">
+                    <i class="fas fa-directions"></i> Построить маршрут
+                </a>
+            </div>
+        </div>
+
+        <!-- Магазин №3 - Дмитровская -->
+        <div class="store-card">
+            <div class="store-image">
+                <img src="{% static 'shop/images/store3.jpg' %}" alt="Магазин на Дмитровской" onerror="this.src='https://via.placeholder.com/300x200?text=Магазин+на+Дмитровской'">
+            </div>
+            <div class="store-info">
+                <h2 class="store-name">Argentic Jewelry — Дмитровская</h2>
+                <div class="store-address">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>г. Москва, м. Дмитровская, ул. Бутырская, д. 46</span>
+                </div>
+                <div class="store-schedule">
+                    <i class="fas fa-clock"></i>
+                    <span>Ежедневно: 10:00 — 21:00</span>
+                </div>
+                <div class="store-phone">
+                    <i class="fas fa-phone"></i>
+                    <span>+7 (495) 345-67-89</span>
+                </div>
+                <div class="store-description">
+                    <strong>Как пройти:</strong> Выход из метро №2, пройти ТЦ "Бутырский", 
+                    вход с торца здания, 1 этаж, вывеска Argentic.
+                </div>
+                <a href="https://yandex.ru/maps/?text=Москва, Бутырская, 46" target="_blank" class="btn-route">
+                    <i class="fas fa-directions"></i> Построить маршрут
+                </a>
+            </div>
+        </div>
+
+        <!-- карта -->
+        <div class="map-container">
+            <div class="map-title">
+                <i class="fas fa-map"></i>
+                <span>Все магазины на карте</span>
+            </div>
+            <div class="map-wrapper">
+                <iframe 
+                    src="https://yandex.ru/map-widget/v1/?ll=37.617698,55.755864&z=12&pt=37.605330,55.764580,pm2rdm~37.672720,55.757660,pm2rdm~37.588440,55.808890,pm2rdm"
+                    allowfullscreen="true" 
+                    loading="lazy">
+                </iframe>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
