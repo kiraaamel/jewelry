@@ -310,8 +310,9 @@
                 </div>
                 <div class="col-md-3">
                     <div class="user-actions-new">
-                        <a href="{% url 'favorites' %}">
+                        <a href="{% url 'favorites' %}" class="position-relative">
                             <i class="far fa-heart"></i> Избранное
+                            <span id="favorites-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill" style="background: var(--accent); font-size: 10px;">0</span>
                         </a>
                         {% if user.is_authenticated %}
                         <a href="{% url 'profile' %}">
@@ -453,7 +454,19 @@
             })
             .catch(error => console.error('Error:', error));
         }
-        
+        function updateFavoritesCount() {
+            fetch('/api/favorites/')
+                .then(response => response.json())
+                .then(data => {
+                    const count = data.length || 0;
+                    const favoritesCount = document.getElementById('favorites-count');
+                    if (favoritesCount) favoritesCount.textContent = count;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Вызываем при загрузке страницы
+        updateFavoritesCount();
         function showNotification(message) {
             const notification = document.createElement('div');
             notification.className = 'notification';

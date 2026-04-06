@@ -97,13 +97,56 @@
         transform: translateY(-5px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.1);
     }
+    .product-image-wrapper {
+        position: relative;
+    }
     .product-image {
         height: 250px;
         object-fit: cover;
         width: 100%;
     }
+    .favorite-icon-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.5);
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        backdrop-filter: blur(4px);
+        z-index: 10;
+    }
+    .favorite-icon-btn:hover {
+        transform: scale(1.1);
+        background: rgba(0,0,0,0.7);
+    }
+    .favorite-icon-btn i {
+        font-size: 18px;
+    }
+    .discount-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #ff4444;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: bold;
+        z-index: 10;
+    }
     .product-info {
         padding: 15px;
+    }
+    .product-info a {
+        text-decoration: none !important;
+        color: inherit;
     }
     .product-category {
         font-size: 11px;
@@ -130,23 +173,17 @@
         margin-left: 8px;
         font-weight: normal;
     }
-    .discount-badge {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        background: #ff4444;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: bold;
-    }
     .rating {
         margin: 8px 0;
     }
     .rating-stars {
         color: #ffc107;
         font-size: 12px;
+    }
+    .product-sizes {
+        font-size: 11px;
+        color: var(--gray);
+        margin: 8px 0;
     }
     .btn-cart {
         width: 100%;
@@ -226,56 +263,53 @@
         background: var(--accent);
         color: white;
     }
+    .notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--accent);
+        color: var(--bg-cream);
+        padding: 12px 24px;
+        border-radius: 30px;
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
 </style>
 
 <div class="container py-4">
     <div class="row">
-        <!-- Боковая панель с фильтрами -->
         <div class="col-md-3">
             <div class="filter-section">
                 <div class="filter-title">Фильтры</div>
-                
-                <!-- Категория -->
                 <div class="filter-group">
                     <label class="filter-label">Категория</label>
                     <select id="filter-category" class="filter-select">
                         <option value="">Все категории</option>
                     </select>
                 </div>
-                
-                <!-- Тип серебра (выпадающий список) -->
                 <div class="filter-group">
                     <label class="filter-label">Тип серебра</label>
                     <select id="filter-silver-type" class="filter-select">
                         <option value="">Все</option>
-                        <option value="sterling">Стерлинговое серебро (925)</option>
-                        <option value="fine">Чистое серебро (999)</option>
-                        <option value="argentium">Аргентиум серебро</option>
-                        <option value="mexican">Мексиканское серебро</option>
-                        <option value="oxidized">Оксидированное серебро</option>
-                        <option value="rhodium_plated">Серебро с родиевым покрытием</option>
-                        <option value="black">Черненое серебро</option>
-                        <option value="matte">Матовое серебро</option>
+                        <option value="sterling">Стерлинговое (925)</option>
+                        <option value="fine">Чистое (999)</option>
+                        <option value="oxidized">Черненое</option>
+                        <option value="matte">Матовое</option>
                     </select>
                 </div>
-                
-                <!-- Проба (выпадающий список) -->
                 <div class="filter-group">
                     <label class="filter-label">Проба</label>
                     <select id="filter-fineness" class="filter-select">
                         <option value="">Все</option>
-                        <option value="800">800 проба</option>
-                        <option value="830">830 проба</option>
-                        <option value="875">875 проба</option>
-                        <option value="900">900 проба</option>
-                        <option value="916">916 проба</option>
                         <option value="925">925 проба</option>
-                        <option value="960">960 проба</option>
-                        <option value="999">999 проба</option>
+                        <option value="875">875 проба</option>
+                        <option value="830">830 проба</option>
                     </select>
                 </div>
-                
-                <!-- Цена -->
                 <div class="filter-group">
                     <label class="filter-label">Цена (₽)</label>
                     <div class="price-inputs">
@@ -283,8 +317,6 @@
                         <input type="number" id="price-max" placeholder="До">
                     </div>
                 </div>
-                
-                <!-- Наличие камней -->
                 <div class="filter-group">
                     <label class="filter-label">Камни</label>
                     <select id="filter-stones" class="filter-select">
@@ -293,31 +325,15 @@
                         <option value="false">Без камней</option>
                     </select>
                 </div>
-                
-                <!-- Тип камня -->
                 <div class="filter-group">
                     <label class="filter-label">Тип камня</label>
                     <select id="filter-stone-type" class="filter-select">
                         <option value="">Любой</option>
                         <option value="diamond">Бриллиант</option>
                         <option value="ruby">Рубин</option>
-                        <option value="sapphire">Сапфир</option>
-                        <option value="emerald">Изумруд</option>
-                        <option value="topaz">Топаз</option>
-                        <option value="amethyst">Аметист</option>
-                        <option value="garnet">Гранат</option>
-                        <option value="peridot">Перидот</option>
-                        <option value="citrine">Цитрин</option>
-                        <option value="aquamarine">Аквамарин</option>
-                        <option value="tourmaline">Турмалин</option>
-                        <option value="opal">Опал</option>
                         <option value="pearl">Жемчуг</option>
-                        <option value="cubic_zirconia">Фианит</option>
-                        <option value="moonstone">Лунный камень</option>
                     </select>
                 </div>
-                
-                <!-- Акция -->
                 <div class="filter-group">
                     <label class="filter-label">Акция</label>
                     <select id="filter-discount" class="filter-select">
@@ -325,13 +341,10 @@
                         <option value="true">Со скидкой</option>
                     </select>
                 </div>
-                
                 <button class="btn-apply" id="apply-filters">Применить</button>
                 <button class="btn-reset" id="reset-filters">Сбросить</button>
             </div>
         </div>
-        
-        <!-- Список товаров -->
         <div class="col-md-9">
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                 <div class="products-count" id="products-count">Загрузка...</div>
@@ -342,17 +355,14 @@
                     <option value="-average_rating">По популярности</option>
                 </select>
             </div>
-            
             <div class="row" id="products-container">
                 <div class="col-12 text-center py-5 text-secondary">Загрузка...</div>
             </div>
-            
             <div id="pagination" class="pagination"></div>
         </div>
     </div>
 </div>
 
-<!-- Модальное окно выбора размера -->
 <div id="size-modal" class="modal">
     <div class="modal-content">
         <h3 style="margin-bottom:20px; color:var(--accent);">Выберите размер</h3>
@@ -374,71 +384,37 @@ let totalPages = 1;
 let selectedProductId = null;
 let selectedProductSizes = [];
 let selectedSize = null;
+let currentFavorites = [];
 
 function buildUrl() {
     let url = '/api/products/?';
     const params = [];
-    
-    // Поиск из URL
     const urlParams = new URLSearchParams(window.location.search);
     const searchQuery = urlParams.get('search');
-    if (searchQuery) {
-        params.push(`search=${encodeURIComponent(searchQuery)}`);
-    }
-    
-    // Категория
+    if (searchQuery) params.push(`search=${encodeURIComponent(searchQuery)}`);
     const category = document.getElementById('filter-category').value;
     if (category) params.push(`category=${category}`);
-    
-    // Тип серебра
     const silverType = document.getElementById('filter-silver-type').value;
     if (silverType) params.push(`silver_type=${silverType}`);
-    
-    // Проба
     const fineness = document.getElementById('filter-fineness').value;
     if (fineness) params.push(`fineness=${fineness}`);
-    
-    // Цена (с валидацией - не даём отрицательные значения)
     let priceMin = document.getElementById('price-min').value;
     let priceMax = document.getElementById('price-max').value;
-    
-    if (priceMin && parseFloat(priceMin) < 0) {
-        priceMin = 0;
-        document.getElementById('price-min').value = 0;
-    }
-    if (priceMax && parseFloat(priceMax) < 0) {
-        priceMax = 0;
-        document.getElementById('price-max').value = 0;
-    }
-    
-    if (priceMin && priceMin !== '') params.push(`price_min=${priceMin}`);
-    if (priceMax && priceMax !== '') params.push(`price_max=${priceMax}`);
-    
-    // Камни (наличие)
+    if (priceMin && parseFloat(priceMin) < 0) priceMin = 0;
+    if (priceMax && parseFloat(priceMax) < 0) priceMax = 0;
+    if (priceMin) params.push(`price_min=${priceMin}`);
+    if (priceMax) params.push(`price_max=${priceMax}`);
     const stones = document.getElementById('filter-stones').value;
     if (stones === 'true') params.push(`stones=true`);
     if (stones === 'false') params.push(`stones=false`);
-    
-    // Тип камня (ВАЖНО: правильное имя поля в API)
     const stoneType = document.getElementById('filter-stone-type').value;
-    if (stoneType && stoneType !== '') {
-        // В API поле называется stone_type (с подчёркиванием)
-        params.push(`stone_type=${stoneType}`);
-    }
-    
-    // Акция
+    if (stoneType) params.push(`stone_type=${stoneType}`);
     const discount = document.getElementById('filter-discount').value;
     if (discount === 'true') params.push(`has_discount=true`);
-    
-    // Сортировка
     const sort = document.getElementById('sort-select').value;
     params.push(`ordering=${sort}`);
-    
-    // Пагинация
     params.push(`page=${currentPage}`);
     params.push(`page_size=9`);
-    
-    console.log('URL:', url + params.join('&')); // Для отладки
     return url + params.join('&');
 }
 
@@ -456,23 +432,46 @@ function loadCategories() {
         });
 }
 
+function loadFavorites() {
+    return fetch('/api/favorites/')
+        .then(r => r.json())
+        .then(data => {
+            currentFavorites = data;
+            return currentFavorites;
+        })
+        .catch(() => {
+            currentFavorites = [];
+            return currentFavorites;
+        });
+}
+
+function isInFavorites(productId) {
+    return currentFavorites.some(f => f.product.id === productId);
+}
+
 function renderProductCard(product) {
-    const sizes = product.size ? product.size.split(',').map(s => s.trim()) : [];
     const discount = product.discount_percent > 0 ? `<span class="discount-badge">-${product.discount_percent}%</span>` : '';
     const oldPrice = product.old_price ? `<span class="old-price">${product.old_price} ₽</span>` : '';
     const imageUrl = product.image || '/static/shop/images/placeholder.png';
     const rating = product.average_rating || 0;
     const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
-    // Экранируем для безопасной вставки в data-атрибут
+    const sizes = product.size ? product.size.split(',').map(s => s.trim()) : [];
     const sizesJson = JSON.stringify(sizes).replace(/"/g, '&quot;');
+    const inFav = isInFavorites(product.id);
+    const heartColor = inFav ? '#ff4444' : 'white';
     
     return `
         <div class="col-md-4 mb-4">
             <div class="product-card">
-                ${discount}
-                <a href="/product/${product.id}/">
-                    <img src="${imageUrl}" class="product-image" onerror="this.src='/static/shop/images/placeholder.png'">
-                </a>
+                <div class="product-image-wrapper">
+                    <a href="/product/${product.id}/">
+                        <img src="${imageUrl}" class="product-image" onerror="this.src='/static/shop/images/placeholder.png'">
+                    </a>
+                    <button class="favorite-icon-btn" data-product-id="${product.id}" onclick="toggleFavoriteInCatalog(${product.id}, event)">
+                        <i class="fas fa-heart" style="color: ${heartColor};"></i>
+                    </button>
+                    ${discount}
+                </div>
                 <div class="product-info">
                     <div class="product-category">${product.category_name || 'Украшение'}</div>
                     <a href="/product/${product.id}/">
@@ -485,8 +484,8 @@ function renderProductCard(product) {
                     <div class="product-price">
                         ${product.price} ₽ ${oldPrice}
                     </div>
-                    <div style="font-size: 12px; color: gray; margin: 5px 0;">
-                        ${sizes.length > 0 ? `Размеры: ${sizes.join(', ')}` : 'Без размера'}
+                    <div class="product-sizes">
+                        ${sizes.length > 0 ? `Размеры: ${sizes.join(', ')}` : '<span class="text-muted">Без размера</span>'}
                     </div>
                     <button class="btn-cart" data-product-id="${product.id}" data-sizes='${sizesJson}'>В корзину</button>
                 </div>
@@ -500,28 +499,28 @@ function loadProducts() {
     const container = document.getElementById('products-container');
     container.innerHTML = '<div class="col-12 text-center py-5 text-secondary">Загрузка...</div>';
     
-    fetch(url)
-        .then(r => r.json())
-        .then(data => {
-            const products = data.results || data;
-            totalPages = Math.ceil((data.count || products.length) / 9);
-            document.getElementById('products-count').textContent = `Найдено товаров: ${data.count || products.length}`;
-            
-            if (products.length === 0) {
-                container.innerHTML = '<div class="col-12 text-center py-5 text-secondary">Товаров не найдено</div>';
-                return;
-            }
-            
-            container.innerHTML = '';
-            products.forEach(product => {
-                container.innerHTML += renderProductCard(product);
+    loadFavorites().then(() => {
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                const products = data.results || data;
+                totalPages = Math.ceil((data.count || products.length) / 9);
+                document.getElementById('products-count').textContent = `Найдено товаров: ${data.count || products.length}`;
+                if (products.length === 0) {
+                    container.innerHTML = '<div class="col-12 text-center py-5 text-secondary">Товаров не найдено</div>';
+                    return;
+                }
+                container.innerHTML = '';
+                products.forEach(product => {
+                    container.innerHTML += renderProductCard(product);
+                });
+                renderPagination();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                container.innerHTML = '<div class="col-12 text-center py-5 text-danger">Ошибка загрузки</div>';
             });
-            renderPagination();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            container.innerHTML = '<div class="col-12 text-center py-5 text-danger">Ошибка загрузки</div>';
-        });
+    });
 }
 
 function renderPagination() {
@@ -530,7 +529,6 @@ function renderPagination() {
         container.innerHTML = '';
         return;
     }
-    
     let html = '';
     for (let i = 1; i <= totalPages; i++) {
         html += `<a href="#" class="page-link ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i}); return false;">${i}</a>`;
@@ -546,14 +544,11 @@ function goToPage(page) {
 }
 
 function openSizeModal(productId, sizes) {
-    console.log('openSizeModal вызван', productId, sizes);
     selectedProductId = productId;
     selectedProductSizes = sizes || [];
     selectedSize = null;
-    
     const container = document.getElementById('size-options');
     if (!container) return;
-    
     if (!sizes || sizes.length === 0) {
         container.innerHTML = '<div class="text-secondary">Размер не указан</div>';
     } else {
@@ -562,7 +557,6 @@ function openSizeModal(productId, sizes) {
             html += `<button class="size-btn" data-size="${size}">${size}</button>`;
         });
         container.innerHTML = html;
-        
         document.querySelectorAll('.size-btn').forEach(btn => {
             btn.onclick = function() {
                 document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
@@ -571,23 +565,22 @@ function openSizeModal(productId, sizes) {
             };
         });
     }
-    
     document.getElementById('modal-quantity').value = 1;
     document.getElementById('size-modal').classList.add('active');
 }
 
 function closeSizeModal() {
     document.getElementById('size-modal').classList.remove('active');
+    selectedProductId = null;
+    selectedSize = null;
 }
 
 function addToCart() {
     const quantity = document.getElementById('modal-quantity').value;
-    
     if (selectedProductSizes.length > 0 && !selectedSize) {
         alert('Выберите размер');
         return;
     }
-    
     fetch('/api/cart/add_item/', {
         method: 'POST',
         headers: {
@@ -600,41 +593,112 @@ function addToCart() {
             size: selectedSize || ''
         })
     })
-    .then(r => r.json())
+    .then(response => response.json())
     .then(() => {
         closeSizeModal();
         updateCartCount();
-        alert('Товар добавлен в корзину!');
+        showNotification('Товар добавлен в корзину!');
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Ошибка при добавлении');
+        showNotification('Ошибка при добавлении в корзину');
     });
 }
 
+function toggleFavoriteInCatalog(productId, event) {
+    event.stopPropagation();
+    event.preventDefault();
+    
+    const btn = event.currentTarget;
+    const icon = btn.querySelector('i');
+    const isActive = icon.style.color === 'rgb(255, 68, 68)' || icon.style.color === '#ff4444';
+    
+    if (!isAuthenticated()) {
+        showNotification('Войдите, чтобы добавить в избранное');
+        setTimeout(() => {
+            window.location.href = '/accounts/login/';
+        }, 1500);
+        return;
+    }
+    
+    if (isActive) {
+        const favorite = currentFavorites.find(f => f.product.id === productId);
+        if (favorite) {
+            fetch(`/api/favorites/${favorite.id}/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') }
+            })
+            .then(() => {
+                icon.style.color = 'white';
+                currentFavorites = currentFavorites.filter(f => f.id !== favorite.id);
+                showNotification('Удалено из избранного');
+                updateFavoritesCount();
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    } else {
+        fetch('/api/favorites/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ product_id: productId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            icon.style.color = '#ff4444';
+            currentFavorites.push(data);
+            showNotification('Добавлено в избранное');
+            updateFavoritesCount();
+        })
+        .catch(error => console.error('Error:', error));
+    }
+}
+
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 2000);
+}
+
 function getCookie(name) {
-    let value = null;
+    let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');
         for (let i = 0; i < cookies.length; i++) {
             const cookie = cookies[i].trim();
             if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                value = decodeURIComponent(cookie.substring(name.length + 1));
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                 break;
             }
         }
     }
-    return value;
+    return cookieValue;
 }
 
 function updateCartCount() {
     fetch('/api/cart/')
-        .then(r => r.json())
+        .then(response => response.json())
         .then(data => {
             const count = data.total_items || 0;
             const cartCount = document.getElementById('cart-count');
             if (cartCount) cartCount.textContent = count;
-        });
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function updateFavoritesCount() {
+    const favoritesCount = document.getElementById('favorites-count');
+    if (favoritesCount) {
+        favoritesCount.textContent = currentFavorites.length;
+    }
+}
+
+function isAuthenticated() {
+    return document.body.classList.contains('user-authenticated');
 }
 
 function escapeHtml(text) {
@@ -644,11 +708,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-document.getElementById('apply-filters').addEventListener('click', () => {
-    currentPage = 1;
-    loadProducts();
-});
-
+document.getElementById('apply-filters').addEventListener('click', () => { currentPage = 1; loadProducts(); });
 document.getElementById('reset-filters').addEventListener('click', () => {
     document.getElementById('filter-category').value = '';
     document.getElementById('filter-silver-type').value = '';
@@ -662,38 +722,9 @@ document.getElementById('reset-filters').addEventListener('click', () => {
     currentPage = 1;
     loadProducts();
 });
-
-document.getElementById('sort-select').addEventListener('change', () => {
-    currentPage = 1;
-    loadProducts();
-});
-
+document.getElementById('sort-select').addEventListener('change', () => { currentPage = 1; loadProducts(); });
 document.getElementById('confirm-add-to-cart').addEventListener('click', addToCart);
 
-loadCategories();
-loadProducts();
-// ========== ВАЛИДАЦИЯ ПОЛЕЙ ЦЕНЫ ==========
-// Этот код нужно добавить после загрузки всех функций
-
-const priceMinInput = document.getElementById('price-min');
-const priceMaxInput = document.getElementById('price-max');
-
-if (priceMinInput) {
-    priceMinInput.addEventListener('input', function() {
-        if (this.value && parseFloat(this.value) < 0) {
-            this.value = 0;
-        }
-    });
-}
-
-if (priceMaxInput) {
-    priceMaxInput.addEventListener('input', function() {
-        if (this.value && parseFloat(this.value) < 0) {
-            this.value = 0;
-        }
-    });
-}
-// Обработчик кнопок "В корзину" (делегирование)
 document.addEventListener('click', function(e) {
     const btn = e.target.closest('.btn-cart');
     if (btn && btn.classList.contains('btn-cart')) {
@@ -703,5 +734,20 @@ document.addEventListener('click', function(e) {
     }
 });
 
+const priceMinInput = document.getElementById('price-min');
+const priceMaxInput = document.getElementById('price-max');
+if (priceMinInput) {
+    priceMinInput.addEventListener('input', function() {
+        if (this.value && parseFloat(this.value) < 0) this.value = 0;
+    });
+}
+if (priceMaxInput) {
+    priceMaxInput.addEventListener('input', function() {
+        if (this.value && parseFloat(this.value) < 0) this.value = 0;
+    });
+}
+
+loadCategories();
+loadProducts();
 </script>
 {% endblock %}

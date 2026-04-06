@@ -375,6 +375,7 @@ function removeFromFavorites(favoriteId, productId) {
         favoritesList = favoritesList.filter(f => f.id !== favoriteId);
         renderFavorites();
         showNotification('Товар удалён из избранного');
+        updateFavoritesCount();
     })
     .catch(error => {
         console.error('Error:', error);
