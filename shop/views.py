@@ -367,3 +367,7 @@ def checkout_page(request):
 def orders(request):
     """Страница моих заказов"""
     return render(request, 'shop/orders.html')
+
+def about(request):
+    """Страница О нас"""
+    return render(request, 'shop/about.html')

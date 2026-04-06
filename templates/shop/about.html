@@ -1,0 +1,381 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+:root {
+    --bg-cream: #F7F2EB;
+    --accent: #5D6E80;
+    --brown: #7A6B5B;
+    --gray: #808E92;
+}
+
+.about-page {
+    background: var(--bg-cream);
+    padding: 40px 0;
+    min-height: 70vh;
+}
+
+.about-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.breadcrumbs {
+    font-size: 14px;
+    color: var(--gray);
+    margin-bottom: 15px;
+}
+
+.breadcrumbs a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+    text-decoration: underline;
+}
+
+.about-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.2fr;
+    gap: 25px;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.about-img {
+    width: 100%;
+    border-radius: 20px;
+    object-fit: cover;
+    height: 280px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.about-text {
+    font-size: 14px;
+    color: var(--brown);
+    line-height: 1.7;
+}
+
+.about-text p {
+    margin-bottom: 15px;
+}
+
+.about-stats {
+    margin-top: 25px;
+    border-top: 1px solid var(--gray);
+    padding-top: 20px;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-around;
+    gap: 20px;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.stat-label {
+    font-size: 13px;
+    color: var(--gray);
+    margin-top: 5px;
+}
+
+.section-title {
+    margin: 50px 0 25px;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--accent);
+    border-left: 4px solid var(--accent);
+    padding-left: 15px;
+}
+
+/* Команда - новый дизайн */
+.team {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+}
+
+.team-card {
+    text-align: center;
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.team-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+}
+
+.team-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--brown));
+    border-radius: 4px 4px 0 0;
+}
+
+.team-card img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.team-card:hover img {
+    transform: scale(1.05);
+}
+
+.team-info {
+    padding: 20px;
+    background: white;
+}
+
+.team-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+}
+
+.team-role {
+    font-size: 13px;
+    color: var(--gray);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* Цитата под командой */
+.team-quote {
+    text-align: center;
+    margin: 0px 0 20px;
+    padding: 35px 25px;
+    background: linear-gradient(135deg, white 0%, #fefefe 100%);
+    border-radius: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid rgba(93,110,128,0.1);
+}
+
+.team-quote i {
+    font-size: 32px;
+    color: var(--accent);
+    opacity: 0.5;
+    margin-bottom: 15px;
+    display: inline-block;
+}
+
+.team-quote p {
+    font-size: 18px;
+    color: var(--brown);
+    line-height: 1.6;
+    font-style: italic;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.team-quote .quote-author {
+    margin-top: 15px;
+    font-size: 13px;
+    color: var(--gray);
+    letter-spacing: 1px;
+}
+
+/* Сертификаты */
+.certs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+}
+
+.cert-item {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.cert-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.cert-item img {
+    width: 100%;
+    height: 430px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.cert-item:hover img {
+    transform: scale(1.02);
+}
+
+.cert-title {
+    padding: 15px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    border-top: 1px solid #e9ecef;
+    background: white;
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+    .about-top {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .team {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .certs {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .team {
+        grid-template-columns: 1fr;
+    }
+    
+    .certs {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .team-quote p {
+        font-size: 15px;
+    }
+}
+</style>
+
+<div class="about-page">
+    <div class="about-container">
+        
+        <div class="breadcrumbs">
+            <a href="/">Главная</a> / <span>О нас</span>
+        </div>
+
+        <div class="about-top">
+            <img src="{% static 'shop/img/about1.jpg' %}" class="about-img" alt="Магазин Argentic" onerror="this.src='https://via.placeholder.com/400x280?text=Argentic'">
+            <img src="{% static 'shop/img/about2.jpg' %}" class="about-img" alt="Изделия Argentic" onerror="this.src='https://via.placeholder.com/400x280?text=Jewelry'">
+            
+            <div class="about-text">
+                <p>
+                    Наша основная миссия — помогать каждому клиенту раскрыть и подчеркнуть его индивидуальность 
+                    с помощью идеально подобранного ювелирного украшения.
+                </p>
+                <p>
+                    Мы создаём не просто аксессуары, а ключ к уверенности в себе.
+                </p>
+                <p>
+                    Магазин был открыт в 2010 году. Наша история — это тысячи улыбок и счастливых глаз клиентов.
+                </p>
+                
+                <div class="about-stats">
+                    <div class="stats-row">
+                        <div class="stat">
+                            <div class="stat-number">15+</div>
+                            <div class="stat-label">лет опыта</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">50+</div>
+                            <div class="stat-label">наград</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">10K+</div>
+                            <div class="stat-label">довольных клиентов</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">Наша команда</div>
+        <div class="team-quote">
+            <i class="fas fa-quote-left"></i>
+            <p>Наша команда — наши главные драгоценности. Вместе мы создаем для вас красоту, за которой стоят годы опыта и любовь к своему делу.</p>
+            <div class="quote-author">Argentic Jewelry Team</div>
+        </div>
+        <div class="team">
+            <div class="team-card">
+                <img src="{% static 'shop/img/team1.jpg' %}" alt="Светлана Иванова" onerror="this.src='https://via.placeholder.com/300x300?text=Team'">
+                <div class="team-info">
+                    <div class="team-name">Светлана Иванова</div>
+                    <div class="team-role">Менеджер</div>
+                </div>
+            </div>
+            <div class="team-card">
+                <img src="{% static 'shop/img/team2.jpg' %}" alt="Игорь Петров" onerror="this.src='https://via.placeholder.com/300x300?text=Team'">
+                <div class="team-info">
+                    <div class="team-name">Игорь Петров</div>
+                    <div class="team-role">Бренд-мастер</div>
+                </div>
+            </div>
+            <div class="team-card">
+                <img src="{% static 'shop/img/team3.jpg' %}" alt="Алексей Ковалев" onerror="this.src='https://via.placeholder.com/300x300?text=Team'">
+                <div class="team-info">
+                    <div class="team-name">Алексей Ковалев</div>
+                    <div class="team-role">Директор</div>
+                </div>
+            </div>
+            <div class="team-card">
+                <img src="{% static 'shop/img/team4.jpg' %}" alt="Марина Сергеева" onerror="this.src='https://via.placeholder.com/300x300?text=Team'">
+                <div class="team-info">
+                    <div class="team-name">Марина Сергеева</div>
+                    <div class="team-role">Ювелир</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">Сертификаты и лицензии</div>
+        
+        <div class="certs">
+            <div class="cert-item">
+                <img src="{% static 'shop/img/cert1.jpg' %}" alt="Сертификат 1" onerror="this.src='https://via.placeholder.com/300x430?text=Certificate'">
+                <div class="cert-title">Сертификат качества</div>
+            </div>
+            <div class="cert-item">
+                <img src="{% static 'shop/img/cert2.jpg' %}" alt="Сертификат 2" onerror="this.src='https://via.placeholder.com/300x430?text=Certificate'">
+                <div class="cert-title">Лицензия</div>
+            </div>
+            <div class="cert-item">
+                <img src="{% static 'shop/img/cert3.jpg' %}" alt="Сертификат 3" onerror="this.src='https://via.placeholder.com/300x430?text=Certificate'">
+                <div class="cert-title">Гарантия подлинности</div>
+            </div>
+            <div class="cert-item">
+                <img src="{% static 'shop/img/cert4.jpg' %}" alt="Сертификат 4" onerror="this.src='https://via.placeholder.com/300x430?text=Certificate'">
+                <div class="cert-title">Международный стандарт</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
