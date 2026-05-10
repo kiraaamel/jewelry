@@ -727,7 +727,6 @@
     </div>
 </div>
 <!-- Модальное окно СБП -->
-<!-- Модальное окно СБП -->
 <div id="sbp-modal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeSbpModal()">&times;</span>
@@ -898,7 +897,6 @@ function updateTotals() {
     finalPrice += deliveryPrice;
     finalPrice += giftWrapPrice;
     
-    // Бонусы, которые будут начислены (5% от итоговой суммы после списания бонусов и доставки)
     const earnBonus = Math.floor(finalPrice * 0.05);
     
     const totalEl = document.getElementById('total');
@@ -925,9 +923,7 @@ function updateTotals() {
 function checkUserHasOrders() {
     return fetch('/api/orders/')
         .then(r => r.json())
-        .then(orders => {
-            return orders.length > 0;
-        });
+        .then(orders => orders.length > 0);
 }
 
 function applyPromo() {
@@ -1014,8 +1010,6 @@ function initDeliveryMethods() {
             }
         });
     });
-    
-    updateDeliveryDateTime();
 }
 
 function initPaymentMethods() {
@@ -1164,16 +1158,23 @@ function formatDate(daysToAdd = 0) {
     return `${day} ${month}`;
 }
 
+function getAvailableDates() {
+    const dates = [];
+    for (let i = 1; i <= 7; i++) {
+        dates.push({
+            value: i,
+            label: formatDate(i)
+        });
+    }
+    return dates;
+}
+
 function updateDeliveryDateTime() {
     const deliveryType = getSelectedDelivery();
     const container = document.getElementById('delivery-date-content');
     const section = document.getElementById('delivery-date-section');
     
     if (!container || !section) return;
-    
-    const today = formatDate(0);
-    const tomorrow = formatDate(1);
-    const inThreeDays = formatDate(3);
     
     section.style.display = 'none';
     container.innerHTML = '';
@@ -1182,6 +1183,29 @@ function updateDeliveryDateTime() {
         section.style.display = 'block';
         const now = new Date();
         const currentHour = now.getHours();
+        const currentDay = now.getDate();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        // Показываем только сегодня и завтра для самовывоза
+        const today = new Date(currentYear, currentMonth, currentDay);
+        const tomorrow = new Date(currentYear, currentMonth, currentDay + 1);
+        
+        const formatDateForPickup = (date) => {
+            return `${date.getDate()} ${date.toLocaleString('ru-RU', { month: 'long' })}`;
+        };
+        
+        let html = `<div style="margin-bottom: 15px;"><label style="font-weight: 500; color: var(--brown);">Выберите дату:</label>
+                    <select id="pickup-date-select" style="width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #ddd; margin-top: 8px;">`;
+        
+        // Добавляем сегодня
+        html += `<option value="today">${formatDateForPickup(today)} (сегодня)</option>`;
+        // Добавляем завтра
+        html += `<option value="tomorrow">${formatDateForPickup(tomorrow)} (завтра)</option>`;
+        html += `</select></div>`;
+        
+        html += `<div style="margin-bottom: 8px; font-size: 13px; color: var(--brown);">Выберите время:</div>
+                 <div style="display: flex; flex-wrap: wrap; gap: 8px;" id="pickup-time-buttons">`;
         
         const allTimes = [
             { time: '10:00', active: currentHour < 10 },
@@ -1191,20 +1215,25 @@ function updateDeliveryDateTime() {
             { time: '18:00', active: currentHour < 18 }
         ];
         
-        let buttonsHtml = `<div style="margin-bottom: 8px; font-size: 13px; color: var(--brown);">📅 ${today}</div><div style="display: flex; flex-wrap: wrap; gap: 8px;">`;
-        
         allTimes.forEach(t => {
             if (t.active) {
-                buttonsHtml += `<button type="button" class="delivery-time-btn" data-time="${t.time}" style="padding: 8px 16px; border: 1px solid var(--accent); border-radius: 30px; background: white; color: var(--accent); cursor: pointer;">${t.time}</button>`;
+                html += `<button type="button" class="delivery-time-btn" data-time="${t.time}" style="padding: 8px 16px; border: 1px solid var(--accent); border-radius: 30px; background: white; color: var(--accent); cursor: pointer;">${t.time}</button>`;
             }
         });
         
         if (currentHour >= 18) {
-            buttonsHtml += `<div style="width: 100%; padding: 8px; background: #f0f0f0; border-radius: 8px; text-align: center; color: var(--gray);">Заказы после 18:00 будут доступны к самовывозу завтра с 10:00</div>`;
+            html += `<div style="width: 100%; padding: 8px; background: #f0f0f0; border-radius: 8px; text-align: center; color: var(--gray); margin-top: 10px;">Заказы после 18:00 будут доступны к самовывозу завтра с 10:00</div>`;
         }
         
-        buttonsHtml += `</div>`;
-        container.innerHTML = buttonsHtml;
+        html += `</div>`;
+        container.innerHTML = html;
+        
+        // Автоматически выбираем первый активный час
+        const firstActiveBtn = document.querySelector('#pickup-time-buttons .delivery-time-btn');
+        if (firstActiveBtn) {
+            firstActiveBtn.style.background = 'var(--accent)';
+            firstActiveBtn.style.color = 'white';
+        }
         
         document.querySelectorAll('.delivery-time-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
@@ -1220,14 +1249,31 @@ function updateDeliveryDateTime() {
     } 
     else if (deliveryType === 'courier') {
         section.style.display = 'block';
-        container.innerHTML = `
-            <div style="margin-bottom: 8px; font-size: 13px; color: var(--brown);">📅 ${tomorrow}</div>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                <button type="button" class="delivery-time-btn" data-time="10:00-14:00" style="padding: 8px 16px; border: 1px solid var(--accent); border-radius: 30px; background: white; color: var(--accent); cursor: pointer;">10:00 - 14:00</button>
-                <button type="button" class="delivery-time-btn" data-time="14:00-18:00" style="padding: 8px 16px; border: 1px solid var(--accent); border-radius: 30px; background: white; color: var(--accent); cursor: pointer;">14:00 - 18:00</button>
-                <button type="button" class="delivery-time-btn" data-time="18:00-22:00" style="padding: 8px 16px; border: 1px solid var(--accent); border-radius: 30px; background: white; color: var(--accent); cursor: pointer;">18:00 - 22:00</button>
-            </div>
-        `;
+        const dates = getAvailableDates();
+        
+        let html = `<div style="margin-bottom: 15px;"><label style="font-weight: 500; color: var(--brown);">Выберите дату:</label>
+                    <select id="courier-date-select" style="width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #ddd; margin-top: 8px;">`;
+        
+        dates.forEach(date => {
+            html += `<option value="${date.value}">${date.label}</option>`;
+        });
+        html += `</select></div>`;
+        
+        html += `<div style="margin-bottom: 8px; font-size: 13px; color: var(--brown);">Выберите интервал доставки:</div>
+                 <div style="display: flex; flex-wrap: wrap; gap: 8px;" id="courier-time-buttons">
+                    <button type="button" class="delivery-time-btn" data-time="10:00-14:00" style="padding: 8px 16px; border: 1px solid var(--accent); border-radius: 30px; background: white; color: var(--accent); cursor: pointer;">10:00 - 14:00</button>
+                    <button type="button" class="delivery-time-btn" data-time="14:00-18:00" style="padding: 8px 16px; border: 1px solid var(--accent); border-radius: 30px; background: white; color: var(--accent); cursor: pointer;">14:00 - 18:00</button>
+                    <button type="button" class="delivery-time-btn" data-time="18:00-22:00" style="padding: 8px 16px; border: 1px solid var(--accent); border-radius: 30px; background: white; color: var(--accent); cursor: pointer;">18:00 - 22:00</button>
+                 </div>`;
+        
+        container.innerHTML = html;
+        
+        // Автоматически выбираем первый интервал
+        const firstTimeBtn = document.querySelector('#courier-time-buttons .delivery-time-btn');
+        if (firstTimeBtn) {
+            firstTimeBtn.style.background = 'var(--accent)';
+            firstTimeBtn.style.color = 'white';
+        }
         
         document.querySelectorAll('.delivery-time-btn').forEach(btn => {
             btn.addEventListener('click', function(e) {
@@ -1243,6 +1289,7 @@ function updateDeliveryDateTime() {
     }
     else if (deliveryType === 'post') {
         section.style.display = 'block';
+        const inThreeDays = formatDate(3);
         container.innerHTML = `
             <div style="padding: 10px; background: #f8f9fa; border-radius: 12px; font-size: 13px;">
                 <i class="fas fa-envelope"></i> Ожидаемая дата получения: <strong>${inThreeDays}</strong>
@@ -1253,47 +1300,57 @@ function updateDeliveryDateTime() {
 
 function getDeliveryDateTime() {
     const deliveryType = getSelectedDelivery();
-    const today = formatDate(0);
-    const tomorrow = formatDate(1);
-    const inThreeDays = formatDate(3);
-    
     let date = '';
     let time = '';
     
     if (deliveryType === 'pickup') {
-        date = today;
-        const selectedBtn = document.querySelector('.delivery-time-btn[style*="background: var(--accent)"]');
-        if (selectedBtn) {
-            time = selectedBtn.getAttribute('data-time');
+        const dateSelect = document.getElementById('pickup-date-select');
+        if (dateSelect) {
+            const selectedValue = dateSelect.value;
+            if (selectedValue === 'today') {
+                date = formatDate(0);
+            } else {
+                date = formatDate(1);
+            }
         } else {
-            const firstBtn = document.querySelector('.delivery-time-btn');
+            date = formatDate(0);
+        }
+        
+        const selectedTimeBtn = document.querySelector('#pickup-time-buttons .delivery-time-btn[style*="background: var(--accent)"]');
+        if (selectedTimeBtn) {
+            time = selectedTimeBtn.getAttribute('data-time');
+        } else {
+            const firstBtn = document.querySelector('#pickup-time-buttons .delivery-time-btn');
             if (firstBtn) {
                 time = firstBtn.getAttribute('data-time');
-                firstBtn.style.background = 'var(--accent)';
-                firstBtn.style.color = 'white';
             } else {
-                time = 'не выбрано';
+                time = '10:00';
             }
         }
     } 
     else if (deliveryType === 'courier') {
-        date = tomorrow;
-        const selectedBtn = document.querySelector('.delivery-time-btn[style*="background: var(--accent)"]');
-        if (selectedBtn) {
-            time = selectedBtn.getAttribute('data-time');
+        const dateSelect = document.getElementById('courier-date-select');
+        if (dateSelect) {
+            const daysToAdd = parseInt(dateSelect.value);
+            date = formatDate(daysToAdd);
         } else {
-            const firstBtn = document.querySelector('.delivery-time-btn');
+            date = formatDate(1);
+        }
+        
+        const selectedTimeBtn = document.querySelector('#courier-time-buttons .delivery-time-btn[style*="background: var(--accent)"]');
+        if (selectedTimeBtn) {
+            time = selectedTimeBtn.getAttribute('data-time');
+        } else {
+            const firstBtn = document.querySelector('#courier-time-buttons .delivery-time-btn');
             if (firstBtn) {
                 time = firstBtn.getAttribute('data-time');
-                firstBtn.style.background = 'var(--accent)';
-                firstBtn.style.color = 'white';
             } else {
-                time = 'не выбран';
+                time = '10:00-14:00';
             }
         }
     }
     else if (deliveryType === 'post') {
-        date = inThreeDays;
+        date = formatDate(3);
         time = 'по получении';
     }
     
@@ -1326,20 +1383,17 @@ function closeSbpModal() {
 function initSbpButtons() {
     document.querySelectorAll('.sbp-app-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            // Убираем выделение со всех кнопок
             document.querySelectorAll('.sbp-app-btn').forEach(b => {
                 b.style.background = 'white';
                 b.style.color = 'var(--accent)';
                 b.style.border = '1px solid var(--accent)';
             });
-            // Выделяем нажатую кнопку
             this.style.background = 'var(--accent)';
             this.style.color = 'white';
             this.style.border = '1px solid var(--accent)';
             selectedSbpApp = this.dataset.app;
             document.getElementById('sbp-status').innerHTML = '';
             
-            // Показываем уведомление о выборе
             const appName = this.querySelector('span').innerText;
             document.getElementById('sbp-status').innerHTML = `<span style="color: green;">✓ Выбран ${appName}</span>`;
         });
@@ -1355,7 +1409,6 @@ function processSbpPayment() {
     const statusDiv = document.getElementById('sbp-status');
     statusDiv.innerHTML = '<span style="color: var(--accent);">Обработка платежа...</span>';
     
-    // Сохраняем способ оплаты как СБП
     if (pendingOrderData) {
         pendingOrderData.payment_method = 'sbp';
     }
@@ -1365,17 +1418,16 @@ function processSbpPayment() {
         
         setTimeout(function() {
             closeSbpModal();
-            // Отправляем заказ на сервер
             submitOrderToServer();
         }, 1500);
     }, 1000);
 }
 
 // ========== ОСНОВНЫЕ ФУНКЦИИ ОФОРМЛЕНИЯ ==========
+
 function submitOrderToServer() {
     const deliveryDateTime = getDeliveryDateTime();
     
-    // Проверяем, что данные заказа существуют
     if (!pendingOrderData) {
         showNotification('Ошибка: данные заказа не найдены');
         return;
@@ -1390,10 +1442,8 @@ function submitOrderToServer() {
         gift_wrap: pendingOrderData.gift_wrap,
         gift_message: pendingOrderData.gift_message,
         comment: pendingOrderData.comment,
-        use_bonus: pendingOrderData.use_bonus
+        phone: pendingOrderData.phone
     };
-    
-    console.log('Отправка заказа:', orderData); // Для отладки
     
     fetch('/api/orders/create_order/', {
         method: 'POST',
@@ -1405,24 +1455,23 @@ function submitOrderToServer() {
     })
     .then(response => {
         if (!response.ok) {
-            return response.json().then(err => { throw new Error(err.error || 'Ошибка сервера'); });
+            return response.text().then(text => {
+                try {
+                    const err = JSON.parse(text);
+                    throw new Error(err.error || 'Ошибка сервера');
+                } catch {
+                    throw new Error('Ошибка сервера: ' + text.substring(0, 100));
+                }
+            });
         }
         return response.json();
     })
     .then(data => {
-        console.log('Ответ сервера:', data); // Для отладки
         if (data.id) {
-            // Очищаем сохранённые данные
             localStorage.removeItem('checkout_promo_applied');
             localStorage.removeItem('checkout_bonus_applied');
-            
-            // Показываем уведомление
             showNotification(`✅ Заказ успешно оформлен! Номер заказа: ${data.order_number}`);
-            
-            // Обновляем счётчик корзины
             updateCartCount();
-            
-            // Перенаправляем на страницу заказов через 2 секунды
             setTimeout(function() {
                 window.location.href = '/orders/';
             }, 2000);
@@ -1463,8 +1512,18 @@ function showPaymentModal() {
     const deliveryAddress = getDeliveryAddress();
     
     if (!firstName) { showNotification('Введите имя'); return; }
+    
     if (!email) { showNotification('Введите email'); return; }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) { showNotification('Введите корректный email'); return; }
+    
     if (!phone) { showNotification('Введите телефон'); return; }
+    const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+    const phoneRegex = /^(\+7|7|8)?\d{10}$/;
+    if (!phoneRegex.test(cleanPhone)) {
+        showNotification('Введите корректный номер телефона (например: +7 999 123-45-67)');
+        return;
+    }
     
     const deliveryType = getSelectedDelivery();
     
@@ -1493,43 +1552,19 @@ function showPaymentModal() {
         return;
     }
     
-    if (deliveryType === 'pickup') {
-        const selectedBtn = document.querySelector('.delivery-time-btn[style*="background: var(--accent)"]');
-        if (!selectedBtn) {
-            showNotification('Выберите время самовывоза');
-            return;
-        }
-    }
-
-    if (deliveryType === 'courier') {
-        const selectedBtn = document.querySelector('.delivery-time-btn[style*="background: var(--accent)"]');
-        if (!selectedBtn) {
-            showNotification('Выберите временной интервал доставки');
-            return;
-        }
-    }
-    
     const totalEl = document.getElementById('total');
     if (!totalEl) return;
     
     const total = totalEl.innerText;
     const paymentMethod = getSelectedPayment();
-    
-    const deliveryDateTime = getDeliveryDateTime();
 
     pendingOrderData = {
         delivery_address: deliveryAddress,
         delivery_method: deliveryType,
-        delivery_date: deliveryDateTime.date,
-        delivery_time: deliveryDateTime.time,
         payment_method: paymentMethod,
         gift_wrap: giftWrapCheckbox ? giftWrapCheckbox.checked : false,
         gift_message: document.getElementById('gift_message') ? document.getElementById('gift_message').value : '',
         comment: document.getElementById('comment') ? document.getElementById('comment').value : '',
-        use_bonus: useBonus,
-        first_name: firstName,
-        last_name: document.getElementById('last_name') ? document.getElementById('last_name').value : '',
-        email: email,
         phone: phone
     };
     
@@ -1568,25 +1603,21 @@ function closePaymentModal() {
     if (cardNumberInput) cardNumberInput.value = '';
     if (cardExpiryInput) cardExpiryInput.value = '';
     if (cardCvvInput) cardCvvInput.value = '';
-
 }
+
 function processPayment() {
-    // Получаем значения полей карты
     let cardNumber = document.getElementById('card-number').value;
     let cardExpiry = document.getElementById('card-expiry').value;
     let cardCvv = document.getElementById('card-cvv').value;
     
-    // Удаляем пробелы и тире из номера карты
     cardNumber = cardNumber.replace(/\s/g, '').replace(/-/g, '');
     
-    // 1. Валидация номера карты (16 цифр)
     const cardNumberRegex = /^\d{16}$/;
     if (!cardNumberRegex.test(cardNumber)) {
         showNotification('Введите корректный номер карты (16 цифр)');
         return;
     }
     
-    // 2. Валидация срока действия
     let month, year;
     if (cardExpiry.includes('/')) {
         const parts = cardExpiry.split('/');
@@ -1613,7 +1644,6 @@ function processPayment() {
         return;
     }
     
-    // Проверка, что карта не просрочена
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
@@ -1623,22 +1653,17 @@ function processPayment() {
         return;
     }
     
-    // 3. Валидация CVV (3 цифры)
     const cvvRegex = /^\d{3}$/;
     if (!cvvRegex.test(cardCvv)) {
         showNotification('Введите корректный CVV код (3 цифры)');
         return;
     }
     
-    // Маскируем номер карты для отображения
     const maskedCard = '**** **** **** ' + cardNumber.slice(-4);
     showNotification(`Обработка платежа... Карта: ${maskedCard}`);
     
-    // Имитация обработки платежа
     setTimeout(function() {
-        // Закрываем модальное окно
         closePaymentModal();
-        // Отправляем заказ на сервер
         submitOrderToServer();
     }, 1500);
 }

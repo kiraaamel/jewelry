@@ -155,40 +155,71 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = (
             'id', 'order_number', 'user', 'created_at', 'status', 'status_display',
-            'total_price', 'delivery_address', 'delivery_method', 'payment_method',
+            'total_price', 'delivery_address', 'delivery_method', 'payment_method', 'delivery_date', 'delivery_time', 
             'gift_wrap', 'gift_message', 'comment', 'delivered_at', 'items', 'bonus_earned'
         )
         read_only_fields = ('id', 'order_number', 'created_at', 'total_price')
 
+import re
+
 class OrderCreateSerializer(serializers.ModelSerializer):
+    phone = serializers.CharField(write_only=True, required=True)
+    
     class Meta:
         model = Order
         fields = (
             'delivery_address', 'delivery_method', 'payment_method',
-            'gift_wrap', 'gift_message', 'comment'
+            'delivery_date', 'delivery_time',  # Добавьте эти поля
+            'gift_wrap', 'gift_message', 'comment', 'phone'
         )
 
+    def validate_phone(self, value):
+        """Валидация номера телефона"""
+        phone = re.sub(r'[^\d+]', '', value)
+        
+        if re.match(r'^\+7\d{10}$', phone):
+            return phone
+        elif re.match(r'^8\d{10}$', phone):
+            return '+7' + phone[1:]
+        elif re.match(r'^7\d{10}$', phone):
+            return '+' + phone
+        elif re.match(r'^\d{10}$', phone):
+            return '+7' + phone
+        else:
+            raise serializers.ValidationError('Введите корректный номер телефона (например: +7 999 123-45-67)')
+    
     def create(self, validated_data):
-        """
-        Создаём заказ из корзины пользователя.
-        """
         request = self.context.get('request')
         user = request.user
-
-        # Получаем корзину пользователя
-        cart = user.cart if hasattr(user, 'cart') else None
         
-        if not cart or not cart.items.exists():
+        phone = validated_data.pop('phone', None)
+        
+        if phone and user.is_authenticated:
+            user.phone = phone
+            user.save()
+
+        try:
+            cart = Cart.objects.get(user=user)
+        except Cart.DoesNotExist:
+            raise serializers.ValidationError("Корзина не найдена")
+        
+        if not cart.items.exists():
             raise serializers.ValidationError("Корзина пуста")
 
-        # Создаём заказ
+        # Создаём заказ со всеми полями, включая дату и время
         order = Order.objects.create(
             user=user,
             total_price=cart.total_price,
-            **validated_data
+            delivery_address=validated_data.get('delivery_address'),
+            delivery_method=validated_data.get('delivery_method'),
+            payment_method=validated_data.get('payment_method'),
+            delivery_date=validated_data.get('delivery_date', ''),
+            delivery_time=validated_data.get('delivery_time', ''),
+            gift_wrap=validated_data.get('gift_wrap', False),
+            gift_message=validated_data.get('gift_message', ''),
+            comment=validated_data.get('comment', '')
         )
 
-        # Переносим товары из корзины в заказ
         for cart_item in cart.items.all():
             OrderItem.objects.create(
                 order=order,
@@ -198,12 +229,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 quantity=cart_item.quantity
             )
             
-            # Уменьшаем количество на складе
             product = cart_item.product
             product.stock_quantity -= cart_item.quantity
             product.save()
 
-        # Очищаем корзину
         cart.items.all().delete()
 
         return order

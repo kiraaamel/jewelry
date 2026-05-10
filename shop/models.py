@@ -647,7 +647,8 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(
         verbose_name='Количество'
     )
-
+    delivery_date = models.CharField(max_length=50, blank=True, null=True, verbose_name='Дата доставки')
+    delivery_time = models.CharField(max_length=50, blank=True, null=True, verbose_name='Время доставки')
     class Meta:
         verbose_name = 'Позиция заказа'
         verbose_name_plural = 'Позиции заказа'

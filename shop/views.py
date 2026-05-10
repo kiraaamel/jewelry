@@ -3,7 +3,6 @@ from django.contrib.auth.decorators import login_required
 from django.views.generic import CreateView
 from django.urls import reverse_lazy
 from .models import User
-# Create your views here.
 from django.http import HttpResponse
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.decorators import action
@@ -16,6 +15,7 @@ from .filters import ProductFilter
 from decimal import Decimal
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
+
 
 from .models import (
     Category, Product, Cart, CartItem, 
@@ -89,6 +89,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = ProductFilter
     ordering_fields = ['price', 'created_at', 'average_rating']
+    search_fields = ['name', 'name_lower', 'description']
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -232,22 +233,36 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['post'])
     def create_order(self, request):
-        serializer = OrderCreateSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            order = serializer.save()
+        try:
+            print("=== CREATE ORDER REQUEST ===")
+            print("User:", request.user)
+            print("Data:", request.data)
             
-            # Начисляем бонусы (5% от суммы заказа)
-            bonus_earned = int(order.total_price * Decimal('0.05'))
-            order.bonus_earned = bonus_earned
-            order.save()
+            serializer = OrderCreateSerializer(data=request.data, context={'request': request})
             
-            # Добавляем бонусы пользователю
-            if order.user:
-                order.user.bonus_points += bonus_earned
-                order.user.save()
-            
-            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if serializer.is_valid():
+                order = serializer.save()
+                
+                # Начисляем бонусы (5% от суммы заказа)
+                bonus_earned = int(order.total_price * Decimal('0.05'))
+                order.bonus_earned = bonus_earned
+                order.save()
+                
+                # Добавляем бонусы пользователю
+                if order.user:
+                    order.user.bonus_points += bonus_earned
+                    order.user.save()
+                
+                return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
+            else:
+                print("Serializer errors:", serializer.errors)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            print("ERROR:", str(e))
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=True, methods=['post'])
     def update_address(self, request, pk=None):
@@ -335,6 +350,10 @@ class WishlistViewSet(viewsets.ModelViewSet):
 
 def home(request):
     """Главная страница"""
+    from django.templatetags.static import static
+    context = {
+        'banner_image': static('shop/images/main_banner.jpeg')
+    }
     return render(request, 'shop/home.html')
 
 def catalog(request):
