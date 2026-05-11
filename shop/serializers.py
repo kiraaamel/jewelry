@@ -4,8 +4,9 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
     Category, Product, Cart, CartItem, 
-    Order, OrderItem, Review, Wishlist
+    Order, OrderItem, Review, Wishlist, PromoCode, PromoCodeUsage
 )
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -64,8 +65,8 @@ class UserSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'phone', 'bonus_points', 'date_joined')
-        read_only_fields = ('id', 'email', 'bonus_points', 'date_joined')
+        fields = ('id', 'email', 'first_name', 'last_name', 'phone', 'bonus_points', 'date_joined', 'birthday')
+        read_only_fields = ('id', 'email', 'date_joined')
 
 class CategorySerializer(serializers.ModelSerializer):
     """
@@ -164,35 +165,22 @@ import re
 
 class OrderCreateSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(write_only=True, required=True)
+    promo_code = serializers.CharField(write_only=True, required=False, allow_blank=True)
     
     class Meta:
         model = Order
         fields = (
             'delivery_address', 'delivery_method', 'payment_method',
-            'delivery_date', 'delivery_time',  # Добавьте эти поля
-            'gift_wrap', 'gift_message', 'comment', 'phone'
+            'delivery_date', 'delivery_time',
+            'gift_wrap', 'gift_message', 'comment', 'phone', 'promo_code'
         )
 
-    def validate_phone(self, value):
-        """Валидация номера телефона"""
-        phone = re.sub(r'[^\d+]', '', value)
-        
-        if re.match(r'^\+7\d{10}$', phone):
-            return phone
-        elif re.match(r'^8\d{10}$', phone):
-            return '+7' + phone[1:]
-        elif re.match(r'^7\d{10}$', phone):
-            return '+' + phone
-        elif re.match(r'^\d{10}$', phone):
-            return '+7' + phone
-        else:
-            raise serializers.ValidationError('Введите корректный номер телефона (например: +7 999 123-45-67)')
-    
     def create(self, validated_data):
         request = self.context.get('request')
         user = request.user
         
         phone = validated_data.pop('phone', None)
+        promo_code_str = validated_data.pop('promo_code', None)
         
         if phone and user.is_authenticated:
             user.phone = phone
@@ -206,20 +194,43 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         if not cart.items.exists():
             raise serializers.ValidationError("Корзина пуста")
 
-        # Создаём заказ со всеми полями, включая дату и время
+        # Рассчитываем общую сумму
+        total_price = cart.total_price
+        promo_discount = 0
+        promo_obj = None
+        
+        # Применяем промокод, если он есть
+        if promo_code_str:
+            try:
+                promo = PromoCode.objects.get(code__iexact=promo_code_str)
+                if promo.is_valid:
+                    # Проверяем для новых пользователей
+                    if not (promo.only_new_users and Order.objects.filter(user=user).exists()):
+                        # Рассчитываем скидку
+                        if promo.discount_type == 'percent':
+                            discount = total_price * (promo.discount_value / 100)
+                            if promo.max_discount_amount and discount > promo.max_discount_amount:
+                                discount = promo.max_discount_amount
+                        else:
+                            discount = min(promo.discount_value, total_price)
+                        
+                        promo_discount = discount
+                        promo_obj = promo
+            except PromoCode.DoesNotExist:
+                pass
+        
+        final_price = total_price - promo_discount
+        
+        # Создаём заказ
         order = Order.objects.create(
             user=user,
-            total_price=cart.total_price,
-            delivery_address=validated_data.get('delivery_address'),
-            delivery_method=validated_data.get('delivery_method'),
-            payment_method=validated_data.get('payment_method'),
-            delivery_date=validated_data.get('delivery_date', ''),
-            delivery_time=validated_data.get('delivery_time', ''),
-            gift_wrap=validated_data.get('gift_wrap', False),
-            gift_message=validated_data.get('gift_message', ''),
-            comment=validated_data.get('comment', '')
+            total_price=final_price,
+            promo_code=promo_obj,
+            promo_discount=promo_discount,
+            **validated_data
         )
 
+        # Переносим товары из корзины в заказ
         for cart_item in cart.items.all():
             OrderItem.objects.create(
                 order=order,
@@ -232,8 +243,23 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             product = cart_item.product
             product.stock_quantity -= cart_item.quantity
             product.save()
+        
+        # Сохраняем использование промокода
+        if promo_obj:
+            PromoCodeUsage.objects.create(
+                user=user,
+                promo_code=promo_obj,
+                order=order,
+                discount_amount=promo_discount
+            )
+            promo_obj.used_count += 1
+            promo_obj.save()
 
+        # Очищаем корзину
         cart.items.all().delete()
+        
+        # Удаляем промокод из сессии
+        request.session.pop('applied_promo', None)
 
         return order
 
@@ -297,3 +323,72 @@ class WishlistSerializer(serializers.ModelSerializer):
         validated_data['user'] = request.user
         return super().create(validated_data)
 
+from .models import PromoCode, PromoCodeUsage
+
+class PromoCodeSerializer(serializers.ModelSerializer):
+    discount_display = serializers.CharField(read_only=True)
+    is_valid = serializers.BooleanField(read_only=True)
+    days_left = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PromoCode
+        fields = (
+            'id', 'code', 'discount_type', 'discount_value', 'discount_display',
+            'min_order_amount', 'max_discount_amount', 'valid_from', 'valid_to',
+            'is_valid', 'only_new_users', 'days_left'
+        )
+        read_only_fields = ('id', 'created_at', 'updated_at')
+    
+    def get_days_left(self, obj):
+        if obj.valid_to:
+            days = (obj.valid_to - timezone.now()).days
+            return max(0, days)
+        return None
+
+class ApplyPromoCodeSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=50)
+    order_total = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+    def validate(self, attrs):
+        code = attrs.get('code')
+        order_total = attrs.get('order_total')
+        user = self.context.get('request').user
+        
+        try:
+            promo = PromoCode.objects.get(code__iexact=code)
+        except PromoCode.DoesNotExist:
+            raise serializers.ValidationError({'code': 'Промокод не найден'})
+        
+        # Проверяем активность
+        if not promo.is_valid:
+            raise serializers.ValidationError({'code': 'Промокод неактивен или истёк срок действия'})
+        
+        # Проверка минимальной суммы заказа
+        if order_total < promo.min_order_amount:
+            raise serializers.ValidationError({'code': f'Минимальная сумма заказа для этого промокода: {promo.min_order_amount} ₽'})
+        
+        # Проверка для новых пользователей
+        if promo.only_new_users:
+            user_orders_count = Order.objects.filter(user=user).count()
+            if user_orders_count > 0:
+                raise serializers.ValidationError({'code': 'Этот промокод только для новых пользователей'})
+        
+        # Проверка лимита использований пользователем
+        user_uses_count = PromoCodeUsage.objects.filter(user=user, promo_code=promo).count()
+        if user_uses_count >= promo.user_limit:
+            raise serializers.ValidationError({'code': f'Вы уже использовали этот промокод (максимум {promo.user_limit} раз)'})
+        
+        # Рассчитываем скидку
+        if promo.discount_type == 'percent':
+            discount = order_total * (promo.discount_value / 100)
+            if promo.max_discount_amount and discount > promo.max_discount_amount:
+                discount = promo.max_discount_amount
+        else:  # fixed
+            discount = promo.discount_value
+            if discount > order_total:
+                discount = order_total
+        
+        attrs['promo'] = promo
+        attrs['discount_amount'] = discount
+        
+        return attrs

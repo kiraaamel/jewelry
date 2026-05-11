@@ -282,7 +282,55 @@
                 opacity: 1;
             }
         }
-        
+        /* ========== ХЛЕБНЫЕ КРОШКИ ========== */
+        .breadcrumbs {
+            background: transparent;
+            padding: 15px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(93, 110, 128, 0.1);
+        }
+
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin: 0;
+        }
+
+        .breadcrumb-item {
+            font-size: 14px;
+            display: inline-flex;  /* ← добавить */
+            align-items: center;
+        }
+
+        .breadcrumb-item a {
+            color: var(--gray);
+            text-decoration: none;
+            transition: color 0.3s;
+            display: inline-flex;  /* ← добавить */
+            align-items: center;   /* ← добавить */
+            gap: 5px;    
+        }
+        .breadcrumb-item a i {
+            line-height: 1;        /* ← добавить */
+        }
+        .breadcrumb-item a:hover {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "→";
+            color: var(--gray);
+            font-size: 16px;
+            display: inline-block;  /* ← добавить */
+            line-height: 1;  
+
+        }
         /* Адаптивность */
         @media (max-width: 992px) {
             .search-bar-new {
@@ -392,6 +440,18 @@
     </div>
     
     <main>
+        {% block breadcrumbs %}
+        <div class="breadcrumbs">
+            <div class="container">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i> Главная</a></li>
+                        {% block breadcrumb_items %}{% endblock %}
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        {% endblock %}
         {% if messages %}
         <div class="container mt-3">
             {% for message in messages %}
@@ -417,17 +477,16 @@
             <div class="custom-row">
                 <div class="col-md-4 mb-4 mb-md-0">
                     <h5>Покупателям</h5>
-                    <a href="#">Как сделать заказ</a>
-                    <a href="#">Способы оплаты</a>
-                    <a href="#">Доставка и оплата</a>
-                    <a href="#">Возврат товара</a>
+                    <a href="{% url 'faq' %}">Как сделать заказ</a>
+                    <a href="{% url 'faq' %}#payment">Способы оплаты</a>
+                    <a href="{% url 'faq' %}#delivery">Доставка и оплата</a>
+                    <a href="{% url 'faq' %}#return">Возврат товара</a>
                 </div>
                 <div class="col-md-4 mb-4 mb-md-0">
                     <h5>О компании</h5>
                     <a href="{% url 'about' %}">О нас</a>
                     <a href="{% url 'stores' %}">Магазины</a>
-                    <a href="#">Контакты</a>
-                    <a href="#">Вакансии</a>
+                    <a href="{% url 'faq' %}#vacancies">Вакансии</a>
                 </div>
                 <div class="col-md-4">
                     <h5>Контакты</h5>

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html 
 from .models import (
     User, Category, Product, 
-    Cart, CartItem, Order, OrderItem, Review, Wishlist
+    Cart, CartItem, Order, OrderItem, Review, Wishlist, PromoCode, PromoCodeUsage
 )
 
 
@@ -60,7 +60,7 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]
     list_display = [
         'order_number', 'user', 'created_at', 'status', 
-        'total_price_display', 'delivery_method'
+        'total_price_display', 'delivery_method', 'delivery_date', 'delivery_time'
     ]
     list_filter = ['status', 'delivery_method', 'payment_method', 'created_at']
     search_fields = ['order_number', 'user__email', 'delivery_address']
@@ -73,7 +73,7 @@ class OrderAdmin(admin.ModelAdmin):
             'fields': ('order_number', 'user', 'status', 'total_price_display', 'created_at')
         }),
         ('Доставка', {
-            'fields': ('delivery_address', 'delivery_method', 'delivered_at')
+            'fields': ('delivery_address', 'delivery_method', 'delivered_at', 'delivery_date', 'delivery_time')
         }),
         ('Оплата', {
             'fields': ('payment_method',)
@@ -365,12 +365,12 @@ class UserAdmin(admin.ModelAdmin):
     """
     Настройки отображения пользователя в админке.
     """
-    list_display = ['email', 'first_name', 'last_name', 'phone', 'bonus_points', 'is_staff', 'is_active']
+    list_display = ['email', 'first_name', 'last_name', 'phone','birthday', 'bonus_points', 'is_staff', 'is_active']
     list_filter = ['is_staff', 'is_active']
     search_fields = ['email', 'first_name', 'last_name', 'phone']
     fieldsets = (
         ('Личная информация', {
-            'fields': ('email', 'first_name', 'last_name', 'phone', 'bonus_points')
+            'fields': ('email', 'first_name', 'last_name', 'phone', 'birthday', 'bonus_points')
         }),
         ('Права доступа', {
             'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')
@@ -382,7 +382,46 @@ class UserAdmin(admin.ModelAdmin):
     )
     readonly_fields = ['last_login', 'date_joined']
 
+class PromoCodeAdmin(admin.ModelAdmin):
+    list_display = ['code', 'discount_display', 'min_order_amount', 'valid_from', 'valid_to', 'is_valid', 'used_count']
+    list_filter = ['discount_type', 'is_active', 'only_new_users']
+    search_fields = ['code']
+    filter_horizontal = ['applicable_categories']
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('code', 'discount_type', 'discount_value', 'min_order_amount', 'max_discount_amount')
+        }),
+        ('Даты действия', {
+            'fields': ('valid_from', 'valid_to')
+        }),
+        ('Ограничения', {
+            'fields': ('usage_limit', 'user_limit', 'only_new_users')
+        }),
+        ('Статус', {
+            'fields': ('is_active', 'applicable_categories')
+        }),
+    )
+    
+    def discount_display(self, obj):
+        return obj.discount_display
+    discount_display.short_description = 'Скидка'
+    
+    def is_valid(self, obj):
+        return obj.is_valid
+    is_valid.boolean = True
+    is_valid.short_description = 'Активен'
 
+
+class PromoCodeUsageAdmin(admin.ModelAdmin):
+    list_display = ['user', 'promo_code', 'order', 'discount_amount', 'used_at']
+    list_filter = ['used_at']
+    search_fields = ['user__email', 'promo_code__code', 'order__order_number']
+    readonly_fields = ['used_at']
+
+
+
+admin.site.register(PromoCode, PromoCodeAdmin)
+admin.site.register(PromoCodeUsage, PromoCodeUsageAdmin)
 # Регистрируем все модели
 admin.site.register(User, UserAdmin)
 admin.site.register(Category)

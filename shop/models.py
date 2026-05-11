@@ -49,6 +49,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True, verbose_name='Email')
     phone = models.CharField(max_length=20, blank=True, verbose_name='Телефон')
     bonus_points = models.IntegerField(default=0, verbose_name='Бонусные баллы')
+    birthday = models.DateField(null=True, blank=True, verbose_name='Дата рождения')
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -530,7 +531,87 @@ class CartItem(models.Model):
             return self.product.price * self.quantity
         return 0
 
+class PromoCode(models.Model):
+    """
+    Модель промокода для скидок.
+    """
+    class DiscountType(models.TextChoices):
+        PERCENT = 'percent', 'Процентная скидка'
+        FIXED = 'fixed', 'Фиксированная скидка'
+    
+    code = models.CharField(max_length=50, unique=True, verbose_name='Код промокода')
+    discount_type = models.CharField(max_length=10, choices=DiscountType.choices, default=DiscountType.PERCENT, verbose_name='Тип скидки')
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Значение скидки')
+    
+    # Ограничения
+    min_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Минимальная сумма заказа')
+    max_discount_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name='Максимальная сумма скидки')
+    
+    # Даты действия
+    valid_from = models.DateTimeField(default=timezone.now, verbose_name='Действует с')
+    valid_to = models.DateTimeField(verbose_name='Действует до')
+    
+    # Ограничения по использованию
+    usage_limit = models.PositiveIntegerField(default=1, verbose_name='Лимит использований')
+    used_count = models.PositiveIntegerField(default=0, verbose_name='Количество использований')
+    user_limit = models.PositiveIntegerField(default=1, verbose_name='Лимит на одного пользователя')
+    
+    # Для новых пользователей
+    only_new_users = models.BooleanField(default=False, verbose_name='Только для новых пользователей')
+    
+    # Активность
+    is_active = models.BooleanField(default=True, verbose_name='Активен')
+    
+    # Категории товаров (опционально)
+    applicable_categories = models.ManyToManyField('Category', blank=True, verbose_name='Применяется к категориям')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+    
+    class Meta:
+        verbose_name = 'Промокод'
+        verbose_name_plural = 'Промокоды'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.code} ({self.discount_value}{'%' if self.discount_type == 'percent' else '₽'})"
+    
+    @property
+    def is_valid(self):
+        """Проверяет, активен ли промокод в данный момент"""
+        now = timezone.now()
+        return (
+            self.is_active and
+            self.valid_from <= now <= self.valid_to and
+            (self.usage_limit is None or self.used_count < self.usage_limit)
+        )
+    
+    @property
+    def discount_display(self):
+        """Возвращает строковое представление скидки"""
+        if self.discount_type == 'percent':
+            return f"{self.discount_value}%"
+        return f"{self.discount_value} ₽"
 
+
+class PromoCodeUsage(models.Model):
+    """
+    История использования промокодов пользователями.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='promo_uses', verbose_name='Пользователь')
+    promo_code = models.ForeignKey(PromoCode, on_delete=models.CASCADE, related_name='uses', verbose_name='Промокод')
+    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='promo_use', verbose_name='Заказ')
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Сумма скидки')
+    used_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата использования')
+    
+    class Meta:
+        verbose_name = 'Использование промокода'
+        verbose_name_plural = 'Использования промокодов'
+        unique_together = ('user', 'promo_code', 'order')
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.promo_code.code}"        
+        
 class Order(models.Model):
     """
     Заказ покупателя.
@@ -584,6 +665,8 @@ class Order(models.Model):
         max_length=100,
         verbose_name='Способ оплаты'
     )
+    delivery_date = models.CharField(max_length=50, blank=True, null=True, verbose_name='Дата доставки')
+    delivery_time = models.CharField(max_length=50, blank=True, null=True, verbose_name='Время доставки')
     gift_wrap = models.BooleanField(
         default=False,
         verbose_name='Подарочная упаковка'
@@ -601,6 +684,8 @@ class Order(models.Model):
         blank=True,
         verbose_name='Дата получения'
     )
+    promo_code = models.ForeignKey(PromoCode, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders', verbose_name='Промокод')
+    promo_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Скидка по промокоду')
     def save(self, *args, **kwargs):
         """
         Автоматически вычисляем общую стоимость заказа.
@@ -763,3 +848,4 @@ class Wishlist(models.Model):
 
     def __str__(self):
         return f"{self.user.email} -> {self.product.name}"
+

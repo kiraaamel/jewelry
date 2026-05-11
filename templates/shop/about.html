@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">О нас</li>
+{% endblock %}
 {% block content %}
 <style>
 :root {
@@ -12,7 +14,7 @@
 
 .about-page {
     background: var(--bg-cream);
-    padding: 40px 0;
+    padding-bottom: 40px;
     min-height: 70vh;
 }
 
@@ -20,21 +22,6 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
-}
-
-.breadcrumbs {
-    font-size: 14px;
-    color: var(--gray);
-    margin-bottom: 15px;
-}
-
-.breadcrumbs a {
-    color: var(--accent);
-    text-decoration: none;
-}
-
-.breadcrumbs a:hover {
-    text-decoration: underline;
 }
 
 .about-top {
@@ -278,11 +265,6 @@
 
 <div class="about-page">
     <div class="about-container">
-        
-        <div class="breadcrumbs">
-            <a href="/">Главная</a> / <span>О нас</span>
-        </div>
-
         <div class="about-top">
             <img src="{% static 'shop/img/about1.jpg' %}" class="about-img" alt="Магазин Argentic" onerror="this.src='https://via.placeholder.com/400x280?text=Argentic'">
             <img src="{% static 'shop/img/about2.jpg' %}" class="about-img" alt="Изделия Argentic" onerror="this.src='https://via.placeholder.com/400x280?text=Jewelry'">

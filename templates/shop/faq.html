@@ -1,0 +1,568 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">FAQ</li>
+{% endblock %}
+{% block content %}
+<style>
+.faq-page {
+    background: var(--bg-cream);
+    padding: 40px 0;
+    min-height: 70vh;
+}
+
+.faq-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.faq-title {
+    font-size: 36px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 40px;
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+}
+
+/* Секции */
+.faq-section {
+    margin-bottom: 50px;
+}
+
+.section-title {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--brown);
+    margin-bottom: 25px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-title i {
+    color: var(--accent);
+    font-size: 24px;
+}
+
+/* Карточка вопроса */
+.faq-card {
+    background: white;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s;
+}
+
+.faq-card:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.faq-question {
+    padding: 20px 25px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--brown);
+    transition: all 0.3s;
+}
+
+.faq-question:hover {
+    background: #f8f9fa;
+}
+
+.faq-question i {
+    color: var(--accent);
+    transition: transform 0.3s;
+    font-size: 14px;
+}
+
+.faq-question.active i {
+    transform: rotate(180deg);
+}
+
+.faq-answer {
+    padding: 0 25px;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    color: var(--gray);
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.faq-answer.active {
+    padding: 0 25px 25px 25px;
+    max-height: 500px;
+}
+
+/* Способы оплаты и доставки - карточки */
+.methods-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.method-card {
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    transition: all 0.3s;
+}
+
+.method-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.method-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+}
+
+.method-icon i {
+    font-size: 28px;
+    color: white;
+}
+
+.method-card h3 {
+    font-size: 18px;
+    color: var(--brown);
+    margin-bottom: 10px;
+}
+
+.method-card .price {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 10px 0;
+}
+
+.method-card p {
+    color: var(--gray);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* Инфо-блок */
+.info-box {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 25px;
+    margin: 30px 0;
+    border-left: 4px solid var(--accent);
+}
+
+.info-box h3 {
+    color: var(--brown);
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.info-box p {
+    color: var(--gray);
+    line-height: 1.6;
+}
+
+.info-box i {
+    color: var(--accent);
+    margin-right: 10px;
+}
+
+/* Контакты */
+.contacts-block {
+    background: linear-gradient(135deg, var(--accent), #4a5a6a);
+    border-radius: 20px;
+    padding: 35px;
+    text-align: center;
+    color: white;
+    margin-top: 20px;
+}
+
+.contacts-block h3 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.contacts-block .contact-items {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.contacts-block .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.contacts-block .contact-item i {
+    font-size: 24px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .faq-title {
+        font-size: 28px;
+    }
+    .section-title {
+        font-size: 22px;
+    }
+    .faq-question {
+        font-size: 14px;
+        padding: 15px 20px;
+    }
+    .faq-answer.active {
+        padding: 0 20px 20px 20px;
+    }
+    .methods-grid {
+        grid-template-columns: 1fr;
+    }
+    .contacts-block .contact-items {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+</style>
+
+<div class="faq-page">
+    <div class="faq-container">
+        <h1 class="faq-title">Помощь и поддержка</h1>
+        
+        <!-- ========== РАЗДЕЛ 1: ЗАКАЗ И ОПЛАТА ========== -->
+        <div class="faq-section" id="payment">
+            <h2 class="section-title">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Заказ и оплата</span>
+            </h2>
+            
+            <div class="faq-card">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Как сделать заказ?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Чтобы сделать заказ, выберите понравившийся товар в каталоге, добавьте его в корзину, затем перейдите в корзину и нажмите «Оформить заказ». Заполните контактные данные, выберите способ доставки и оплаты, затем подтвердите заказ. После оформления вы получите подтверждение на email.
+                </div>
+            </div>
+            
+            <div class="faq-card">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Какие способы оплаты доступны?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Мы принимаем следующие способы оплаты:</p>
+                    <ul style="margin-top: 10px; margin-left: 20px;">
+                        <li><strong>Банковская карта онлайн</strong> — Visa, Mastercard, МИР</li>
+                        <li><strong>СБП (Система быстрых платежей)</strong> — оплата через приложение банка</li>
+                        <li><strong>Наличными при получении</strong> — только для курьерской доставки</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="faq-card">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Безопасно ли оплачивать картой на сайте?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Да, оплата на нашем сайте абсолютно безопасна. Все данные передаются в зашифрованном виде через защищённый протокол SSL. Мы не храним данные вашей карты — они обрабатываются платёжным шлюзом.
+                </div>
+            </div>
+            
+            <div class="faq-card">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Что такое бонусы и как их использовать?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Бонусы начисляются за каждый заказ (5% от суммы покупки). 1 бонус = 1 рубль. Вы можете списать до 50% от стоимости заказа. Бонусы действуют в течение года с момента начисления. Узнать количество бонусов можно в личном кабинете.
+                </div>
+            </div>
+            
+            <div class="faq-card">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Нужна ли регистрация для оформления заказа?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Регистрация не обязательна, но мы рекомендуем её пройти. Зарегистрированные пользователи получают бонусы за покупки, могут отслеживать историю заказов и быстрее оформлять новые заказы.
+                </div>
+            </div>
+        </div>
+        
+        <!-- ========== РАЗДЕЛ 2: ДОСТАВКА ========== -->
+        <div class="faq-section" id="delivery">
+            <h2 class="section-title">
+                <i class="fas fa-truck"></i>
+                <span>Доставка</span>
+            </h2>
+            
+            <div class="methods-grid">
+                <div class="method-card">
+                    <div class="method-icon">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <h3>Самовывоз</h3>
+                    <div class="price">Бесплатно</div>
+                    <p>г. Москва, ул. Тверская, 1 (ТЦ "Галерея")<br>Ежедневно с 10:00 до 21:00</p>
+                </div>
+                <div class="method-card">
+                    <div class="method-icon">
+                        <i class="fas fa-motorcycle"></i>
+                    </div>
+                    <h3>Курьерская доставка</h3>
+                    <div class="price">300 ₽</div>
+                    <p>Доставка по Москве в день заказа или на следующий день. Бесплатно при заказе от 5000 ₽</p>
+                </div>
+                <div class="method-card">
+                    <div class="method-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h3>Почта России</h3>
+                    <div class="price">200 ₽</div>
+                    <p>Доставка по всей России. Срок доставки: 3-7 дней. Бесплатно при заказе от 5000 ₽</p>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <h3><i class="fas fa-clock"></i> Сроки доставки</h3>
+                <p>• Самовывоз — на следующий день после оформления заказа<br>
+                • Курьерская доставка — 1-2 дня<br>
+                • Почта России — 3-7 дней в зависимости от региона</p>
+            </div>
+            
+            <div class="faq-card">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Как отследить заказ?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    После отправки заказа вы получите трек-номер для отслеживания на email. Также статус заказа можно посмотреть в личном кабинете в разделе «Мои заказы».
+                </div>
+            </div>
+            
+            <div class="faq-card">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Можно ли изменить адрес доставки?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Да, вы можете изменить адрес доставки в личном кабинете в разделе «Мои заказы», пока заказ находится в статусе «Новый» или «Подтверждён».
+                </div>
+            </div>
+        </div>
+        
+        <!-- ========== РАЗДЕЛ 3: ВОЗВРАТ И ОБМЕН ========== -->
+        <div class="faq-section" id="return">
+            <h2 class="section-title">
+                <i class="fas fa-undo-alt"></i>
+                <span>Возврат и обмен</span>
+            </h2>
+            
+            <div class="faq-card">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Можно ли вернуть товар?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Да, вы можете вернуть товар надлежащего качества в течение 14 дней с момента получения. Товар должен быть в оригинальной упаковке, без следов ношения, с сохранением всех бирок и ярлыков.
+                </div>
+            </div>
+            
+            <div class="faq-card">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Как оформить возврат?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Для оформления возврата свяжитесь с нашей службой поддержки по email: argentic@gmail.com или по телефону +7 (999) 999-99-99. Наши менеджеры помогут вам оформить возврат и подскажут дальнейшие действия.
+                </div>
+            </div>
+            
+            <div class="faq-card">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    В течение какого времени возвращаются деньги?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Деньги возвращаются на ту же карту, с которой производилась оплата, в течение 5-10 рабочих дней после получения и проверки возвращённого товара.
+                </div>
+            </div>
+        </div>
+        
+        <!-- ========== РАЗДЕЛ 4: УХОД ЗА ИЗДЕЛИЯМИ ========== -->
+        <div class="faq-section">
+            <h2 class="section-title">
+                <i class="fas fa-gem"></i>
+                <span>Уход за изделиями</span>
+            </h2>
+            
+            <div class="faq-card">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Как ухаживать за серебряными украшениями?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    • Храните украшения в мягкой ткани или шкатулке отдельно друг от друга<br>
+                    • Избегайте контакта с парфюмерией, косметикой и бытовой химией<br>
+                    • Снимайте украшения перед сном, принятием душа или занятием спортом<br>
+                    • Чистите специальной салфеткой или мягкой тканью
+                </div>
+            </div>
+            
+            <div class="faq-card">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Что делать, если серебро потемнело?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Потемнение — естественный процесс для серебра. Очистить украшение можно:<br>
+                    • Специальной пастой для серебра<br>
+                    • Содовым раствором (1 ст. ложка соды на стакан воды)<br>
+                    • Профессиональной чисткой в ювелирной мастерской
+                </div>
+            </div>
+            
+            <div class="faq-card">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Как чистить украшения с камнями?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Украшения с камнями рекомендуется чистить только мягкой тканью, смоченной в мыльном растворе. Не используйте абразивные средства и не замачивайте изделия надолго, чтобы не повредить крепление камней.
+                </div>
+            </div>
+        </div>
+        <!-- ========== РАЗДЕЛ 6: ВАКАНСИИ ========== -->
+        <div class="faq-section" id="vacancies">
+            <h2 class="section-title">
+                <i class="fas fa-briefcase"></i>
+                <span>Вакансии</span>
+            </h2>
+            
+            <div class="methods-grid">
+                <div class="method-card">
+                    <div class="method-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h3>Менеджер по продажам</h3>
+                    <div class="price">от 60 000 ₽</div>
+                    <p>📍 Москва | Полный день</p>
+                    <p style="margin-top: 10px;">Опыт работы в розничной торговле приветствуется. Уверенное знание ПК, коммуникабельность.</p>
+                </div>
+                
+                <div class="method-card">
+                    <div class="method-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <h3>Комплектовщик заказов</h3>
+                    <div class="price">от 45 000 ₽</div>
+                    <p>📍 Москва | Сменный график</p>
+                    <p style="margin-top: 10px;">Внимательность, аккуратность, опыт работы на складе приветствуется.</p>
+                </div>
+                
+                <div class="method-card">
+                    <div class="method-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h3>Курьер</h3>
+                    <div class="price">от 50 000 ₽</div>
+                    <p>📍 Москва | Гибкий график</p>
+                    <p style="margin-top: 10px;">Наличие личного автомобиля, знание города, ответственность.</p>
+                </div>
+                
+                <div class="method-card">
+                    <div class="method-icon">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <h3>Контент-менеджер</h3>
+                    <div class="price">от 55 000 ₽</div>
+                    <p>📍 Удалённо | Полный день</p>
+                    <p style="margin-top: 10px;">Навыки фотосъёмки, обработки изображений, написание описаний к товарам.</p>
+                </div>
+            </div>
+            
+            <div class="info-box" style="text-align: center;">
+                <h3><i class="fas fa-paper-plane"></i> Отправить резюме</h3>
+                <p>Присылайте своё резюме на почту: <strong>hr@argentic.ru</strong> с указанием желаемой должности в теме письма.</p>
+                <p style="margin-top: 10px;">Или звоните по телефону: <strong>+7 (999) 999-99-99</strong> (отдел кадров, пн-пт с 10:00 до 18:00)</p>
+            </div>
+        </div>
+        <!-- ========== РАЗДЕЛ 5: КОНТАКТЫ ========== -->
+        <div class="faq-section">
+            <h2 class="section-title">
+                <i class="fas fa-headset"></i>
+                <span>Контакты</span>
+            </h2>
+            
+            <div class="contacts-block">
+                <h3>Свяжитесь с нами</h3>
+                <div class="contact-items">
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <span>+7 (999) 999-99-99</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>argentic@gmail.com</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fab fa-instagram"></i>
+                        <span>@argentic_jewelry</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fab fa-telegram"></i>
+                        <span>@argentic_support</span>
+                    </div>
+                </div>
+                <p style="margin-top: 25px; opacity: 0.8;">Режим работы: ежедневно с 10:00 до 21:00</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFaq(element) {
+    element.classList.toggle('active');
+    const answer = element.nextElementSibling;
+    answer.classList.toggle('active');
+}
+
+// Автоматическое открытие вопроса из URL-якоря
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.hash) {
+        const targetId = window.location.hash.substring(1);
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+            const question = targetElement.querySelector('.faq-question');
+            if (question) {
+                setTimeout(() => {
+                    question.click();
+                    question.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 500);
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

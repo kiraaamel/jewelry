@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'catalog' %}">Каталог</a></li>
+{% if product.category %}
+<li class="breadcrumb-item"><a href="{% url 'catalog' %}?category={{ product.category.slug }}">{{ product.category.name }}</a></li>
+{% endif %}
+<li class="breadcrumb-item active" aria-current="page">{{ product.name|truncatechars:50 }}</li>
+{% endblock %}
 {% block content %}
 <style>
     /* Цвета из вашего дизайна */
@@ -14,22 +20,8 @@
     
     .product-detail-page {
         background-color: var(--bg-cream);
-        padding: 40px 0;
+        padding-bottom: 40px;
         min-height: 100vh;
-    }
-    
-    .breadcrumb-custom {
-        margin-bottom: 20px;
-        font-size: 13px;
-    }
-    
-    .breadcrumb-custom a {
-        color: var(--accent);
-        text-decoration: none;
-    }
-    
-    .breadcrumb-custom span {
-        color: var(--gray);
     }
     
     .product-main {
@@ -884,13 +876,7 @@
                 </div>
             `;
         
-        const content = `
-            <div class="breadcrumb-custom">
-                <a href="/">Главная</a> / 
-                <a href="/catalog/">Каталог</a> / 
-                <span>${product.name}</span>
-            </div>
-            
+        const content = `            
             <div class="product-main">
                 <div class="product-image-col">
                     <div class="product-image">

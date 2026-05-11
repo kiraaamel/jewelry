@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">Избранное</li>
+{% endblock %}
 {% block content %}
 <style>
 :root {

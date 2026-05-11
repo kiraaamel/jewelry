@@ -15,6 +15,7 @@ from .filters import ProductFilter
 from decimal import Decimal
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.utils import timezone 
 
 
 from .models import (
@@ -44,7 +45,12 @@ class CustomSignupView(SignupView):
         return super().form_valid(form)
 def product_detail(request, pk):
     """Детальная страница товара"""
-    return render(request, 'shop/product_detail.html', {'product_id': pk})
+    from .models import Product
+    product = get_object_or_404(Product, id=pk, is_active=True)
+    context = {
+        'product': product,  # ← передаём весь объект product
+    }
+    return render(request, 'shop/product_detail.html', context)
     
 def index(request):
     return HttpResponse("Добро пожаловать в ювелирный магазин!")
@@ -391,6 +397,53 @@ def about(request):
     """Страница О нас"""
     return render(request, 'shop/about.html')
 
+    """Страница магазинов и пунктов самовывоза"""
+    return render(request, 'shop/stores.html')
+
+def faq(request):
+    """Страница часто задаваемых вопросов"""
+    return render(request, 'shop/faq.html')
+
 def stores(request):
     """Страница магазинов и пунктов самовывоза"""
     return render(request, 'shop/stores.html')
+
+from .models import PromoCode, PromoCodeUsage
+from .serializers import PromoCodeSerializer, ApplyPromoCodeSerializer
+
+class PromoCodeViewSet(viewsets.GenericViewSet):
+    permission_classes = [permissions.AllowAny]  # Для просмотра не требуется авторизация
+    
+    def list(self, request):
+        """
+        Получение списка активных промокодов.
+        """
+        now = timezone.now()
+        promoCodes = PromoCode.objects.filter(
+            is_active=True,
+            valid_from__lte=now,
+            valid_to__gte=now
+        ).order_by('-discount_value')
+        
+        serializer = PromoCodeSerializer(promoCodes, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['post'])
+    def apply(self, request):
+        """
+        Применение промокода.
+        """
+        serializer = ApplyPromoCodeSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            return Response({
+                'valid': True,
+                'discount_amount': float(serializer.validated_data['discount_amount']),
+                'promo_code': serializer.validated_data['promo'].code,
+                'message': f'Промокод применён! Скидка: {serializer.validated_data["discount_amount"]} ₽'
+            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['post'])
+    def remove(self, request):
+        request.session.pop('applied_promo', None)
+        return Response({'message': 'Промокод удалён'})

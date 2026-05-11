@@ -1,6 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'cart' %}">Корзина</a></li>
+<li class="breadcrumb-item active" aria-current="page">Оформление заказа</li>
+{% endblock %}
 {% block content %}
 <style>
 :root {
@@ -284,9 +287,10 @@
     transition: all 0.3s;
 }
 
-.submit-btn:hover {
-    background: #4a5a6a;
-    transform: translateY(-2px);
+.submit-btn:disabled {
+    background: var(--gray);
+    cursor: not-allowed;
+    transform: none;
 }
 
 .bonus-row {
@@ -506,8 +510,8 @@
                             <span>Способ доставки</span>
                         </div>
                         <div class="delivery-methods" id="delivery-methods">
-                            <div class="method-item selected" data-delivery="pickup" data-price="0">
-                                <input type="radio" name="delivery" value="pickup" checked>
+                            <div class="method-item" data-delivery="pickup" data-price="0">
+                                <input type="radio" name="delivery" value="pickup">
                                 <div class="method-info">
                                     <div class="method-name">Самовывоз</div>
                                     <div class="method-price">Бесплатно</div>
@@ -663,8 +667,12 @@
                         <span id="subtotal">0 ₽</span>
                     </div>
                     <div class="summary-row">
-                        <span>Скидка</span>
-                        <span id="discount">0 ₽</span>
+                        <span>Скидка по промокоду</span>
+                        <span id="promo-discount-amount">0 ₽</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Скидка по бонусам</span>
+                        <span id="bonus-discount-amount">0 ₽</span>
                     </div>
                     <div class="summary-row">
                         <span>Доставка</span>
@@ -674,8 +682,8 @@
                     <!-- Промокод -->
                     <div class="promo-section">
                         <div class="promo-input-group">
-                            <input type="text" id="promo-code" placeholder="Промокод HELLOSILVER">
-                            <button onclick="applyPromo()">Применить</button>
+                            <input type="text" id="promo-code" placeholder="Введите промокод">
+                            <button onclick="applyPromoCode()">Применить</button>
                         </div>
                         <div id="promo-status"></div>
                     </div>
@@ -698,7 +706,7 @@
                         <span id="bonus-earn">0 бонусов</span>
                     </div>
                 </div>
-                <button class="submit-btn" onclick="showPaymentModal()">Подтвердить заказ</button>
+                <button class="submit-btn" id="submit-order-btn" onclick="showPaymentModal()" disabled>Выберите способ доставки</button>
                 <div class="bonus-note">
                     Нажимая «Подтвердить заказ», вы соглашаетесь с условиями оферты
                 </div>
@@ -726,7 +734,7 @@
         </div>
     </div>
 </div>
-<!-- Модальное окно СБП -->
+
 <div id="sbp-modal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeSbpModal()">&times;</span>
@@ -767,17 +775,18 @@ let deliveryPrice = 0;
 let giftWrapPrice = 0;
 let useBonus = false;
 let userBonus = 0;
-let promoApplied = false;
 let selectedPickupPoint = null;
 let selectedPostPoint = null;
 let pendingOrderData = null;
 let selectedSbpApp = null;
+let deliverySelected = false;
+
+// Переменные для промокода
+let appliedPromo = null;
+let promoDiscount = 0;
+let currentPromoCode = null;
 
 function loadFromStorage() {
-    const savedPromo = localStorage.getItem('checkout_promo_applied');
-    if (savedPromo === 'true') {
-        promoApplied = true;
-    }
     const savedBonus = localStorage.getItem('checkout_bonus_applied');
     if (savedBonus === 'true') {
         useBonus = true;
@@ -787,7 +796,6 @@ function loadFromStorage() {
 }
 
 function saveToStorage() {
-    localStorage.setItem('checkout_promo_applied', promoApplied);
     localStorage.setItem('checkout_bonus_applied', useBonus);
 }
 
@@ -828,18 +836,14 @@ function renderOrderSummary() {
     if (!cartData || !cartData.items) return;
     
     let subtotal = 0;
-    let oldTotal = 0;
     let itemsHtml = '';
     
     cartData.items.forEach(item => {
         const price = parseFloat(item.product_price) || 0;
-        const oldPrice = parseFloat(item.old_price) || price;
         const qty = parseInt(item.quantity) || 1;
         const total = price * qty;
-        const old = oldPrice * qty;
         
         subtotal += total;
-        oldTotal += old;
         
         itemsHtml += `
             <div class="summary-item">
@@ -853,19 +857,91 @@ function renderOrderSummary() {
         `;
     });
     
-    const discount = oldTotal - subtotal;
-    
     const orderItemsEl = document.getElementById('order-items');
     const subtotalEl = document.getElementById('subtotal');
-    const discountEl = document.getElementById('discount');
     const bonusAvailableEl = document.getElementById('bonus-available');
     
     if (orderItemsEl) orderItemsEl.innerHTML = itemsHtml;
     if (subtotalEl) subtotalEl.innerHTML = subtotal.toFixed(0) + ' ₽';
-    if (discountEl) discountEl.innerHTML = discount.toFixed(0) + ' ₽';
     if (bonusAvailableEl) bonusAvailableEl.innerHTML = userBonus + ' бонусов';
     
     updateTotals();
+}
+
+function applyPromoCode() {
+    const promoInput = document.getElementById('promo-code');
+    const code = promoInput.value.trim();
+    
+    if (!code) {
+        showNotification('Введите промокод');
+        return;
+    }
+    
+    const subtotal = parseFloat(document.getElementById('subtotal').innerText) || 0;
+    
+    fetch('/api/promo/apply/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            code: code,
+            order_total: subtotal
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.valid) {
+            appliedPromo = {
+                code: data.promo_code,
+                discount: data.discount_amount
+            };
+            promoDiscount = data.discount_amount;
+            currentPromoCode = code;
+            
+            document.getElementById('promo-status').innerHTML = `
+                <div class="promo-applied">
+                    <span>✓ ${data.message}</span>
+                    <i class="fas fa-times" onclick="removePromoCode()"></i>
+                </div>
+            `;
+            
+            promoInput.value = '';
+            updateTotals();
+            showNotification(data.message);
+        } else {
+            let errorMsg = 'Неверный промокод';
+            if (data.code) errorMsg = data.code[0];
+            if (data.non_field_errors) errorMsg = data.non_field_errors[0];
+            showNotification(errorMsg);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при проверке промокода');
+    });
+}
+
+function removePromoCode() {
+    fetch('/api/promo/remove/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(() => {
+        appliedPromo = null;
+        promoDiscount = 0;
+        currentPromoCode = null;
+        document.getElementById('promo-status').innerHTML = '';
+        updateTotals();
+        showNotification('Промокод удалён');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
 }
 
 function updateTotals() {
@@ -876,22 +952,18 @@ function updateTotals() {
         subtotal += (parseFloat(item.product_price) || 0) * (parseInt(item.quantity) || 1);
     });
     
-    let discount = 0;
-    let promoDiscount = 0;
+    let finalPrice = subtotal;
     
-    if (promoApplied) {
-        promoDiscount = subtotal * 0.2;
-        discount += promoDiscount;
-    }
+    // Применяем скидку по промокоду
+    let promoDiscountAmount = promoDiscount || 0;
+    finalPrice -= promoDiscountAmount;
     
-    let finalPrice = subtotal - discount;
-    
-    let bonusToUse = 0;
+    // Применяем скидку по бонусам
+    let bonusDiscount = 0;
     if (useBonus) {
         const maxBonusToUse = Math.floor(finalPrice * 0.5);
-        bonusToUse = Math.min(userBonus, maxBonusToUse);
-        finalPrice -= bonusToUse;
-        discount += bonusToUse;
+        bonusDiscount = Math.min(userBonus, maxBonusToUse);
+        finalPrice -= bonusDiscount;
     }
     
     finalPrice += deliveryPrice;
@@ -901,64 +973,22 @@ function updateTotals() {
     
     const totalEl = document.getElementById('total');
     const deliveryCostEl = document.getElementById('delivery-cost');
-    const promoStatusEl = document.getElementById('promo-status');
     const bonusEarnEl = document.getElementById('bonus-earn');
+    const promoDiscountAmountEl = document.getElementById('promo-discount-amount');
+    const bonusDiscountAmountEl = document.getElementById('bonus-discount-amount');
     
     if (totalEl) totalEl.innerHTML = finalPrice.toFixed(0) + ' ₽';
     if (deliveryCostEl) deliveryCostEl.innerHTML = deliveryPrice === 0 ? 'Бесплатно' : deliveryPrice + ' ₽';
     if (bonusEarnEl) bonusEarnEl.innerHTML = earnBonus + ' бонусов';
-    
-    if (promoApplied && promoStatusEl) {
-        promoStatusEl.innerHTML = `
-            <div class="promo-applied">
-                <span>✓ Промокод HELLOSILVER применён. Скидка: -${promoDiscount.toFixed(0)} ₽</span>
-                <i class="fas fa-times" onclick="cancelPromo()"></i>
-            </div>
-        `;
-    } else if (promoStatusEl) {
-        promoStatusEl.innerHTML = '';
-    }
-}
-
-function checkUserHasOrders() {
-    return fetch('/api/orders/')
-        .then(r => r.json())
-        .then(orders => orders.length > 0);
-}
-
-function applyPromo() {
-    const promoCodeEl = document.getElementById('promo-code');
-    if (!promoCodeEl) return;
-    const code = promoCodeEl.value;
-    
-    if (code && code.toUpperCase() === 'HELLOSILVER') {
-        checkUserHasOrders().then(hasOrders => {
-            if (hasOrders) {
-                showNotification('Промокод действует только для новых покупателей');
-                return;
-            }
-            promoApplied = true;
-            saveToStorage();
-            updateTotals();
-            showNotification('Промокод применён!');
-            promoCodeEl.value = '';
-        });
-    } else {
-        showNotification('Неверный промокод');
-    }
-}
-
-function cancelPromo() {
-    promoApplied = false;
-    saveToStorage();
-    updateTotals();
-    showNotification('Промокод отменён');
+    if (promoDiscountAmountEl) promoDiscountAmountEl.innerHTML = promoDiscountAmount.toFixed(0) + ' ₽';
+    if (bonusDiscountAmountEl) bonusDiscountAmountEl.innerHTML = bonusDiscount.toFixed(0) + ' ₽';
 }
 
 function initDeliveryMethods() {
     const addressSection = document.getElementById('address-section');
     const pickupPointsDiv = document.getElementById('pickup-points');
     const postPointsDiv = document.getElementById('post-points');
+    const submitBtn = document.getElementById('submit-order-btn');
     
     document.querySelectorAll('.method-item[data-delivery]').forEach(el => {
         el.addEventListener('click', () => {
@@ -967,6 +997,13 @@ function initDeliveryMethods() {
             const radio = el.querySelector('input[type="radio"]');
             if (radio) radio.checked = true;
             deliveryPrice = parseInt(el.dataset.price) || 0;
+            deliverySelected = true;
+            
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Подтвердить заказ';
+                submitBtn.style.background = 'var(--accent)';
+            }
             
             const deliveryType = el.dataset.delivery;
             
@@ -996,6 +1033,7 @@ function initDeliveryMethods() {
             
             updateDeliveryDateTime();
             updateTotals();
+            updatePaymentMethods();
         });
     });
     
@@ -1110,7 +1148,7 @@ if (useBonusCheckbox) {
 
 function getSelectedDelivery() {
     const selected = document.querySelector('input[name="delivery"]:checked');
-    return selected ? selected.value : 'pickup';
+    return selected ? selected.value : null;
 }
 
 function getSelectedPayment() {
@@ -1120,6 +1158,8 @@ function getSelectedPayment() {
 
 function getDeliveryAddress() {
     const deliveryType = getSelectedDelivery();
+    
+    if (!deliveryType) return null;
     
     if (deliveryType === 'courier') {
         const cityEl = document.getElementById('city');
@@ -1150,12 +1190,14 @@ function getDeliveryAddress() {
 
 // ========== ФУНКЦИИ ДАТЫ И ВРЕМЕНИ ДОСТАВКИ ==========
 
-function formatDate(daysToAdd = 0) {
+function formatDateNumber(daysToAdd = 0) {
     const date = new Date();
     date.setDate(date.getDate() + daysToAdd);
     const day = date.getDate();
-    const month = date.toLocaleString('ru-RU', { month: 'long' });
-    return `${day} ${month}`;
+    const month = date.getMonth() + 1;
+    const formattedMonth = month < 10 ? '0' + month : month;
+    const formattedDay = day < 10 ? '0' + day : day;
+    return `${formattedDay}.${formattedMonth}`;
 }
 
 function getAvailableDates() {
@@ -1163,7 +1205,7 @@ function getAvailableDates() {
     for (let i = 1; i <= 7; i++) {
         dates.push({
             value: i,
-            label: formatDate(i)
+            label: formatDateNumber(i)
         });
     }
     return dates;
@@ -1179,28 +1221,31 @@ function updateDeliveryDateTime() {
     section.style.display = 'none';
     container.innerHTML = '';
     
+    if (!deliveryType) return;
+    
     if (deliveryType === 'pickup') {
         section.style.display = 'block';
         const now = new Date();
         const currentHour = now.getHours();
         const currentDay = now.getDate();
-        const currentMonth = now.getMonth();
+        const currentMonth = now.getMonth() + 1;
         const currentYear = now.getFullYear();
         
-        // Показываем только сегодня и завтра для самовывоза
-        const today = new Date(currentYear, currentMonth, currentDay);
-        const tomorrow = new Date(currentYear, currentMonth, currentDay + 1);
+        const today = new Date(currentYear, currentMonth - 1, currentDay);
+        const tomorrow = new Date(currentYear, currentMonth - 1, currentDay + 1);
         
         const formatDateForPickup = (date) => {
-            return `${date.getDate()} ${date.toLocaleString('ru-RU', { month: 'long' })}`;
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            const formattedDay = day < 10 ? '0' + day : day;
+            const formattedMonth = month < 10 ? '0' + month : month;
+            return `${formattedDay}.${formattedMonth}`;
         };
         
         let html = `<div style="margin-bottom: 15px;"><label style="font-weight: 500; color: var(--brown);">Выберите дату:</label>
                     <select id="pickup-date-select" style="width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #ddd; margin-top: 8px;">`;
         
-        // Добавляем сегодня
         html += `<option value="today">${formatDateForPickup(today)} (сегодня)</option>`;
-        // Добавляем завтра
         html += `<option value="tomorrow">${formatDateForPickup(tomorrow)} (завтра)</option>`;
         html += `</select></div>`;
         
@@ -1228,7 +1273,6 @@ function updateDeliveryDateTime() {
         html += `</div>`;
         container.innerHTML = html;
         
-        // Автоматически выбираем первый активный час
         const firstActiveBtn = document.querySelector('#pickup-time-buttons .delivery-time-btn');
         if (firstActiveBtn) {
             firstActiveBtn.style.background = 'var(--accent)';
@@ -1268,7 +1312,6 @@ function updateDeliveryDateTime() {
         
         container.innerHTML = html;
         
-        // Автоматически выбираем первый интервал
         const firstTimeBtn = document.querySelector('#courier-time-buttons .delivery-time-btn');
         if (firstTimeBtn) {
             firstTimeBtn.style.background = 'var(--accent)';
@@ -1289,7 +1332,7 @@ function updateDeliveryDateTime() {
     }
     else if (deliveryType === 'post') {
         section.style.display = 'block';
-        const inThreeDays = formatDate(3);
+        const inThreeDays = formatDateNumber(3);
         container.innerHTML = `
             <div style="padding: 10px; background: #f8f9fa; border-radius: 12px; font-size: 13px;">
                 <i class="fas fa-envelope"></i> Ожидаемая дата получения: <strong>${inThreeDays}</strong>
@@ -1300,6 +1343,8 @@ function updateDeliveryDateTime() {
 
 function getDeliveryDateTime() {
     const deliveryType = getSelectedDelivery();
+    if (!deliveryType) return { date: '', time: '' };
+    
     let date = '';
     let time = '';
     
@@ -1308,12 +1353,12 @@ function getDeliveryDateTime() {
         if (dateSelect) {
             const selectedValue = dateSelect.value;
             if (selectedValue === 'today') {
-                date = formatDate(0);
+                date = formatDateNumber(0);
             } else {
-                date = formatDate(1);
+                date = formatDateNumber(1);
             }
         } else {
-            date = formatDate(0);
+            date = formatDateNumber(0);
         }
         
         const selectedTimeBtn = document.querySelector('#pickup-time-buttons .delivery-time-btn[style*="background: var(--accent)"]');
@@ -1332,9 +1377,9 @@ function getDeliveryDateTime() {
         const dateSelect = document.getElementById('courier-date-select');
         if (dateSelect) {
             const daysToAdd = parseInt(dateSelect.value);
-            date = formatDate(daysToAdd);
+            date = formatDateNumber(daysToAdd);
         } else {
-            date = formatDate(1);
+            date = formatDateNumber(1);
         }
         
         const selectedTimeBtn = document.querySelector('#courier-time-buttons .delivery-time-btn[style*="background: var(--accent)"]');
@@ -1350,7 +1395,7 @@ function getDeliveryDateTime() {
         }
     }
     else if (deliveryType === 'post') {
-        date = formatDate(3);
+        date = formatDateNumber(3);
         time = 'по получении';
     }
     
@@ -1423,9 +1468,66 @@ function processSbpPayment() {
     }, 1000);
 }
 
+// Обновление доступных способов оплаты
+function updatePaymentMethods() {
+    const deliveryType = getSelectedDelivery();
+    const cashMethod = document.querySelector('.method-item[data-payment="cash"]');
+    const cardMethod = document.querySelector('.method-item[data-payment="card"]');
+    
+    if (!cashMethod) return;
+    
+    if (deliveryType === 'courier') {
+        cashMethod.style.opacity = '1';
+        cashMethod.style.pointerEvents = 'auto';
+        const cashRadio = cashMethod.querySelector('input');
+        if (cashRadio) cashRadio.disabled = false;
+        
+        let note = cashMethod.querySelector('.method-note');
+        if (note) note.remove();
+    } else {
+        cashMethod.style.opacity = '0.5';
+        cashMethod.style.pointerEvents = 'none';
+        const cashRadio = cashMethod.querySelector('input');
+        if (cashRadio) cashRadio.disabled = true;
+        
+        let note = cashMethod.querySelector('.method-note');
+        if (!note) {
+            note = document.createElement('div');
+            note.className = 'method-note';
+            note.style.fontSize = '11px';
+            note.style.color = '#d32f2f';
+            note.style.marginTop = '4px';
+            cashMethod.querySelector('.method-info').appendChild(note);
+        }
+        
+        if (deliveryType === 'pickup') {
+            note.innerHTML = '❌ Оплата наличными недоступна при самовывозе';
+        } else if (deliveryType === 'post') {
+            note.innerHTML = '❌ Оплата наличными недоступна при отправке почтой';
+        } else {
+            note.innerHTML = '❌ Оплата наличными недоступна';
+        }
+        
+        if (cashRadio && cashRadio.checked) {
+            const cardRadio = cardMethod.querySelector('input');
+            if (cardRadio) {
+                cardRadio.checked = true;
+                cardMethod.classList.add('selected');
+                cashMethod.classList.remove('selected');
+            }
+        }
+    }
+}
+
 // ========== ОСНОВНЫЕ ФУНКЦИИ ОФОРМЛЕНИЯ ==========
 
 function submitOrderToServer() {
+    const deliveryType = getSelectedDelivery();
+    if (!deliveryType) {
+        showNotification('Выберите способ доставки');
+        return;
+    }
+    
     const deliveryDateTime = getDeliveryDateTime();
     
     if (!pendingOrderData) {
@@ -1444,6 +1546,11 @@ function submitOrderToServer() {
         comment: pendingOrderData.comment,
         phone: pendingOrderData.phone
     };
+    
+    // Добавляем промокод, если он применён
+    if (currentPromoCode) {
+        orderData.promo_code = currentPromoCode;
+    }
     
     fetch('/api/orders/create_order/', {
         method: 'POST',
@@ -1468,7 +1575,6 @@ function submitOrderToServer() {
     })
     .then(data => {
         if (data.id) {
-            localStorage.removeItem('checkout_promo_applied');
             localStorage.removeItem('checkout_bonus_applied');
             showNotification(`✅ Заказ успешно оформлен! Номер заказа: ${data.order_number}`);
             updateCartCount();
@@ -1497,6 +1603,13 @@ function updateCartCount() {
 }
 
 function showPaymentModal() {
+    const deliveryType = getSelectedDelivery();
+    
+    if (!deliveryType) {
+        showNotification('Выберите способ доставки');
+        return;
+    }
+    
     const firstNameEl = document.getElementById('first_name');
     const emailEl = document.getElementById('email');
     const phoneEl = document.getElementById('phone');
@@ -1512,8 +1625,8 @@ function showPaymentModal() {
     const deliveryAddress = getDeliveryAddress();
     
     if (!firstName) { showNotification('Введите имя'); return; }
-    
     if (!email) { showNotification('Введите email'); return; }
+    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) { showNotification('Введите корректный email'); return; }
     
@@ -1524,8 +1637,6 @@ function showPaymentModal() {
         showNotification('Введите корректный номер телефона (например: +7 999 123-45-67)');
         return;
     }
-    
-    const deliveryType = getSelectedDelivery();
     
     if (deliveryType === 'courier') {
         const streetEl = document.getElementById('street');
@@ -1673,7 +1784,7 @@ function showNotification(message) {
     notif.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;';
     notif.innerText = message;
     document.body.appendChild(notif);
-    setTimeout(() => notif.remove(), 2000);
+    setTimeout(() => notif.remove(), 3000);
 }
 
 function escapeHtml(text) {
@@ -1702,7 +1813,6 @@ function getCookie(name) {
 initDeliveryMethods();
 initPaymentMethods();
 initSbpButtons();
-updateDeliveryDateTime();
 loadCheckout();
 </script>
 {% endblock %}

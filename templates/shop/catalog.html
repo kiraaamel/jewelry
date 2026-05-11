@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">Каталог</li>
+{% endblock %}
 {% block content %}
 <style>
     .filter-section {

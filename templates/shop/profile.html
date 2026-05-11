@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">Профиль</li>
+{% endblock %}
 {% block content %}
 <style>
 :root {
@@ -9,6 +11,8 @@
     --brown: #7A6B5B;
     --gray: #808E92;
     --green: #28a745;
+    --red: #dc3545;
+    --orange: #ff9800;
 }
 
 .profile-page {
@@ -153,7 +157,7 @@
     box-shadow: 0 0 0 2px rgba(93,110,128,0.1);
 }
 
-.form-group input:read-only {
+.form-group input:read-only, .form-group input:disabled {
     background: #f8f9fa;
     cursor: not-allowed;
 }
@@ -173,6 +177,125 @@
 .btn-save:hover {
     background: #4a5a6a;
     transform: translateY(-2px);
+}
+
+/* Карточка промокода */
+.promo-card {
+    background: linear-gradient(135deg, #fff9e6, #fff0cc);
+    border-left: 4px solid var(--orange);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.promo-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.promo-card.discount-percent {
+    border-left-color: var(--orange);
+    background: linear-gradient(135deg, #fff8e7, #ffefd0);
+}
+
+.promo-card.discount-fixed {
+    border-left-color: var(--green);
+    background: linear-gradient(135deg, #e8f5e9, #d4e8d6);
+}
+
+.promo-code {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--brown);
+    margin-bottom: 10px;
+    font-family: monospace;
+}
+
+.promo-discount {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--orange);
+    margin-bottom: 10px;
+}
+
+.promo-card.discount-fixed .promo-discount {
+    color: var(--green);
+}
+
+.promo-desc {
+    color: var(--gray);
+    font-size: 13px;
+    margin-bottom: 15px;
+}
+
+.promo-terms {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(0,0,0,0.1);
+}
+
+.promo-term {
+    font-size: 11px;
+    color: var(--gray);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.promo-term i {
+    font-size: 12px;
+}
+
+.promo-expiry {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 11px;
+    color: var(--gray);
+    background: rgba(255,255,255,0.8);
+    padding: 4px 8px;
+    border-radius: 20px;
+}
+
+.promo-expiry.urgent {
+    background: #ffebee;
+    color: var(--red);
+}
+
+.copy-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+
+.copy-btn:hover {
+    background: #4a5a6a;
+    transform: translateY(-2px);
+}
+
+.empty-promo {
+    text-align: center;
+    padding: 40px;
+    color: var(--gray);
+}
+
+.empty-promo i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.5;
 }
 
 /* Бонусы */
@@ -199,6 +322,102 @@
     font-size: 12px;
     opacity: 0.7;
     margin-top: 10px;
+}
+
+.birthday-bonus-card {
+    background: linear-gradient(135deg, #ff9800, #ff5722);
+    border-radius: 16px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 20px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+/* Отзывы */
+.review-card {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+}
+
+.review-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.review-product {
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.review-product-name {
+    font-size: 16px;
+}
+
+.review-product-link {
+    font-size: 12px;
+    color: var(--gray);
+    text-decoration: none;
+}
+
+.review-product-link:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+.review-stars {
+    margin: 10px 0;
+}
+
+.review-stars i {
+    color: #ffc107;
+    font-size: 16px;
+    margin-right: 2px;
+}
+
+.review-text {
+    color: var(--brown);
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 10px 0;
+}
+
+.review-date {
+    font-size: 12px;
+    color: var(--gray);
+}
+
+.review-image {
+    margin-top: 10px;
+    max-width: 150px;
+    border-radius: 8px;
+}
+
+.delete-review-btn {
+    background: transparent;
+    border: none;
+    color: var(--red);
+    cursor: pointer;
+    padding: 5px;
+    font-size: 14px;
+}
+
+.delete-review-btn:hover {
+    opacity: 0.7;
 }
 
 /* Адреса */
@@ -363,6 +582,14 @@
     .sidebar-menu a {
         padding: 8px 16px;
     }
+    
+    .promo-code {
+        font-size: 18px;
+    }
+    
+    .promo-discount {
+        font-size: 24px;
+    }
 }
 </style>
 
@@ -379,6 +606,8 @@
                 <ul class="sidebar-menu">
                     <li><a href="#" class="active" data-tab="profile"><i class="fas fa-user"></i> Профиль</a></li>
                     <li><a href="#" data-tab="addresses"><i class="fas fa-map-marker-alt"></i> Мои адреса</a></li>
+                    <li><a href="#" data-tab="reviews"><i class="fas fa-star"></i> Мои отзывы</a></li>
+                    <li><a href="#" data-tab="promocodes"><i class="fas fa-tags"></i> Промокоды и акции</a></li>
                     <li><a href="#" data-tab="bonus"><i class="fas fa-coins"></i> Бонусы</a></li>
                 </ul>
             </div>
@@ -410,7 +639,12 @@
                             <label>Телефон</label>
                             <input type="tel" id="profile-phone" placeholder="+7 (___) ___-__-__">
                         </div>
-                        <button type="submit" class="btn-save">Сохранить изменения</button>
+                        <div class="form-group">
+                            <label>Дата рождения</label>
+                            <input type="date" id="profile-birthday" max="2013-05-11">
+                            <small id="birthday-hint" style="font-size: 12px; color: var(--gray); display: block; margin-top: 5px;"></small>
+                        </div>
+                        <button type="submit" class="btn-save" id="save-profile-btn">Сохранить изменения</button>
                     </form>
                 </div>
 
@@ -422,9 +656,26 @@
                     </div>
                 </div>
 
+                <!-- Вкладка Мои отзывы -->
+                <div id="reviews-tab" class="tab-content" style="display: none;">
+                    <div class="content-title">Мои отзывы</div>
+                    <div id="reviews-list">
+                        <div class="text-center py-3 text-secondary">Загрузка отзывов...</div>
+                    </div>
+                </div>
+
+                <!-- Вкладка Промокоды и акции -->
+                <div id="promocodes-tab" class="tab-content" style="display: none;">
+                    <div class="content-title">Доступные промокоды и акции</div>
+                    <div id="promocodes-list">
+                        <div class="text-center py-3 text-secondary">Загрузка промокодов...</div>
+                    </div>
+                </div>
+
                 <!-- Вкладка Бонусы -->
                 <div id="bonus-tab" class="tab-content" style="display: none;">
                     <div class="content-title">Мои бонусы</div>
+                    <div id="birthday-bonus-container"></div>
                     <div class="bonus-card">
                         <h3>Доступно бонусов</h3>
                         <div class="bonus-value" id="bonus-points">0</div>
@@ -462,6 +713,7 @@
 let currentUser = null;
 let currentAddresses = [];
 let currentEditAddressIndex = null;
+let currentReviews = [];
 
 function loadProfile() {
     fetch('/api/auth/me/')
@@ -469,6 +721,8 @@ function loadProfile() {
         .then(user => {
             currentUser = user;
             renderProfile(user);
+            loadBonusHistory();
+            setTimeout(() => checkBirthdayBonus(user), 500);
         })
         .catch(error => console.error('Error:', error));
 }
@@ -480,11 +734,195 @@ function renderProfile(user) {
     document.getElementById('profile-first-name').value = user.first_name || '';
     document.getElementById('profile-last-name').value = user.last_name || '';
     document.getElementById('profile-phone').value = user.phone || '';
+    
+    const birthdayInput = document.getElementById('profile-birthday');
+    const birthdayHint = document.getElementById('birthday-hint');
+    
+    if (user.birthday) {
+        birthdayInput.value = user.birthday;
+        birthdayInput.disabled = true;
+        birthdayInput.style.background = '#f8f9fa';
+        birthdayHint.innerHTML = '📅 Дата рождения указана и не может быть изменена.';
+        birthdayHint.style.color = '#28a745';
+    } else {
+        birthdayInput.disabled = false;
+        birthdayHint.innerHTML = 'Укажите дату рождения для получения бонусов. Пользователь должен быть старше 12 лет.';
+        birthdayHint.style.color = 'var(--gray)';
+    }
+    
     document.getElementById('bonus-points').innerHTML = user.bonus_points || 0;
 }
 
+function validateAge(birthday) {
+    const birthDate = new Date(birthday);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age >= 12;
+}
+
+function checkBirthdayBonus(user) {
+    if (!user.birthday) return;
+    
+    const today = new Date();
+    const birthday = new Date(user.birthday);
+    const currentYear = today.getFullYear();
+    
+    const birthdayThisYear = new Date(currentYear, birthday.getMonth(), birthday.getDate());
+    const twoWeeksBefore = new Date(birthdayThisYear);
+    twoWeeksBefore.setDate(birthdayThisYear.getDate() - 14);
+    
+    today.setHours(0, 0, 0, 0);
+    twoWeeksBefore.setHours(0, 0, 0, 0);
+    birthdayThisYear.setHours(0, 0, 0, 0);
+    
+    if (today >= twoWeeksBefore && today <= birthdayThisYear) {
+        const bonusAlreadyGiven = localStorage.getItem(`birthday_bonus_${user.id}_${currentYear}`);
+        if (!bonusAlreadyGiven) {
+            const container = document.getElementById('birthday-bonus-container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="birthday-bonus-card">
+                        <i class="fas fa-gift" style="font-size: 24px; margin-bottom: 10px;"></i>
+                        <h3 style="margin-bottom: 5px;">🎂 С наступающим днём рождения!</h3>
+                        <p style="font-size: 14px; opacity: 0.9;">В честь вашего праздника мы начислим 1000 бонусов!</p>
+                        <button onclick="claimBirthdayBonus()" style="background: white; color: #ff9800; border: none; padding: 8px 20px; border-radius: 30px; margin-top: 10px; cursor: pointer; font-weight: 600;">Получить бонус</button>
+                    </div>
+                `;
+            }
+        }
+    }
+}
+
+function claimBirthdayBonus() {
+    const currentYear = new Date().getFullYear();
+    const newBonusAmount = (currentUser.bonus_points || 0) + 1000;
+    
+    fetch('/api/auth/me/', {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            bonus_points: newBonusAmount
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.id) {
+            currentUser = data;
+            document.getElementById('bonus-points').innerHTML = data.bonus_points;
+            
+            document.getElementById('birthday-bonus-container').innerHTML = `
+                <div class="birthday-bonus-card" style="background: linear-gradient(135deg, #4caf50, #2e7d32);">
+                    <i class="fas fa-check-circle" style="font-size: 24px; margin-bottom: 10px;"></i>
+                    <h3>🎉 Бонус получен!</h3>
+                    <p>1000 бонусов зачислено на ваш счёт</p>
+                </div>
+            `;
+            
+            localStorage.setItem(`birthday_bonus_${currentUser.id}_${currentYear}`, 'true');
+            loadBonusHistory();
+            showNotification('✅ 1000 бонусов успешно начислены!');
+        } else {
+            showNotification('Ошибка при начислении бонусов');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('❌ Ошибка при начислении бонусов');
+    });
+}
+
+// ========== ФУНКЦИИ ДЛЯ ПРОМОКОДОВ ==========
+
+function loadPromoCodes() {
+    fetch('/api/promo/')
+        .then(response => response.json())
+        .then(promoCodes => {
+            renderPromoCodes(promoCodes);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('promocodes-list').innerHTML = '<div class="text-center py-3 text-secondary">Ошибка загрузки промокодов</div>';
+        });
+}
+
+function renderPromoCodes(promoCodes) {
+    const container = document.getElementById('promocodes-list');
+    
+    if (!promoCodes || promoCodes.length === 0) {
+        container.innerHTML = `
+            <div class="empty-promo">
+                <i class="fas fa-tags"></i>
+                <h3>Нет активных промокодов</h3>
+                <p>Следите за нашими акциями, скоро появятся новые промокоды!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const now = new Date();
+    let html = '<div class="row">';
+    
+    promoCodes.forEach(promo => {
+        const validTo = new Date(promo.valid_to);
+        const daysLeft = Math.ceil((validTo - now) / (1000 * 60 * 60 * 24));
+        const isUrgent = daysLeft <= 3 && daysLeft >= 0;
+        
+        const discountTypeClass = promo.discount_type === 'percent' ? 'discount-percent' : 'discount-fixed';
+        const discountDisplay = promo.discount_display;
+        
+        let termsHtml = '';
+        if (promo.min_order_amount > 0) {
+            termsHtml += `<span class="promo-term"><i class="fas fa-shopping-cart"></i> от ${promo.min_order_amount} ₽</span>`;
+        }
+        if (promo.max_discount_amount) {
+            termsHtml += `<span class="promo-term"><i class="fas fa-tag"></i> макс. скидка ${promo.max_discount_amount} ₽</span>`;
+        }
+        if (promo.only_new_users) {
+            termsHtml += `<span class="promo-term"><i class="fas fa-user-plus"></i> для новых покупателей</span>`;
+        }
+        
+        const expiryClass = isUrgent ? 'urgent' : '';
+        const expiryText = isUrgent ? `⏰ Осталось ${daysLeft} дня` : `до ${validTo.toLocaleDateString('ru-RU')}`;
+        
+        html += `
+            <div class="col-md-6 mb-3">
+                <div class="promo-card ${discountTypeClass}">
+                    <div class="promo-expiry ${expiryClass}">${expiryText}</div>
+                    <div class="promo-code">${promo.code}</div>
+                    <div class="promo-discount">${discountDisplay}</div>
+                    <div class="promo-terms">
+                        ${termsHtml}
+                    </div>
+                    <button class="copy-btn" onclick="copyPromoCode('${promo.code}')">
+                        <i class="fas fa-copy"></i> Скопировать код
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function copyPromoCode(code) {
+    navigator.clipboard.writeText(code).then(() => {
+        showNotification(`✅ Промокод "${code}" скопирован!`);
+    }).catch(() => {
+        showNotification('❌ Не удалось скопировать код');
+    });
+}
+
+// ========== ОСТАЛЬНЫЕ ФУНКЦИИ ==========
+
 function loadAddresses() {
-    // Получаем уникальные адреса из заказов пользователя
     fetch('/api/orders/')
         .then(response => response.json())
         .then(orders => {
@@ -563,13 +1001,95 @@ function saveAddressEdit() {
         return;
     }
     
-    // Обновляем адрес в локальном списке
     if (currentEditAddressIndex !== null) {
         currentAddresses[currentEditAddressIndex].address = newAddress;
         renderAddresses();
         showNotification('Адрес обновлён');
     }
     closeAddressModal();
+}
+
+function loadReviews() {
+    fetch('/api/reviews/')
+        .then(response => response.json())
+        .then(reviews => {
+            currentReviews = reviews;
+            renderReviews();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('reviews-list').innerHTML = '<div class="text-center py-3 text-secondary">Ошибка загрузки отзывов</div>';
+        });
+}
+
+function renderReviews() {
+    const container = document.getElementById('reviews-list');
+    
+    if (currentReviews.length === 0) {
+        container.innerHTML = '<div class="text-center py-5"><i class="fas fa-star" style="font-size: 48px; color: var(--gray); margin-bottom: 15px;"></i><h3 style="color: var(--brown);">У вас пока нет отзывов</h3><p style="color: var(--gray);">Оставьте свой первый отзыв после получения заказа</p><a href="/catalog/" class="btn-save" style="display: inline-block; margin-top: 15px;">Перейти в каталог</a></div>';
+        return;
+    }
+    
+    let html = '';
+    currentReviews.forEach(review => {
+        const productLink = `/product/${review.product}/`;
+        const stars = [1,2,3,4,5].map(i => 
+            `<i class="fas fa-star${i <= review.rating ? '' : '-o'}"></i>`
+        ).join('');
+        
+        let imageHtml = '';
+        if (review.image) {
+            let imageUrl = typeof review.image === 'string' ? review.image : (review.image.url || '');
+            if (imageUrl) {
+                imageHtml = `<img src="${imageUrl}" class="review-image" alt="Фото отзыва">`;
+            }
+        }
+        
+        const date = new Date(review.created_at).toLocaleDateString('ru-RU');
+        
+        html += `
+            <div class="review-card" data-review-id="${review.id}">
+                <div class="review-product">
+                    <span class="review-product-name">Товар: ${escapeHtml(review.product_name || 'Украшение')}</span>
+                    <a href="${productLink}" class="review-product-link">Посмотреть товар →</a>
+                </div>
+                <div class="review-stars">${stars}</div>
+                <div class="review-text">${escapeHtml(review.comment || '')}</div>
+                ${imageHtml}
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+                    <span class="review-date">${date}</span>
+                    <button class="delete-review-btn" onclick="deleteReview(${review.id})">
+                        <i class="fas fa-trash-alt"></i> Удалить
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+function deleteReview(reviewId) {
+    if (!confirm('Вы уверены, что хотите удалить этот отзыв?')) return;
+    
+    fetch(`/api/reviews/${reviewId}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            currentReviews = currentReviews.filter(r => r.id !== reviewId);
+            renderReviews();
+            showNotification('Отзыв успешно удалён');
+        } else {
+            showNotification('Ошибка при удалении отзыва');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при удалении отзыва');
+    });
 }
 
 function loadBonusHistory() {
@@ -579,12 +1099,34 @@ function loadBonusHistory() {
             const container = document.getElementById('bonus-history-list');
             const ordersWithBonuses = orders.filter(o => o.bonus_earned > 0);
             
-            if (ordersWithBonuses.length === 0) {
+            let savedHistory = [];
+            if (currentUser && currentUser.id) {
+                const saved = localStorage.getItem(`bonus_history_${currentUser.id}`);
+                if (saved) {
+                    savedHistory = JSON.parse(saved);
+                }
+            }
+            
+            if (ordersWithBonuses.length === 0 && savedHistory.length === 0) {
                 container.innerHTML = '<div class="text-center py-3 text-secondary">Пока нет начислений</div>';
                 return;
             }
             
             let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+            
+            savedHistory.forEach(entry => {
+                const date = new Date(entry.date).toLocaleDateString('ru-RU');
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #fff3e0; border-radius: 12px; border-left: 4px solid #ff9800;">
+                        <div>
+                            <div style="font-weight: 500; color: #ff9800;">${entry.message || '🎂 Бонус за день рождения'}</div>
+                            <div style="font-size: 12px; color: var(--gray);">от ${date}</div>
+                        </div>
+                        <div style="color: #ff9800; font-weight: 600;">+${entry.amount} бонусов</div>
+                    </div>
+                `;
+            });
+            
             ordersWithBonuses.forEach(order => {
                 const date = new Date(order.created_at).toLocaleDateString('ru-RU');
                 html += `
@@ -597,6 +1139,7 @@ function loadBonusHistory() {
                     </div>
                 `;
             });
+            
             html += '</div>';
             container.innerHTML = html;
         })
@@ -610,11 +1153,22 @@ function loadBonusHistory() {
 document.getElementById('profile-form').addEventListener('submit', function(e) {
     e.preventDefault();
     
+    const birthday = document.getElementById('profile-birthday').value;
+    
+    if (birthday && !validateAge(birthday)) {
+        showNotification('❌ Пользователь должен быть старше 12 лет');
+        return;
+    }
+    
     const formData = {
         first_name: document.getElementById('profile-first-name').value,
         last_name: document.getElementById('profile-last-name').value,
         phone: document.getElementById('profile-phone').value
     };
+    
+    if (birthday && !currentUser.birthday) {
+        formData.birthday = birthday;
+    }
     
     fetch('/api/auth/me/', {
         method: 'PATCH',
@@ -629,7 +1183,8 @@ document.getElementById('profile-form').addEventListener('submit', function(e) {
         if (data.id) {
             currentUser = data;
             renderProfile(data);
-            showNotification('Профиль успешно обновлён');
+            setTimeout(() => checkBirthdayBonus(data), 500);
+            showNotification('✅ Профиль успешно обновлён');
         } else {
             showNotification('Ошибка при обновлении профиля');
         }
@@ -659,6 +1214,12 @@ function initTabs() {
             } else if (tab === 'addresses') {
                 document.getElementById('addresses-tab').style.display = 'block';
                 loadAddresses();
+            } else if (tab === 'reviews') {
+                document.getElementById('reviews-tab').style.display = 'block';
+                loadReviews();
+            } else if (tab === 'promocodes') {
+                document.getElementById('promocodes-tab').style.display = 'block';
+                loadPromoCodes();
             } else if (tab === 'bonus') {
                 document.getElementById('bonus-tab').style.display = 'block';
                 loadBonusHistory();
@@ -672,7 +1233,7 @@ function showNotification(message) {
     notif.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;';
     notif.innerText = message;
     document.body.appendChild(notif);
-    setTimeout(() => notif.remove(), 2000);
+    setTimeout(() => notif.remove(), 3000);
 }
 
 function escapeHtml(text) {

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'account_login' %}">Вход</a></li>
+<li class="breadcrumb-item active" aria-current="page">Сброс пароля</li>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow" style="border: none; border-radius: 16px; overflow: hidden;">
+                <div class="card-header" style="background-color: var(--accent); color: white; border: none; padding: 20px;">
+                    <h4 class="mb-0"><i class="fas fa-key me-2"></i> Сброс пароля</h4>
+                </div>
+                <div class="card-body" style="padding: 30px;">
+                    <p class="text-secondary mb-4">Введите ваш email, и мы отправим ссылку для сброса пароля.</p>
+                    <form method="post" action="{% url 'account_reset_password' %}">
+                        {% csrf_token %}
+                        {% if form.errors %}
+                        <div class="alert alert-danger" style="border-radius: 12px;">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <div class="mb-4">
+                            <label for="id_email" class="form-label" style="color: var(--brown); font-weight: 500;">Email</label>
+                            <input type="email" name="email" class="form-control" id="id_email" required style="border-radius: 12px; padding: 12px; border: 1px solid #ddd;">
+                        </div>
+                        <button type="submit" class="btn w-100" style="background-color: var(--accent); color: white; border: none; border-radius: 12px; padding: 12px; font-weight: 600;">
+                            <i class="fas fa-paper-plane me-2"></i> Отправить
+                        </button>
+                    </form>
+                    <hr class="my-4">
+                    <p class="text-center mb-0">
+                        <a href="{% url 'account_login' %}" style="color: var(--accent); text-decoration: none;">
+                            <i class="fas fa-arrow-left me-1"></i> Вернуться ко входу
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

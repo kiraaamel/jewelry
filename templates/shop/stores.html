@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">Магазины</li>
+{% endblock %}
 {% block content %}
 <style>
 :root {
@@ -12,7 +14,7 @@
 
 .stores-page {
     background: var(--bg-cream);
-    padding: 40px 0;
+    padding-bottom: 40px;
     min-height: 70vh;
 }
 
@@ -21,23 +23,6 @@
     margin: 0 auto;
     padding: 0 20px;
 }
-
-/* хлебные крошки */
-.breadcrumbs {
-    font-size: 14px;
-    color: var(--gray);
-    margin-bottom: 30px;
-}
-
-.breadcrumbs a {
-    color: var(--accent);
-    text-decoration: none;
-}
-
-.breadcrumbs a:hover {
-    text-decoration: underline;
-}
-
 /* заголовок */
 .page-title {
     font-size: 32px;
@@ -219,11 +204,6 @@
 <div class="stores-page">
     <div class="stores-container">
         
-        <!-- хлебные крошки -->
-        <div class="breadcrumbs">
-            <a href="/">Главная</a> / <span>Магазины</span>
-        </div>
-
         <!-- заголовок -->
         <h1 class="page-title">Наши магазины</h1>
         <p class="page-subtitle">Выберите удобный пункт самовывоза в Москве</p>
