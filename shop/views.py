@@ -86,25 +86,75 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]  # доступно всем
 
 from django.db import models
+from django.db.models import Avg, Value, FloatField
+from django.db.models.functions import Coalesce
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Product.objects.select_related('category').prefetch_related('reviews').all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.AllowAny]
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_class = ProductFilter
-    ordering_fields = ['price', 'created_at', 'average_rating']
+    ordering_fields = ['price', 'created_at']
     search_fields = ['name', 'name_lower', 'description']
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        search = self.request.query_params.get('search', None)
-        if search:
-            # Приводим поисковый запрос к нижнему регистру
-            search_lower = search.lower()
-            # Ищем в name_lower (там уже всё в нижнем регистре)
-            queryset = queryset.filter(name_lower__icontains=search_lower)
-        return queryset
+        try:
+            # Базовый запрос
+            queryset = Product.objects.filter(is_active=True).select_related('category', 'collection')
+            
+            # Обработка ids параметра для отзывов
+            ids = self.request.query_params.get('ids', None)
+            if ids:
+                ids_list = ids.split(',')
+                queryset = queryset.filter(id__in=ids_list)
+            
+            # Поиск
+            search = self.request.query_params.get('search', None)
+            if search:
+                search_lower = search.lower()
+                queryset = queryset.filter(name_lower__icontains=search_lower)
+            
+            return queryset
+        except Exception as e:
+            print(f"Error in get_queryset: {e}")
+            return Product.objects.none()
+
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.filter_queryset(self.get_queryset())
+            
+            # Пагинация
+            page_size = request.query_params.get('page_size', 12)
+            try:
+                page_size = int(page_size)
+            except (ValueError, TypeError):
+                page_size = 12
+            
+            # Если запрошены все товары (без пагинации)
+            if page_size == 0 or 'ids' in request.query_params:
+                serializer = self.get_serializer(queryset, many=True)
+                return Response(serializer.data)
+            
+            page = int(request.query_params.get('page', 1))
+            start = (page - 1) * page_size
+            end = start + page_size
+            
+            total = queryset.count()
+            paginated_queryset = queryset[start:end]
+            
+            serializer = self.get_serializer(paginated_queryset, many=True)
+            
+            return Response({
+                'count': total,
+                'next': f"/api/products/?page={page + 1}&page_size={page_size}" if end < total else None,
+                'previous': f"/api/products/?page={page - 1}&page_size={page_size}" if page > 1 else None,
+                'results': serializer.data
+            })
+        except Exception as e:
+            print(f"Error in list: {e}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=500)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -113,11 +163,17 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     
     @action(detail=True, methods=['get'])
     def reviews(self, request, pk=None):
-        product = self.get_object()
-        reviews = product.reviews.filter(moderated=True).order_by('-created_at')
-        serializer = ReviewSerializer(reviews, many=True, context={'request': request})
-        return Response(serializer.data)
-    
+        try:
+            product = self.get_object()
+            reviews = product.reviews.filter(moderated=True).order_by('-created_at')
+            # Добавляем product_name для каждого отзыва
+            for review in reviews:
+                review.product_name = product.name
+            serializer = ReviewSerializer(reviews, many=True, context={'request': request})
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+            
 class CartViewSet(viewsets.GenericViewSet):
     """
     ViewSet для корзины.

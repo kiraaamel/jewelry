@@ -80,8 +80,6 @@ class ProductSerializer(serializers.ModelSerializer):
     """
     Сериализатор для товара.
     """
-    average_rating = serializers.FloatField(read_only=True)
-    reviews_count = serializers.IntegerField(read_only=True)
     discount_percent = serializers.IntegerField(read_only=True)
     available_quantity = serializers.IntegerField(read_only=True)
     is_in_favorites = serializers.SerializerMethodField()
@@ -92,6 +90,10 @@ class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     collection_name = serializers.CharField(source='collection.name', read_only=True)
     collection_slug = serializers.CharField(source='collection.slug', read_only=True)
+    
+    # Добавляем эти поля для совместимости
+    average_rating = serializers.FloatField(default=0, read_only=True)
+    reviews_count = serializers.IntegerField(default=0, read_only=True)
 
     class Meta:
         model = Product
@@ -270,11 +272,18 @@ class ReviewSerializer(serializers.ModelSerializer):
     Сериализатор для отзыва.
     """
     user_name = serializers.CharField(source='user.email', read_only=True)
+    product_name = serializers.SerializerMethodField()  # Добавляем это поле
 
     class Meta:
         model = Review
-        fields = ('id', 'user', 'user_name', 'product', 'rating', 'comment', 'image', 'created_at', 'moderated')
+        fields = ('id', 'user', 'user_name', 'product', 'product_name', 'rating', 'comment', 'image', 'created_at', 'moderated')
         read_only_fields = ('id', 'user', 'created_at', 'moderated')
+
+    def get_product_name(self, obj):
+        """Возвращает название товара для отзыва"""
+        if hasattr(obj, 'product_name'):
+            return obj.product_name
+        return obj.product.name if obj.product else 'Товар'
 
     def validate(self, attrs):
         """
@@ -304,7 +313,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         validated_data['user'] = request.user
         return super().create(validated_data)
-
+        
 class WishlistSerializer(serializers.ModelSerializer):
     """
     Сериализатор для избранного.

@@ -2,7 +2,6 @@ from django_filters import rest_framework as filters
 from django.db import models
 from .models import Product
 
-
 class ProductFilter(filters.FilterSet):
     price_min = filters.NumberFilter(field_name='price', lookup_expr='gte')
     price_max = filters.NumberFilter(field_name='price', lookup_expr='lte')
@@ -17,12 +16,14 @@ class ProductFilter(filters.FilterSet):
         choices=Product.FINENESS_CHOICES,
         lookup_expr='exact'
     )
-    stone_type = filters.ChoiceFilter(  # ← добавить этот фильтр
+    stone_type = filters.ChoiceFilter(
         field_name='stone_type',
         choices=Product.STONE_TYPE_CHOICES,
         lookup_expr='exact'
     )
     has_discount = filters.BooleanFilter(method='filter_has_discount')
+    collection = filters.NumberFilter(field_name='collection__id')
+    collection_slug = filters.CharFilter(field_name='collection__slug')
     
     def filter_has_discount(self, queryset, name, value):
         if value:
@@ -33,5 +34,5 @@ class ProductFilter(filters.FilterSet):
         model = Product
         fields = [
             'category', 'silver_type', 'fineness', 'stones', 'stone_type',
-            'collection', 'is_active', 'price_min', 'price_max', 'has_discount'
+            'collection', 'collection_slug', 'is_active', 'price_min', 'price_max', 'has_discount'
         ]

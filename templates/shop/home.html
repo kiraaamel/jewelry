@@ -33,6 +33,23 @@
     </div>
 </div>
 
+<!-- ========== КОЛЛЕКЦИИ ========== -->
+<div class="collections-section py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold" style="color: var(--accent); font-family: 'Playfair Display', serif; font-size: 32px;">Наши коллекции</h2>
+            <p style="color: var(--gray);">Вдохновляющие образы для особых моментов</p>
+        </div>
+        <div class="row" id="collections-list">
+            <div class="col-12 text-center" style="color: var(--gray);">
+                <div class="spinner-border" style="color: var(--accent);" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ========== ОТЗЫВЫ ========== -->
 <div class="container">
     <h2 class="section-title-left">Отзывы</h2>
@@ -327,7 +344,53 @@
     line-height: 1.5;
     margin-bottom: 0;
 }
+.collection-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    aspect-ratio: 1 / 1;
+}
 
+.collection-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.collection-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.collection-card:hover .collection-image {
+    transform: scale(1.08);
+}
+
+.collection-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    padding: 20px;
+    text-align: center;
+}
+
+.collection-name {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    transition: all 0.3s;
+}
+
+.collection-card:hover .collection-name {
+    transform: translateY(-3px);
+}
 /* ========== АДАПТИВНОСТЬ ========== */
 @media (max-width: 768px) {
     .banner-text-box {
@@ -533,13 +596,56 @@ async function loadReviews() {
         container.innerHTML = '<div class="col-12 text-center" style="color: var(--gray);">Ошибка загрузки отзывов</div>';
     }
 }
+function loadCollections() {
+    fetch('/api/collections/')
+        .then(response => response.json())
+        .then(collections => {
+            const container = document.getElementById('collections-list');
+            if (!container) return;
+            
+            // Берём только первые 4 коллекции
+            const latestCollections = collections.slice(0, 4);
+            
+            if (latestCollections.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center" style="color: var(--gray);">Коллекций пока нет</div>';
+                return;
+            }
+            
+            let html = '';
+            latestCollections.forEach(collection => {
+                let imageUrl = collection.image || '/static/shop/images/collection-placeholder.jpg';
+                if (imageUrl && typeof imageUrl === 'object') {
+                    imageUrl = imageUrl.url || '/static/shop/images/collection-placeholder.jpg';
+                }
+                
+                html += `
+                    <div class="col-md-3 col-sm-6 mb-4">
+                        <div class="collection-card" onclick="window.location.href='/catalog/?collection=${collection.slug}'">
+                            <img src="${imageUrl}" alt="${collection.name}" class="collection-image" onerror="this.src='/static/shop/images/collection-placeholder.jpg'">
+                            <div class="collection-overlay">
+                                <h3 class="collection-name">${collection.name}</h3>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading collections:', error);
+            const container = document.getElementById('collections-list');
+            if (container) {
+                container.innerHTML = '<div class="col-12 text-center" style="color: var(--gray);">Ошибка загрузки коллекций</div>';
+            }
+        });
+}
 
-// Загружаем всё при загрузке страницы
+// Добавьте вызов функции в DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function() {
+    loadCollections();  // Добавьте эту строку
     loadProducts('bestseller-products', '/api/products/?page_size=4', 4);
     loadReviews();
     
-    // Проверяем авторизацию через JS (если на странице есть элемент с data атрибутом)
     const isAuthenticated = document.body.classList.contains('user-authenticated');
     if (isAuthenticated) {
         loadProducts('recommended-products', '/api/products/?page_size=4', 4);
