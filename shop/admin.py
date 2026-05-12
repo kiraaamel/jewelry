@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html 
 from .models import (
-    User, Category, Product, 
+    User, Category, Product, Collection,
     Cart, CartItem, Order, OrderItem, Review, Wishlist, PromoCode, PromoCodeUsage
 )
 
@@ -153,7 +153,7 @@ class CartAdmin(admin.ModelAdmin):
 
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'category', 'price_display', 
+    list_display = ['id', 'name', 'category', 'price_display', 'collection',
                    'silver_info', 'weight', 'stock_status', 'has_discount_display', 
                    'stones_display', 'image_preview', 'images_count_display', 'created_at']
     list_filter = ['category', 'silver_type', 'fineness', 'stones', 'created_at', 'collection']
@@ -419,7 +419,33 @@ class PromoCodeUsageAdmin(admin.ModelAdmin):
     readonly_fields = ['used_at']
 
 
+class CollectionAdmin(admin.ModelAdmin):
+    list_display = ['name', 'slug', 'order', 'is_active', 'products_count', 'image_preview']
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['name', 'description']
+    prepopulated_fields = {'slug': ('name',)}
+    list_editable = ['order', 'is_active']
+    
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('name', 'slug', 'description', 'image')
+        }),
+        ('Настройки отображения', {
+            'fields': ('order', 'is_active')
+        }),
+    )
+    
+    def products_count(self, obj):
+        return obj.products.count()
+    products_count.short_description = 'Товаров в коллекции'
+    
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 50px; border-radius: 5px;" />', obj.image.url)
+        return '-'
+    image_preview.short_description = 'Превью'
 
+admin.site.register(Collection, CollectionAdmin)
 admin.site.register(PromoCode, PromoCodeAdmin)
 admin.site.register(PromoCodeUsage, PromoCodeUsageAdmin)
 # Регистрируем все модели

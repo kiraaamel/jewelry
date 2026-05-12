@@ -106,7 +106,32 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-
+class Collection(models.Model):
+    """
+    Коллекция товаров (например: "Весенняя коллекция", "Премиум", "Свадебная" и т.д.)
+    """
+    name = models.CharField(max_length=255, verbose_name='Название коллекции')
+    slug = models.SlugField(unique=True, verbose_name='URL-идентификатор')
+    description = models.TextField(blank=True, verbose_name='Описание коллекции')
+    image = models.ImageField(upload_to='collections/', blank=True, null=True, verbose_name='Фото коллекции')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок сортировки')
+    is_active = models.BooleanField(default=True, verbose_name='Активна')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+    
+    class Meta:
+        verbose_name = 'Коллекция'
+        verbose_name_plural = 'Коллекции'
+        ordering = ['order', 'name']
+    
+    def __str__(self):
+        return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+        
 class Product(models.Model):
     """
     Ювелирное изделие.
@@ -264,8 +289,14 @@ class Product(models.Model):
     )
     
     # Коллекция
-    collection = models.CharField(max_length=255, blank=True, verbose_name='Коллекция')
-    
+    collection = models.ForeignKey(
+        Collection,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='products',
+        verbose_name='Коллекция'
+    )
     # Мета-информация
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')

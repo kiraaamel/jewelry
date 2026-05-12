@@ -2,7 +2,6 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.views.generic import CreateView
 from django.urls import reverse_lazy
-from .models import User
 from django.http import HttpResponse
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.decorators import action
@@ -20,13 +19,13 @@ from django.utils import timezone
 
 from .models import (
     Category, Product, Cart, CartItem, 
-    Order, Review, Wishlist
+    Order, Review, Wishlist, User, Collection
 )
 from .serializers import (
     CategorySerializer, ProductSerializer, CartSerializer,
     OrderSerializer, OrderCreateSerializer, ReviewSerializer,
     WishlistSerializer, UserSerializer, RegisterSerializer,
-    CustomTokenObtainPairSerializer
+    CustomTokenObtainPairSerializer, CollectionSerializer
 )
 from rest_framework_simplejwt.views import TokenObtainPairView
 from allauth.account.views import SignupView
@@ -447,3 +446,11 @@ class PromoCodeViewSet(viewsets.GenericViewSet):
     def remove(self, request):
         request.session.pop('applied_promo', None)
         return Response({'message': 'Промокод удалён'})
+
+class CollectionViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet для коллекций (только чтение).
+    """
+    queryset = Collection.objects.filter(is_active=True).order_by('order', 'name')
+    serializer_class = CollectionSerializer
+    permission_classes = [permissions.AllowAny]

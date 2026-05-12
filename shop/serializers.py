@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
-    Category, Product, Cart, CartItem, 
+    Category, Product, Cart, CartItem, Collection,
     Order, OrderItem, Review, Wishlist, PromoCode, PromoCodeUsage
 )
 from django.utils import timezone
@@ -90,6 +90,8 @@ class ProductSerializer(serializers.ModelSerializer):
     fineness_display = serializers.CharField(source='get_fineness_display', read_only=True)
     stone_type_display = serializers.CharField(source='get_stone_type_display', read_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
+    collection_name = serializers.CharField(source='collection.name', read_only=True)
+    collection_slug = serializers.CharField(source='collection.slug', read_only=True)
 
     class Meta:
         model = Product
@@ -101,7 +103,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'fineness', 'fineness_display',
             'weight', 'size',
             'stones', 'stone_type', 'stone_type_display', 'stone_weight',
-            'collection',
+            'collection', 'collection_name', 'collection_slug',
             'image', 'image_2', 'image_3', 'image_4', 'image_5',
             'average_rating', 'reviews_count', 'discount_percent',
             'created_at', 'is_in_favorites', 'is_active'
@@ -392,3 +394,9 @@ class ApplyPromoCodeSerializer(serializers.Serializer):
         attrs['discount_amount'] = discount
         
         return attrs
+class CollectionSerializer(serializers.ModelSerializer):
+    products_count = serializers.IntegerField(source='products.count', read_only=True)
+    
+    class Meta:
+        model = Collection
+        fields = ('id', 'name', 'slug', 'description', 'image', 'order', 'is_active', 'products_count', 'created_at')

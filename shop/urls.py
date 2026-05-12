@@ -3,7 +3,7 @@ from django.contrib.auth import views as auth_views
 from rest_framework.routers import DefaultRouter
 from . import views
 from allauth.account import views as allauth_views 
-from .views import PromoCodeViewSet
+from .views import PromoCodeViewSet, CollectionViewSet
 
 router = DefaultRouter()
 router.register(r'promo', PromoCodeViewSet, basename='promo')
@@ -13,6 +13,7 @@ router.register(r'cart', views.CartViewSet, basename='cart')
 router.register(r'orders', views.OrderViewSet, basename='order')
 router.register(r'reviews', views.ReviewViewSet, basename='review')
 router.register(r'favorites', views.WishlistViewSet, basename='favorite')
+router.register(r'collections', CollectionViewSet, basename='collection')
 
 urlpatterns = [
     # ========== HTML СТРАНИЦЫ ==========
