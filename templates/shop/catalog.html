@@ -57,6 +57,12 @@
         font-size: 13px;
         min-width: 0;
     }
+    .page-link.disabled {
+        color: var(--gray);
+        cursor: not-allowed;
+        pointer-events: none;
+        background: transparent;
+    }
     .btn-apply {
         background: var(--accent);
         color: white;
@@ -292,6 +298,19 @@
         z-index: 1000;
         animation: slideIn 0.3s ease;
     }
+    .btn-clear-search {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .btn-clear-search:hover {
+        background: #4a5a6a;
+        transform: translateY(-2px);
+    }
     @keyframes slideIn {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
@@ -368,6 +387,9 @@
                     <option value="-price">Цена (по убыванию)</option>
                     <option value="-average_rating">По популярности</option>
                 </select>
+                <button id="clear-search" class="btn-clear-search" style="display: none; padding: 10px 20px; border-radius: 30px; background: var(--accent); color: white; border: none; cursor: pointer;">
+                    <i class="fas fa-times"></i> Очистить поиск
+                </button>
             </div>
             <div class="row" id="products-container">
                 <div class="col-12 text-center py-5 text-secondary">Загрузка...</div>
@@ -406,12 +428,50 @@ let finenessChoices = [];
 let stoneTypeChoices = [];
 
 // Получение параметра collection из URL
-const urlParams = new URLSearchParams(window.location.search);
+let urlParams = new URLSearchParams(window.location.search);
 const collectionSlug = urlParams.get('collection');
+// В начале скрипта добавьте:
+const searchQuery = urlParams.get('search');
+
+// Показываем кнопку очистки, если есть поисковый запрос
+if (searchQuery) {
+    const clearBtn = document.getElementById('clear-search');
+    if (clearBtn) clearBtn.style.display = 'block';
+}
+
+// Обработчик кнопки очистки поиска
+// Обработчик кнопки очистки поиска
+// Обработчик кнопки очистки поиска
+const clearSearchBtn = document.getElementById('clear-search');
+if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', () => {
+        // Удаляем параметр search из URL
+        const url = new URL(window.location.href);
+        url.searchParams.delete('search');
+        window.history.pushState({}, '', url);
+        
+        // Обновляем urlParams
+        updateUrlParams();
+        
+        // Очищаем поле поиска
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) searchInput.value = '';
+        
+        // Скрываем кнопку
+        clearSearchBtn.style.display = 'none';
+        
+        // Сбрасываем страницу
+        currentPage = 1;
+        
+        // Перезагружаем товары
+        loadProducts();
+    });
+}
 
 function buildUrl() {
     let url = '/api/products/?';
     const params = [];
+    // Используйте глобальный urlParams, а не создавайте новый
     const searchQuery = urlParams.get('search');
     if (searchQuery) params.push(`search=${encodeURIComponent(searchQuery)}`);
     
@@ -489,7 +549,10 @@ function loadCategories() {
         })
         .catch(e => console.error('Error loading categories:', e));
 }
-
+// Функция обновления параметров URL
+function updateUrlParams() {
+    urlParams = new URLSearchParams(window.location.search);
+}
 // Загрузка фильтров из API
 function loadFilterOptions() {
     // Типы серебра из модели Product
@@ -623,49 +686,122 @@ function renderProductCard(product) {
         </div>
     `;
 }
-
 function loadProducts() {
     const url = buildUrl();
     const container = document.getElementById('products-container');
     container.innerHTML = '<div class="col-12 text-center py-5 text-secondary"><div class="spinner-border text-secondary"></div><p class="mt-2">Загрузка...</p></div>';
+    
+    // Показываем/скрываем кнопку очистки поиска
+    const currentUrl = new URL(window.location.href);
+    const hasSearch = currentUrl.searchParams.has('search');
+    const clearBtn = document.getElementById('clear-search');
+    if (clearBtn) {
+        clearBtn.style.display = hasSearch ? 'block' : 'none';
+    }
     
     loadFavorites().then(() => {
         fetch(url)
             .then(r => r.json())
             .then(data => {
                 const products = data.results || data;
-                totalPages = Math.ceil((data.count || products.length) / 9);
-                document.getElementById('products-count').textContent = `Найдено товаров: ${data.count || products.length}`;
+                const totalItems = data.count || products.length;
+                totalPages = Math.ceil(totalItems / 9);
+                document.getElementById('products-count').textContent = `Найдено товаров: ${totalItems}`;
+                
                 if (products.length === 0) {
                     container.innerHTML = '<div class="col-12 text-center py-5 text-secondary"><i class="fas fa-search fa-3x mb-3"></i><p>Товаров не найдено</p></div>';
+                    renderPagination();
                     return;
                 }
+                
                 container.innerHTML = '';
                 products.forEach(product => {
                     container.innerHTML += renderProductCard(product);
                 });
                 renderPagination();
+                window.scrollTo({ top: 400, behavior: 'smooth' });
             })
             .catch(error => {
                 console.error('Error:', error);
                 container.innerHTML = '<div class="col-12 text-center py-5 text-danger">Ошибка загрузки товаров</div>';
+                renderPagination();
             });
     });
 }
 
 function renderPagination() {
     const container = document.getElementById('pagination');
-    if (totalPages <= 1) {
+    if (!container) return;
+    
+    // Всегда показываем пагинацию, даже если totalPages = 0 или 1
+    // Но если товаров нет, показываем пустоту
+    if (totalPages <= 0) {
         container.innerHTML = '';
         return;
     }
+    
     let html = '';
-    for (let i = 1; i <= totalPages; i++) {
+    
+    // Кнопка "Назад"
+    if (currentPage > 1) {
+        html += `<a href="#" class="page-link" onclick="goToPage(${currentPage - 1}); return false;">← Назад</a>`;
+    } else {
+        html += `<span class="page-link disabled">← Назад</span>`;
+    }
+    
+    // Номера страниц
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    
+    if (endPage - startPage < maxVisible - 1) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+    
+    if (startPage > 1) {
+        html += `<a href="#" class="page-link" onclick="goToPage(1); return false;">1</a>`;
+        if (startPage > 2) html += `<span class="page-link disabled">...</span>`;
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
         html += `<a href="#" class="page-link ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i}); return false;">${i}</a>`;
     }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<span class="page-link disabled">...</span>`;
+        html += `<a href="#" class="page-link" onclick="goToPage(${totalPages}); return false;">${totalPages}</a>`;
+    }
+    
+    // Кнопка "Вперед"
+    if (currentPage < totalPages) {
+        html += `<a href="#" class="page-link" onclick="goToPage(${currentPage + 1}); return false;">Вперед →</a>`;
+    } else {
+        html += `<span class="page-link disabled">Вперед →</span>`;
+    }
+    
     container.innerHTML = html;
 }
-
+// Обновление URL при изменении фильтров
+function updateUrlWithFilters() {
+    const url = new URL(window.location.href);
+    const collection = document.getElementById('filter-collection').value;
+    
+    if (collection && collection !== 'all') {
+        url.searchParams.set('collection', collection);
+    } else {
+        url.searchParams.delete('collection');
+    }
+    
+    // Сохраняем search параметр, если он есть
+    const searchQuery = urlParams.get('search');
+    if (searchQuery) {
+        url.searchParams.set('search', searchQuery);
+    } else {
+        url.searchParams.delete('search');
+    }
+    
+    window.history.pushState({}, '', url);
+}
 function goToPage(page) {
     if (page < 1 || page > totalPages) return;
     currentPage = page;
@@ -703,6 +839,26 @@ function closeSizeModal() {
     document.getElementById('size-modal').classList.remove('active');
     selectedProductId = null;
     selectedSize = null;
+}
+// Функция для обновления URL при поиске (вызывается из base.html)
+function updateSearchQuery(query) {
+    const url = new URL(window.location.href);
+    if (query) {
+        url.searchParams.set('search', query);
+    } else {
+        url.searchParams.delete('search');
+    }
+    window.history.pushState({}, '', url);
+    
+    // Показываем/скрываем кнопку очистки
+    const clearBtn = document.getElementById('clear-search');
+    if (clearBtn) {
+        clearBtn.style.display = query ? 'block' : 'none';
+    }
+    
+    // Перезагружаем товары
+    currentPage = 1;
+    loadProducts();
 }
 
 function addToCart() {
@@ -853,15 +1009,21 @@ document.getElementById('reset-filters').addEventListener('click', () => {
     document.getElementById('filter-discount').value = '';
     document.getElementById('sort-select').value = '-created_at';
     
-    // Очищаем URL параметры (убираем collection из адресной строки)
+    // Очищаем URL параметры (убираем collection и search из адресной строки)
     const url = new URL(window.location.href);
     url.searchParams.delete('collection');
+    url.searchParams.delete('search');
     window.history.pushState({}, '', url);
     
     // Сбрасываем переменные
     currentPage = 1;
-    // Убираем выделение с коллекций в фильтре (если есть)
-    window.collectionSlug = null;
+    currentCollectionSlug = null;
+    
+    // Очищаем поле поиска, если оно есть
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
     
     // Перезагружаем товары
     loadProducts();

@@ -124,16 +124,11 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = self.filter_queryset(self.get_queryset())
             
             # Пагинация
-            page_size = request.query_params.get('page_size', 12)
+            page_size = request.query_params.get('page_size', 9)
             try:
                 page_size = int(page_size)
             except (ValueError, TypeError):
-                page_size = 12
-            
-            # Если запрошены все товары (без пагинации)
-            if page_size == 0 or 'ids' in request.query_params:
-                serializer = self.get_serializer(queryset, many=True)
-                return Response(serializer.data)
+                page_size = 9
             
             page = int(request.query_params.get('page', 1))
             start = (page - 1) * page_size
@@ -152,10 +147,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             })
         except Exception as e:
             print(f"Error in list: {e}")
-            import traceback
-            traceback.print_exc()
-            return Response({'error': str(e)}, status=500)
-
+            return Response({'error': str(e), 'results': []}, status=200)
+            
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['request'] = self.request
@@ -173,7 +166,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(serializer.data)
         except Exception as e:
             return Response({'error': str(e)}, status=500)
-            
+
 class CartViewSet(viewsets.GenericViewSet):
     """
     ViewSet для корзины.

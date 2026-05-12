@@ -584,6 +584,8 @@
                 const query = searchInput.value.trim();
                 if (query) {
                     window.location.href = `/catalog/?search=${encodeURIComponent(query)}`;
+                } else {
+                    window.location.href = '/catalog/';
                 }
             });
         }
@@ -594,6 +596,8 @@
                     const query = searchInput.value.trim();
                     if (query) {
                         window.location.href = `/catalog/?search=${encodeURIComponent(query)}`;
+                    } else {
+                        window.location.href = '/catalog/';
                     }
                 }
             });
