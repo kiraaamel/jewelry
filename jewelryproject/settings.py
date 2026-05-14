@@ -72,10 +72,8 @@ ACCOUNT_ADAPTER = 'shop.adapters.CustomAccountAdapter'
 
 # Настройки входа и регистрации
 ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
-ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
 # Поля для регистрации (только стандартные, остальные добавляет форма)

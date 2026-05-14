@@ -1,19 +1,57 @@
+"""
+Модели данных для интернет-магазина Argentic Jewelry.
+
+Содержит все модели: пользователь, категории, товары, корзина, заказы,
+отзывы, избранное, промокоды, коллекции.
+"""
+
+import os
+import uuid
+from typing import List, Tuple, Optional, Union
+from decimal import Decimal
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-import uuid
+from django.contrib.auth.base_user import BaseUserManager
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.contrib.auth.base_user import BaseUserManager
+from django.core.exceptions import ValidationError
+from django.utils.text import slugify
 
-def product_image_upload_path(instance, filename):
-    """Путь для загрузки изображений товаров"""
+
+def product_image_upload_path(instance: 'Product', filename: str) -> str:
+    """
+    Путь для загрузки изображений товаров.
+
+    Args:
+        instance (Product): Экземпляр товара
+        filename (str): Имя файла
+
+    Returns:
+        str: Путь для сохранения файла
+    """
     return f'products/{instance.slug}/{filename}'
+
 
 class UserManager(BaseUserManager):
     """
     Кастомный менеджер для модели User с email в качестве логина.
     """
-    def create_user(self, email, password=None, **extra_fields):
+
+    def create_user(self, email: str, password: Optional[str] = None, **extra_fields) -> 'User':
+        """
+        Создаёт обычного пользователя.
+
+        Args:
+            email (str): Email пользователя
+            password (str, optional): Пароль
+            **extra_fields: Дополнительные поля
+
+        Returns:
+            User: Созданный пользователь
+
+        Raises:
+            ValueError: Если email не указан
+        """
         if not email:
             raise ValueError('Email обязателен')
         email = self.normalize_email(email)
@@ -22,7 +60,21 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, password=None, **extra_fields):
+    def create_superuser(self, email: str, password: Optional[str] = None, **extra_fields) -> 'User':
+        """
+        Создаёт суперпользователя.
+
+        Args:
+            email (str): Email суперпользователя
+            password (str, optional): Пароль
+            **extra_fields: Дополнительные поля
+
+        Returns:
+            User: Созданный суперпользователь
+
+        Raises:
+            ValueError: Если is_staff или is_superuser не True
+        """
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
@@ -34,10 +86,15 @@ class UserManager(BaseUserManager):
 
         return self.create_user(email, password, **extra_fields)
 
-def generate_order_number():
+
+def generate_order_number() -> str:
     """
     Генерирует уникальный номер заказа.
+
     Формат: ORD-YYYYMMDD-XXXX (где XXXX - случайные символы)
+
+    Returns:
+        str: Уникальный номер заказа
     """
     date_part = timezone.now().strftime('%Y%m%d')
     random_part = str(uuid.uuid4())[:4].upper()
@@ -45,25 +102,38 @@ def generate_order_number():
 
 
 class User(AbstractUser):
-    username = None
+    """
+    Модель пользователя с email в качестве логина.
+    """
+    username = None  # type: ignore
     email = models.EmailField(unique=True, verbose_name='Email')
     phone = models.CharField(max_length=20, blank=True, verbose_name='Телефон')
     bonus_points = models.IntegerField(default=0, verbose_name='Бонусные баллы')
     birthday = models.DateField(null=True, blank=True, verbose_name='Дата рождения')
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS: List[str] = []
 
-    objects = UserManager()  # ← кастомный менеджер
+    objects = UserManager()
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Возвращает email пользователя."""
         return self.email
 
-    def is_product_in_wishlist(self, product_id):
+    def is_product_in_wishlist(self, product_id: int) -> bool:
+        """
+        Проверяет, находится ли товар в избранном у пользователя.
+
+        Args:
+            product_id (int): ID товара
+
+        Returns:
+            bool: True если товар в избранном, иначе False
+        """
         return self.wishlist.filter(product_id=product_id).exists()
 
 
@@ -71,18 +141,9 @@ class Category(models.Model):
     """
     Категория товара с поддержкой вложенности.
     """
-    name = models.CharField(
-        max_length=255,
-        verbose_name='Название'
-    )
-    slug = models.SlugField(
-        unique=True,
-        verbose_name='URL-идентификатор'
-    )
-    description = models.TextField(
-        blank=True,
-        verbose_name='Описание'
-    )
+    name = models.CharField(max_length=255, verbose_name='Название')
+    slug = models.SlugField(unique=True, verbose_name='URL-идентификатор')
+    description = models.TextField(blank=True, verbose_name='Описание')
     parent = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,
@@ -103,41 +164,52 @@ class Category(models.Model):
         verbose_name_plural = 'Категории'
         ordering = ['name']
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Возвращает название категории."""
         return self.name
+
 
 class Collection(models.Model):
     """
-    Коллекция товаров (например: "Весенняя коллекция", "Премиум", "Свадебная" и т.д.)
+    Коллекция товаров (например: "Весенняя коллекция", "Премиум", "Свадебная").
     """
     name = models.CharField(max_length=255, verbose_name='Название коллекции')
     slug = models.SlugField(unique=True, verbose_name='URL-идентификатор')
     description = models.TextField(blank=True, verbose_name='Описание коллекции')
-    image = models.ImageField(upload_to='collections/', blank=True, null=True, verbose_name='Фото коллекции')
+    image = models.ImageField(
+        upload_to='collections/',
+        blank=True,
+        null=True,
+        verbose_name='Фото коллекции'
+    )
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок сортировки')
     is_active = models.BooleanField(default=True, verbose_name='Активна')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
-    
+
     class Meta:
         verbose_name = 'Коллекция'
         verbose_name_plural = 'Коллекции'
         ordering = ['order', 'name']
-    
-    def __str__(self):
+
+    def __str__(self) -> str:
+        """Возвращает название коллекции."""
         return self.name
-    
-    def save(self, *args, **kwargs):
+
+    def save(self, *args, **kwargs) -> None:
+        """Создаёт slug, если не указан."""
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-        
+
+
 class Product(models.Model):
     """
     Ювелирное изделие.
     """
+
     # Типы серебра
-    SILVER_TYPE_CHOICES = [
+    SILVER_TYPE_CHOICES: List[Tuple[str, str]] = [
         ('sterling', 'Стерлинговое серебро (925)'),
         ('fine', 'Чистое серебро (999)'),
         ('argentium', 'Аргентиум серебро'),
@@ -147,9 +219,9 @@ class Product(models.Model):
         ('black', 'Черненое серебро'),
         ('matte', 'Матовое серебро'),
     ]
-    
+
     # Пробы серебра
-    FINENESS_CHOICES = [
+    FINENESS_CHOICES: List[Tuple[str, str]] = [
         ('800', '800 проба'),
         ('830', '830 проба'),
         ('875', '875 проба'),
@@ -159,9 +231,9 @@ class Product(models.Model):
         ('960', '960 проба'),
         ('999', '999 проба'),
     ]
-    
+
     # Типы камней
-    STONE_TYPE_CHOICES = [
+    STONE_TYPE_CHOICES: List[Tuple[str, str]] = [
         ('diamond', 'Бриллиант'),
         ('ruby', 'Рубин'),
         ('sapphire', 'Сапфир'),
@@ -179,18 +251,24 @@ class Product(models.Model):
         ('moonstone', 'Лунный камень'),
         ('none', 'Нет камней'),
     ]
-    
+
     # Основная информация
     name = models.CharField(max_length=255, verbose_name='Название')
     slug = models.SlugField(unique=True, verbose_name='URL-идентификатор')
     description = models.TextField(verbose_name='Описание')
-    
+
     # Цены и наличие
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена')
-    old_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name='Старая цена')
+    old_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        verbose_name='Старая цена'
+    )
     stock_quantity = models.PositiveIntegerField(default=0, verbose_name='Количество на складе')
     reserved_quantity = models.PositiveIntegerField(default=0, verbose_name='Зарезервированное количество')
-    
+
     # Связь с категорией
     category = models.ForeignKey(
         Category,
@@ -199,7 +277,7 @@ class Product(models.Model):
         related_name='products',
         verbose_name='Категория'
     )
-    
+
     # Страна производства
     country = models.CharField(
         max_length=100,
@@ -207,8 +285,8 @@ class Product(models.Model):
         default='Италия',
         verbose_name='Страна производства'
     )
-    
-    # Фотографии (5 полей вместо отдельной модели)
+
+    # Фотографии
     image = models.ImageField(
         upload_to=product_image_upload_path,
         blank=True,
@@ -240,7 +318,7 @@ class Product(models.Model):
         null=True,
         verbose_name='Дополнительное фото 5'
     )
-    
+
     # Характеристики серебра
     silver_type = models.CharField(
         max_length=30,
@@ -254,7 +332,7 @@ class Product(models.Model):
         default='925',
         verbose_name='Проба серебра'
     )
-    
+
     # Физические характеристики
     weight = models.DecimalField(
         max_digits=8,
@@ -269,7 +347,7 @@ class Product(models.Model):
         verbose_name='Размер',
         help_text='Например: 16.5, 17, 18, S, M, L'
     )
-    
+
     # Камни
     stones = models.BooleanField(default=False, verbose_name='Наличие драгоценных камней')
     stone_type = models.CharField(
@@ -287,7 +365,7 @@ class Product(models.Model):
         verbose_name='Вес камней (карат)',
         help_text='Общий вес всех камней в каратах'
     )
-    
+
     # Коллекция
     collection = models.ForeignKey(
         Collection,
@@ -297,6 +375,7 @@ class Product(models.Model):
         related_name='products',
         verbose_name='Коллекция'
     )
+
     # Мета-информация
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
@@ -314,7 +393,6 @@ class Product(models.Model):
         editable=False,
         verbose_name='Название (нижний регистр)'
     )
-    # Активность (мягкое удаление)
     is_active = models.BooleanField(default=True, verbose_name='Активен')
 
     class Meta:
@@ -327,19 +405,32 @@ class Product(models.Model):
             models.Index(fields=['is_active']),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Возвращает строковое представление товара."""
         silver_display = self.get_silver_type_display()
         fineness_display = self.get_fineness_display()
         return f"{self.name} - {silver_display} ({fineness_display}) - {self.price}₽"
 
     # ========== СВОЙСТВА ==========
-    
+
     @property
-    def available_quantity(self):
+    def available_quantity(self) -> int:
+        """
+        Возвращает доступное количество товара на складе.
+
+        Returns:
+            int: Доступное количество (stock_quantity - reserved_quantity)
+        """
         return self.stock_quantity - self.reserved_quantity
 
     @property
-    def average_rating(self):
+    def average_rating(self) -> float:
+        """
+        Возвращает средний рейтинг товара на основе отзывов.
+
+        Returns:
+            float: Средний рейтинг (0-5), округлённый до 1 знака
+        """
         reviews = self.reviews.filter(moderated=True)
         if not reviews:
             return 0
@@ -347,22 +438,45 @@ class Product(models.Model):
         return round(total / reviews.count(), 1)
 
     @property
-    def reviews_count(self):
+    def reviews_count(self) -> int:
+        """
+        Возвращает количество промодерированных отзывов на товар.
+
+        Returns:
+            int: Количество отзывов
+        """
         return self.reviews.filter(moderated=True).count()
 
     @property
-    def discount_percent(self):
+    def discount_percent(self) -> int:
+        """
+        Возвращает процент скидки на товар.
+
+        Returns:
+            int: Процент скидки (0-100)
+        """
         if self.old_price and self.old_price > self.price:
             return int((1 - self.price / self.old_price) * 100)
         return 0
-    
+
     @property
-    def has_discount(self):
+    def has_discount(self) -> bool:
+        """
+        Проверяет, есть ли скидка на товар.
+
+        Returns:
+            bool: True если есть скидка, иначе False
+        """
         return self.old_price is not None and self.old_price > self.price
-    
+
     @property
-    def all_images(self):
-        """Список всех загруженных изображений"""
+    def all_images(self) -> List[Tuple[str, Union[str, 'models.ImageField']]]:
+        """
+        Возвращает список всех загруженных изображений товара.
+
+        Returns:
+            List[Tuple[str, Union[str, ImageField]]]: Список кортежей (ключ, изображение)
+        """
         images = []
         if self.image:
             images.append(('main', self.image.url if hasattr(self.image, 'url') else self.image))
@@ -375,10 +489,15 @@ class Product(models.Model):
         if self.image_5:
             images.append(('5', self.image_5.url if hasattr(self.image_5, 'url') else self.image_5))
         return images
-    
+
     @property
-    def images_count(self):
-        """Количество загруженных изображений"""
+    def images_count(self) -> int:
+        """
+        Возвращает количество загруженных изображений товара.
+
+        Returns:
+            int: Количество изображений
+        """
         count = 0
         if self.image:
             count += 1
@@ -391,55 +510,79 @@ class Product(models.Model):
         if self.image_5:
             count += 1
         return count
-    
+
     @property
-    def main_image(self):
-        """Возвращает URL главного фото"""
+    def main_image(self) -> Optional[str]:
+        """
+        Возвращает URL главного фото товара.
+
+        Returns:
+            Optional[str]: URL главного фото или None
+        """
         if self.image:
             return self.image.url if hasattr(self.image, 'url') else self.image
         return None
 
     # ========== МЕТОДЫ ==========
-    
-    def is_in_wishlist(self, user):
+
+    def is_in_wishlist(self, user: Optional[User]) -> bool:
+        """
+        Проверяет, находится ли товар в избранном у пользователя.
+
+        Args:
+            user (User, optional): Пользователь
+
+        Returns:
+            bool: True если товар в избранном, иначе False
+        """
         if not user or not user.is_authenticated:
             return False
         return Wishlist.objects.filter(user=user, product=self).exists()
-    
-    def clean(self):
-        """Валидация данных перед сохранением"""
+
+    def clean(self) -> None:
+        """
+        Валидация данных перед сохранением товара.
+
+        Raises:
+            ValidationError: При нарушении валидации
+        """
+        from django.core.exceptions import ValidationError
+
         # Проверка старой цены
         if self.old_price and self.old_price <= self.price:
             raise ValidationError({'old_price': 'Старая цена должна быть больше текущей'})
-        
+
         # Проверка камней
         if self.stones and not self.stone_type:
             raise ValidationError({'stone_type': 'Укажите тип камней'})
-        
+
         if self.stones and self.stone_type == 'none':
             raise ValidationError({'stone_type': 'Выберите конкретный тип камня'})
-        
+
         if self.stone_weight and not self.stones:
             raise ValidationError({'stones': 'Отметьте наличие камней для указания веса'})
-        
+
         # Проверка веса
         if self.weight and self.weight <= 0:
             raise ValidationError({'weight': 'Вес должен быть положительным числом'})
-        
+
         # Проверка количества на складе
         if self.stock_quantity < 0:
             raise ValidationError({'stock_quantity': 'Количество на складе не может быть отрицательным'})
-    
-    def save(self, *args, **kwargs):
-        """Создаём slug, если не указан, и заполняем name_lower"""
+
+    def save(self, *args, **kwargs) -> None:
+        """
+        Сохраняет товар, создавая slug и name_lower перед сохранением.
+        """
         if not self.slug:
             self.slug = slugify(self.name)
-        # Заполняем name_lower для поиска
         self.name_lower = self.name.lower()
         super().save(*args, **kwargs)
-        
-    def delete(self, *args, **kwargs):
-        """Удаляем файлы изображений при удалении товара"""
+
+    def delete(self, *args, **kwargs) -> None:
+        """
+        Удаляет товар и связанные с ним изображения из файловой системы.
+        """
         if self.image and self.image.name and os.path.isfile(self.image.path):
             os.remove(self.image.path)
         if self.image_2 and self.image_2.name and os.path.isfile(self.image_2.path):
@@ -451,7 +594,6 @@ class Product(models.Model):
         if self.image_5 and self.image_5.name and os.path.isfile(self.image_5.path):
             os.remove(self.image_5.path)
         super().delete(*args, **kwargs)
-
 
 
 class Cart(models.Model):
@@ -472,35 +614,36 @@ class Cart(models.Model):
         blank=True,
         verbose_name='Ключ сессии'
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата создания'
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name='Дата обновления'
-    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
 
     class Meta:
         verbose_name = 'Корзина'
         verbose_name_plural = 'Корзины'
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Возвращает строковое представление корзины."""
         if self.user:
             return f"Корзина {self.user.email}"
         return f"Корзина гостя (сессия: {self.session_key})"
 
     @property
-    def total_price(self):
+    def total_price(self) -> Decimal:
         """
         Общая стоимость всех товаров в корзине.
+
+        Returns:
+            Decimal: Общая стоимость
         """
         return sum(item.total_price for item in self.items.all())
 
     @property
-    def total_items(self):
+    def total_items(self) -> int:
         """
         Общее количество товаров в корзине.
+
+        Returns:
+            int: Количество товаров
         """
         return sum(item.quantity for item in self.items.all())
 
@@ -520,106 +663,131 @@ class CartItem(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Товар'
     )
-    quantity = models.PositiveIntegerField(
-        default=1,
-        verbose_name='Количество'
-    )
+    quantity = models.PositiveIntegerField(default=1, verbose_name='Количество')
     size = models.CharField(max_length=20, blank=True, null=True)
-    
-    added_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата добавления'
-    )
+    added_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата добавления')
 
     class Meta:
         verbose_name = 'Элемент корзины'
         verbose_name_plural = 'Элементы корзины'
         unique_together = ('cart', 'product')
 
-    def clean(self):
+    def clean(self) -> None:
         """
         Проверка наличия товара на складе перед сохранением.
+
+        Raises:
+            ValidationError: Если количество превышает доступное
         """
+        from django.core.exceptions import ValidationError
         if self.quantity > self.product.available_quantity:
-            from django.core.exceptions import ValidationError
             raise ValidationError(
                 f'Доступно только {self.product.available_quantity} единиц товара "{self.product.name}"'
             )
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
+        """Сохраняет элемент корзины с предварительной валидацией."""
         self.clean()
         super().save(*args, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Возвращает строковое представление элемента корзины."""
         return f"{self.product.name} x{self.quantity}"
 
     @property
-    def total_price(self):
+    def total_price(self) -> Decimal:
         """
         Стоимость этой позиции (цена товара * количество).
+
+        Returns:
+            Decimal: Стоимость позиции
         """
         if self.product and self.product.price is not None and self.quantity is not None:
             return self.product.price * self.quantity
-        return 0
+        return Decimal('0')
+
 
 class PromoCode(models.Model):
     """
     Модель промокода для скидок.
     """
+
     class DiscountType(models.TextChoices):
         PERCENT = 'percent', 'Процентная скидка'
         FIXED = 'fixed', 'Фиксированная скидка'
-    
+
     code = models.CharField(max_length=50, unique=True, verbose_name='Код промокода')
-    discount_type = models.CharField(max_length=10, choices=DiscountType.choices, default=DiscountType.PERCENT, verbose_name='Тип скидки')
+    discount_type = models.CharField(
+        max_length=10,
+        choices=DiscountType.choices,
+        default=DiscountType.PERCENT,
+        verbose_name='Тип скидки'
+    )
     discount_value = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Значение скидки')
-    
+
     # Ограничения
     min_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Минимальная сумма заказа')
-    max_discount_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name='Максимальная сумма скидки')
-    
+    max_discount_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Максимальная сумма скидки'
+    )
+
     # Даты действия
     valid_from = models.DateTimeField(default=timezone.now, verbose_name='Действует с')
     valid_to = models.DateTimeField(verbose_name='Действует до')
-    
+
     # Ограничения по использованию
     usage_limit = models.PositiveIntegerField(default=1, verbose_name='Лимит использований')
     used_count = models.PositiveIntegerField(default=0, verbose_name='Количество использований')
     user_limit = models.PositiveIntegerField(default=1, verbose_name='Лимит на одного пользователя')
-    
+
     # Для новых пользователей
     only_new_users = models.BooleanField(default=False, verbose_name='Только для новых пользователей')
-    
+
     # Активность
     is_active = models.BooleanField(default=True, verbose_name='Активен')
-    
+
     # Категории товаров (опционально)
     applicable_categories = models.ManyToManyField('Category', blank=True, verbose_name='Применяется к категориям')
-    
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
-    
+
     class Meta:
         verbose_name = 'Промокод'
         verbose_name_plural = 'Промокоды'
         ordering = ['-created_at']
-    
-    def __str__(self):
+
+    def __str__(self) -> str:
+        """Возвращает строковое представление промокода."""
         return f"{self.code} ({self.discount_value}{'%' if self.discount_type == 'percent' else '₽'})"
-    
+
     @property
-    def is_valid(self):
-        """Проверяет, активен ли промокод в данный момент"""
+    def is_valid(self) -> bool:
+        """
+        Проверяет, активен ли промокод в данный момент.
+
+        Returns:
+            bool: True если промокод активен, иначе False
+        """
         now = timezone.now()
         return (
             self.is_active and
             self.valid_from <= now <= self.valid_to and
             (self.usage_limit is None or self.used_count < self.usage_limit)
         )
-    
+
     @property
-    def discount_display(self):
-        """Возвращает строковое представление скидки"""
+    def discount_display(self) -> str:
+        """
+        Возвращает строковое представление скидки.
+
+        Returns:
+            str: Строка скидки (например "10%" или "500 ₽")
+        """
         if self.discount_type == 'percent':
             return f"{self.discount_value}%"
         return f"{self.discount_value} ₽"
@@ -629,24 +797,42 @@ class PromoCodeUsage(models.Model):
     """
     История использования промокодов пользователями.
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='promo_uses', verbose_name='Пользователь')
-    promo_code = models.ForeignKey(PromoCode, on_delete=models.CASCADE, related_name='uses', verbose_name='Промокод')
-    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='promo_use', verbose_name='Заказ')
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='promo_uses',
+        verbose_name='Пользователь'
+    )
+    promo_code = models.ForeignKey(
+        PromoCode,
+        on_delete=models.CASCADE,
+        related_name='uses',
+        verbose_name='Промокод'
+    )
+    order = models.ForeignKey(
+        'Order',
+        on_delete=models.CASCADE,
+        related_name='promo_use',
+        verbose_name='Заказ'
+    )
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Сумма скидки')
     used_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата использования')
-    
+
     class Meta:
         verbose_name = 'Использование промокода'
         verbose_name_plural = 'Использования промокодов'
         unique_together = ('user', 'promo_code', 'order')
-    
-    def __str__(self):
-        return f"{self.user.email} - {self.promo_code.code}"        
-        
+
+    def __str__(self) -> str:
+        """Возвращает строковое представление использования промокода."""
+        return f"{self.user.email} - {self.promo_code.code}"
+
+
 class Order(models.Model):
     """
     Заказ покупателя.
     """
+
     class Status(models.TextChoices):
         NEW = 'new', 'Новый'
         CONFIRMED = 'confirmed', 'Подтверждён'
@@ -668,10 +854,7 @@ class Order(models.Model):
         default=generate_order_number,
         verbose_name='Номер заказа'
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата создания'
-    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
@@ -681,56 +864,49 @@ class Order(models.Model):
     total_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0,  # ← значение по умолчанию
+        default=0,
         verbose_name='Общая стоимость'
     )
     bonus_earned = models.IntegerField(default=0, verbose_name='Начислено бонусов')
-    delivery_address = models.TextField(
-        verbose_name='Адрес доставки'
-    )
-    delivery_method = models.CharField(
-        max_length=100,
-        verbose_name='Способ доставки'
-    )
-    payment_method = models.CharField(
-        max_length=100,
-        verbose_name='Способ оплаты'
-    )
+    delivery_address = models.TextField(verbose_name='Адрес доставки')
+    delivery_method = models.CharField(max_length=100, verbose_name='Способ доставки')
+    payment_method = models.CharField(max_length=100, verbose_name='Способ оплаты')
     delivery_date = models.CharField(max_length=50, blank=True, null=True, verbose_name='Дата доставки')
     delivery_time = models.CharField(max_length=50, blank=True, null=True, verbose_name='Время доставки')
-    gift_wrap = models.BooleanField(
-        default=False,
-        verbose_name='Подарочная упаковка'
-    )
-    gift_message = models.TextField(
-        blank=True,
-        verbose_name='Текст открытки'
-    )
-    comment = models.TextField(
-        blank=True,
-        verbose_name='Комментарий к заказу'
-    )
-    delivered_at = models.DateTimeField(
+    gift_wrap = models.BooleanField(default=False, verbose_name='Подарочная упаковка')
+    gift_message = models.TextField(blank=True, verbose_name='Текст открытки')
+    comment = models.TextField(blank=True, verbose_name='Комментарий к заказу')
+    delivered_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата получения')
+    promo_code = models.ForeignKey(
+        PromoCode,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        verbose_name='Дата получения'
+        related_name='orders',
+        verbose_name='Промокод'
     )
-    promo_code = models.ForeignKey(PromoCode, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders', verbose_name='Промокод')
-    promo_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Скидка по промокоду')
-    def save(self, *args, **kwargs):
+    promo_discount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name='Скидка по промокоду'
+    )
+
+    def save(self, *args, **kwargs) -> None:
         """
-        Автоматически вычисляем общую стоимость заказа.
+        Автоматически вычисляет общую стоимость заказа перед сохранением.
         """
         if not self.total_price and self.pk:
-            # Если заказ уже существует, считаем сумму по позициям
             self.total_price = sum(item.total_price for item in self.items.all())
         super().save(*args, **kwargs)
+
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
         ordering = ['-created_at']
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Возвращает строковое представление заказа."""
         return f"Заказ №{self.order_number}"
 
 
@@ -760,26 +936,29 @@ class OrderItem(models.Model):
         default=0,
         verbose_name='Цена на момент заказа'
     )
-    quantity = models.PositiveIntegerField(
-        verbose_name='Количество'
-    )
+    quantity = models.PositiveIntegerField(verbose_name='Количество')
     delivery_date = models.CharField(max_length=50, blank=True, null=True, verbose_name='Дата доставки')
     delivery_time = models.CharField(max_length=50, blank=True, null=True, verbose_name='Время доставки')
+
     class Meta:
         verbose_name = 'Позиция заказа'
         verbose_name_plural = 'Позиции заказа'
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Возвращает строковое представление позиции заказа."""
         return f"{self.product_name} x{self.quantity}"
 
     @property
-    def total_price(self):
+    def total_price(self) -> Decimal:
         """
         Стоимость этой позиции (цена * количество).
+
+        Returns:
+            Decimal: Стоимость позиции
         """
         if self.price is not None and self.quantity is not None:
             return self.price * self.quantity
-        return 0
+        return Decimal('0')
 
 
 class Review(models.Model):
@@ -802,41 +981,37 @@ class Review(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         verbose_name='Оценка'
     )
-    comment = models.TextField(
-        blank=True,
-        verbose_name='Текст отзыва'
-    )
+    comment = models.TextField(blank=True, verbose_name='Текст отзыва')
     image = models.ImageField(
         upload_to='reviews/',
         blank=True,
         null=True,
         verbose_name='Фото'
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата'
-    )
-    moderated = models.BooleanField(
-        default=False,
-        verbose_name='Промодерировано'
-    )
-    def clean(self):
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата')
+    moderated = models.BooleanField(default=False, verbose_name='Промодерировано')
+
+    def clean(self) -> None:
         """
-        Проверка, что пользователь действительно покупал этот товар.
+        Проверяет, что пользователь действительно покупал этот товар.
+
+        Raises:
+            ValidationError: Если пользователь не покупал товар
         """
         has_purchased = Order.objects.filter(
             user=self.user,
             items__product=self.product,
             status=Order.Status.DELIVERED
         ).exists()
-        
+
         if not has_purchased:
             from django.core.exceptions import ValidationError
             raise ValidationError(
                 'Вы можете оставить отзыв только на товары, которые вы купили и получили.'
             )
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
+        """Сохраняет отзыв с предварительной валидацией."""
         self.clean()
         super().save(*args, **kwargs)
 
@@ -846,7 +1021,8 @@ class Review(models.Model):
         unique_together = ('user', 'product')
         ordering = ['-created_at']
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Возвращает строковое представление отзыва."""
         return f"Отзыв {self.user.email} на {self.product.name} - {self.rating}★"
 
 
@@ -866,10 +1042,7 @@ class Wishlist(models.Model):
         related_name='wishlisted_by',
         verbose_name='Товар'
     )
-    added_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата добавления'
-    )
+    added_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата добавления')
 
     class Meta:
         verbose_name = 'Избранное'
@@ -877,6 +1050,6 @@ class Wishlist(models.Model):
         unique_together = ('user', 'product')
         ordering = ['-added_at']
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Возвращает строковое представление избранного."""
         return f"{self.user.email} -> {self.product.name}"
-
