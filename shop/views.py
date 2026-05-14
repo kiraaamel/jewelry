@@ -504,6 +504,6 @@ class CollectionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CollectionSerializer
     permission_classes = [permissions.AllowAny]
 
-def trigger_error(request):
-    """Тестовая функция для проверки Sentry"""
-    division_by_zero = 1 / 0
+#def trigger_error(request):
+#    """Тестовая функция для проверки Sentry"""
+#    division_by_zero = 1 / 0

@@ -41,5 +41,5 @@ urlpatterns = [
     path('api/auth/login/', views.CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/me/', views.UserProfileView.as_view(), name='user_profile'),
 
-    path('sentry-debug/', views.trigger_error, name='sentry-debug'),
+    #path('sentry-debug/', views.trigger_error, name='sentry-debug'),
 ]
