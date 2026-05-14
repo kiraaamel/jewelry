@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken', 
     'django_filters',
+    'silk', 
 ]
 
 SITE_ID = 1
@@ -87,6 +88,7 @@ ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = '/accounts/login/'
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/accounts/login/'
 
 MIDDLEWARE = [
+    'silk.middleware.SilkyMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -199,3 +201,16 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # токен живёт 1 день
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7), # refresh токен живёт 7 дней
 }
+
+# Настройки Silk для профилирования
+SILKY_PYTHON_PROFILER = True  # Включить профайлер Python
+SILKY_PYTHON_PROFILER_BINARY = True  # Сохранять результаты в бинарном формате
+SILKY_MAX_RECORDED_REQUESTS = 1000  # Максимум записей для хранения
+SILKY_AUTHENTICATION = True  # Требовать авторизацию для просмотра
+SILKY_AUTHORISATION = True   # Требовать права доступа
+
+# Ограничить доступ к Silk только для администраторов
+def silk_has_permission(request):
+    return request.user.is_superuser
+
+SILKY_PERMISSION = silk_has_permission
