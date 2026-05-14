@@ -503,3 +503,7 @@ class CollectionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Collection.objects.filter(is_active=True).order_by('order', 'name')
     serializer_class = CollectionSerializer
     permission_classes = [permissions.AllowAny]
+
+def trigger_error(request):
+    """Тестовая функция для проверки Sentry"""
+    division_by_zero = 1 / 0
