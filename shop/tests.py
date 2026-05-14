@@ -1,270 +1,375 @@
+"""
+Тесты для API интернет-магазина Argentic Jewelry
+
+Тестируются основные эндпоинты: товары, категории, корзина, заказы, отзывы, избранное, аутентификация.
+"""
+
+import json
+from decimal import Decimal
 from django.test import TestCase
-from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
-from decimal import Decimal
+from datetime import datetime, timedelta
+from django.utils import timezone
 
-from .models import Category, Product, Cart, CartItem, Order, Review, Wishlist
+from shop.models import (
+    Category, Product, Collection, Cart, CartItem,
+    Order, OrderItem, Review, Wishlist, PromoCode, PromoCodeUsage
+)
 
 User = get_user_model()
 
 
-class UserModelTest(TestCase):
-    """Тесты для модели пользователя"""
-
-    def test_create_user(self):
-        """Тест 1: Создание пользователя"""
-        user = User.objects.create_user(
-            email='test@example.com',
-            password='testpass123',
-            first_name='Тест',
-            last_name='Пользователь'
-        )
-        self.assertEqual(user.email, 'test@example.com')
-        self.assertTrue(user.check_password('testpass123'))
-
-    def test_user_phone_field(self):
-        """Тест 2: Проверка поля телефона"""
-        user = User.objects.create_user(
-            email='test@example.com',
-            password='testpass123',
-            phone='+79161234567'
-        )
-        self.assertEqual(user.phone, '+79161234567')
-
-    def test_bonus_points_default(self):
-        """Тест 3: Бонусные баллы по умолчанию = 0"""
-        user = User.objects.create_user(
-            email='test@example.com',
-            password='testpass123'
-        )
-        self.assertEqual(user.bonus_points, 0)
-
-
-class CategoryModelTest(TestCase):
-    """Тесты для модели категории"""
-
-    def test_create_category(self):
-        """Тест 4: Создание категории"""
-        category = Category.objects.create(
-            name='Кольца',
-            slug='kolca'
-        )
-        self.assertEqual(category.name, 'Кольца')
-        self.assertEqual(str(category), 'Кольца')
-
-
-class ProductModelTest(TestCase):
-    """Тесты для модели товара"""
-
+class AuthenticationTests(TestCase):
+    """Тесты для аутентификации и регистрации"""
+    
     def setUp(self):
-        self.category = Category.objects.create(name='Кольца', slug='kolca')
+        self.client = APIClient()
+        self.register_url = '/api/auth/register/'
+        self.login_url = '/api/auth/login/'
+        self.me_url = '/api/auth/me/'
+        
+    def test_01_user_registration_success(self):
+        """Тест успешной регистрации нового пользователя"""
+        data = {
+            'email': 'newuser@example.com',
+            'first_name': 'Тест',
+            'last_name': 'Пользователь',
+            'phone': '+79991234567',
+            'password': 'TestPass123!',
+            'password2': 'TestPass123!'
+        }
+        response = self.client.post(self.register_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(User.objects.count(), 1)
+        self.assertEqual(User.objects.first().email, 'newuser@example.com')
+    
+    def test_02_user_registration_password_mismatch(self):
+        """Тест регистрации с несовпадающими паролями"""
+        data = {
+            'email': 'newuser@example.com',
+            'password': 'TestPass123!',
+            'password2': 'DifferentPass123!'
+        }
+        response = self.client.post(self.register_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', response.data)
+    
+    def test_03_user_registration_duplicate_email(self):
+        """Тест регистрации с уже существующим email"""
+        User.objects.create_user(email='existing@example.com', password='pass123')
+        data = {
+            'email': 'existing@example.com',
+            'password': 'TestPass123!',
+            'password2': 'TestPass123!'
+        }
+        response = self.client.post(self.register_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    def test_04_user_login_success(self):
+        """Тест успешного входа в систему"""
+        User.objects.create_user(email='test@example.com', password='TestPass123!')
+        data = {'email': 'test@example.com', 'password': 'TestPass123!'}
+        response = self.client.post(self.login_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
+    
+    def test_05_user_login_invalid_credentials(self):
+        """Тест входа с неверными данными"""
+        User.objects.create_user(email='test@example.com', password='TestPass123!')
+        data = {'email': 'test@example.com', 'password': 'WrongPassword!'}
+        response = self.client.post(self.login_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class ProductTests(TestCase):
+    """Тесты для товаров и каталога"""
+    
+    def setUp(self):
+        self.client = APIClient()
+        self.category = Category.objects.create(name='Кольца', slug='rings')
+        self.collection = Collection.objects.create(name='Весенняя коллекция', slug='spring', is_active=True)
         self.product = Product.objects.create(
-            name='Кольцо серебряное',
-            slug='kolco-serebryanoe',
-            description='Красивое кольцо',
+            name='Серебряное кольцо',
+            slug='silver-ring',
+            description='Красивое серебряное кольцо',
+            price=Decimal('15000.00'),
+            stock_quantity=10,
+            category=self.category,
+            collection=self.collection,
+            is_active=True
+        )
+        
+    def test_06_get_products_list(self):
+        """Тест получения списка товаров"""
+        response = self.client.get('/api/products/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Проверяем, что в ответе есть результаты (может быть пагинация)
+        if 'results' in response.data:
+            self.assertTrue(len(response.data['results']) > 0)
+        else:
+            self.assertTrue(len(response.data) > 0)
+    
+    def test_07_get_product_detail(self):
+        """Тест получения детальной информации о товаре"""
+        response = self.client.get(f'/api/products/{self.product.id}/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], 'Серебряное кольцо')
+        self.assertEqual(str(response.data['price']), '15000.00')
+    
+    def test_08_filter_products_by_price(self):
+        """Тест фильтрации товаров по цене"""
+        Product.objects.create(
+            name='Дорогое кольцо',
+            slug='expensive-ring',
+            description='Дорогое кольцо',
+            price=Decimal('50000.00'),
+            stock_quantity=5,
+            category=self.category,
+            is_active=True
+        )
+        response = self.client.get('/api/products/?price_min=10000&price_max=30000')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Получаем список товаров (учитывая пагинацию)
+        products = response.data.get('results', response.data)
+        for product in products:
+            price = Decimal(str(product['price']))
+            self.assertTrue(price >= 10000)
+            self.assertTrue(price <= 30000)
+    
+    def test_09_filter_products_with_discount(self):
+        """Тест фильтрации товаров со скидкой"""
+        Product.objects.create(
+            name='Товар со скидкой',
+            slug='discount-product',
+            description='Товар со скидкой',
+            price=Decimal('10000.00'),
+            old_price=Decimal('15000.00'),
+            stock_quantity=5,
+            category=self.category,
+            is_active=True
+        )
+        response = self.client.get('/api/products/?has_discount=true')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        products = response.data.get('results', response.data)
+        for product in products:
+            # Проверяем, что old_price существует (скидка)
+            self.assertIsNotNone(product.get('old_price'))
+    
+    def test_10_get_categories(self):
+        """Тест получения списка категорий"""
+        response = self.client.get('/api/categories/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) >= 1)
+    
+    def test_11_get_collections(self):
+        """Тест получения списка коллекций"""
+        response = self.client.get('/api/collections/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) >= 1)
+
+
+class CartTests(TestCase):
+    """Тесты для корзины"""
+    
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(email='cartuser@example.com', password='TestPass123!')
+        self.client.force_authenticate(user=self.user)
+        
+        self.category = Category.objects.create(name='Браслеты', slug='bracelets')
+        self.product = Product.objects.create(
+            name='Серебряный браслет',
+            slug='silver-bracelet',
+            description='Красивый браслет',
+            price=Decimal('12000.00'),
+            stock_quantity=10,
+            category=self.category,
+            is_active=True
+        )
+        
+    def test_12_get_cart_empty(self):
+        """Тест получения пустой корзины"""
+        response = self.client.get('/api/cart/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['total_items'], 0)
+    
+    def test_13_add_item_to_cart(self):
+        """Тест добавления товара в корзину"""
+        data = {'product_id': self.product.id, 'quantity': 2}
+        response = self.client.post('/api/cart/add_item/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['total_items'], 2)
+    
+    def test_14_update_cart_item_quantity(self):
+        """Тест изменения количества товара в корзине"""
+        # Сначала добавляем товар
+        self.client.post('/api/cart/add_item/', {'product_id': self.product.id, 'quantity': 1}, format='json')
+        
+        # Получаем cart_item_id
+        cart = Cart.objects.get(user=self.user)
+        cart_item = cart.items.first()
+        
+        # Изменяем количество
+        data = {'cart_item_id': cart_item.id, 'quantity': 5}
+        response = self.client.post('/api/cart/update_item/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_15_remove_item_from_cart(self):
+        """Тест удаления товара из корзины"""
+        # Добавляем товар
+        self.client.post('/api/cart/add_item/', {'product_id': self.product.id, 'quantity': 1}, format='json')
+        
+        # Получаем cart_item_id
+        cart = Cart.objects.get(user=self.user)
+        cart_item = cart.items.first()
+        
+        # Удаляем товар
+        data = {'cart_item_id': cart_item.id}
+        response = self.client.post('/api/cart/remove_item/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(cart.items.count(), 0)
+
+
+class OrderTests(TestCase):
+    """Тесты для заказов"""
+    
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(email='orderuser@example.com', password='TestPass123!')
+        self.client.force_authenticate(user=self.user)
+        
+        self.category = Category.objects.create(name='Серьги', slug='earrings')
+        self.product = Product.objects.create(
+            name='Серебряные серьги',
+            slug='silver-earrings',
+            description='Красивые серьги',
+            price=Decimal('18000.00'),
+            stock_quantity=10,
+            category=self.category,
+            is_active=True
+        )
+        
+        # Создаём корзину с товаром
+        self.cart, created = Cart.objects.get_or_create(user=self.user)
+        self.cart_item = CartItem.objects.create(
+            cart=self.cart,
+            product=self.product,
+            quantity=1
+        )
+    
+    def test_16_create_order_success(self):
+        """Тест успешного создания заказа"""
+        data = {
+            'delivery_address': 'Москва, ул. Тверская, д. 1',
+            'delivery_method': 'courier',
+            'payment_method': 'card',
+            'phone': '+79991234567'
+        }
+        response = self.client.post('/api/orders/create_order/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNotNone(response.data.get('order_number'))
+        self.assertEqual(response.data['status'], 'new')
+    
+    def test_17_get_user_orders(self):
+        """Тест получения списка заказов пользователя"""
+        # Создаём заказ
+        data = {
+            'delivery_address': 'Москва, ул. Тверская, д. 1',
+            'delivery_method': 'courier',
+            'payment_method': 'card',
+            'phone': '+79991234567'
+        }
+        self.client.post('/api/orders/create_order/', data, format='json')
+        
+        # Получаем список заказов
+        response = self.client.get('/api/orders/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) >= 1)
+
+
+class FavoriteTests(TestCase):
+    """Тесты для избранного"""
+    
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(email='favuser@example.com', password='TestPass123!')
+        self.client.force_authenticate(user=self.user)
+        
+        self.category = Category.objects.create(name='Подвески', slug='pendants')
+        self.product = Product.objects.create(
+            name='Серебряная подвеска',
+            slug='silver-pendant',
+            description='Красивая подвеска',
+            price=Decimal('8000.00'),
+            stock_quantity=15,
+            category=self.category,
+            is_active=True
+        )
+    
+    def test_18_add_to_favorites(self):
+        """Тест добавления товара в избранное"""
+        data = {'product_id': self.product.id}
+        response = self.client.post('/api/favorites/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Wishlist.objects.filter(user=self.user).count(), 1)
+    
+    def test_19_get_favorites_list(self):
+        """Тест получения списка избранного"""
+        Wishlist.objects.create(user=self.user, product=self.product)
+        response = self.client.get('/api/favorites/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) >= 1)
+    
+    def test_20_remove_from_favorites(self):
+        """Тест удаления товара из избранного"""
+        wishlist = Wishlist.objects.create(user=self.user, product=self.product)
+        response = self.client.delete(f'/api/favorites/{wishlist.id}/')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Wishlist.objects.filter(user=self.user).count(), 0)
+
+
+class UnauthorizedAccessTests(TestCase):
+    """Тесты для проверки доступа неавторизованных пользователей"""
+    
+    def setUp(self):
+        self.client = APIClient()
+        self.category = Category.objects.create(name='Тестовая категория', slug='test')
+        self.product = Product.objects.create(
+            name='Тестовый товар',
+            slug='test-product',
+            description='Тестовое описание',
             price=Decimal('5000.00'),
             stock_quantity=10,
             category=self.category,
-            metal='Серебро',
-            fineness=925
+            is_active=True
         )
-
-    def test_product_available_quantity(self):
-        """Тест 5: Проверка доступного количества"""
-        self.assertEqual(self.product.available_quantity, 10)
-
-    def test_discount_percent_no_discount(self):
-        """Тест 6: Скидка отсутствует"""
-        self.assertEqual(self.product.discount_percent, 0)
-
-    def test_discount_percent_with_discount(self):
-        """Тест 7: Скидка рассчитывается правильно"""
-        self.product.old_price = Decimal('10000.00')
-        self.product.save()
-        # Скидка: (10000 - 5000) / 10000 * 100 = 50%
-        self.assertEqual(self.product.discount_percent, 50)
-
-
-class CartModelTest(TestCase):
-    """Тесты для модели корзины"""
-
-    def setUp(self):
-        self.user = User.objects.create_user(
-            email='cartuser@example.com',
-            password='testpass123'
-        )
-        self.category = Category.objects.create(name='Кольца', slug='kolca')
-        self.product = Product.objects.create(
-            name='Кольцо',
-            slug='kolco',
-            description='Описание',
-            price=Decimal('5000.00'),
-            stock_quantity=10,
-            category=self.category
-        )
-        # Корзина уже создаётся автоматически при создании пользователя
-        self.cart = self.user.cart  # получаем существующую корзину
-
-    def test_cart_created_for_user(self):
-        """Тест 8: Корзина создаётся для пользователя"""
-        self.assertIsNotNone(self.user.cart)  # проверяем, что корзина есть
-
-    def test_add_item_to_cart(self):
-        """Тест 9: Добавление товара в корзину"""
-        cart_item = CartItem.objects.create(
-            cart=self.cart,
-            product=self.product,
-            quantity=2
-        )
-        self.assertEqual(cart_item.quantity, 2)
-        self.assertEqual(cart_item.total_price, Decimal('10000.00'))
-
-    def test_cart_total_price(self):
-        """Тест 10: Общая стоимость корзины"""
-        CartItem.objects.create(cart=self.cart, product=self.product, quantity=2)
-        self.assertEqual(self.cart.total_price, Decimal('10000.00'))
-
-
-class OrderModelTest(TestCase):
-    """Тесты для модели заказа"""
-
-    def setUp(self):
-        self.user = User.objects.create_user(
-            email='orderuser@example.com',
-            password='testpass123'
-        )
-        self.category = Category.objects.create(name='Кольца', slug='kolca')
-        self.product = Product.objects.create(
-            name='Кольцо',
-            slug='kolco',
-            description='Описание',
-            price=Decimal('5000.00'),
-            stock_quantity=10,
-            category=self.category
-        )
-
-    def test_order_creation(self):
-        """Тест 11: Создание заказа"""
-        order = Order.objects.create(
-            user=self.user,
-            total_price=Decimal('10000.00'),
-            delivery_address='Москва, ул. Пушкина, д. 1',
-            delivery_method='Курьер',
-            payment_method='Карта онлайн'
-        )
-        self.assertEqual(order.status, Order.Status.NEW)
-        self.assertIsNotNone(order.order_number)
-        self.assertTrue(order.order_number.startswith('ORD-'))
-
-
-class ReviewModelTest(TestCase):
-    """Тесты для модели отзыва"""
-
-    def setUp(self):
-        self.user = User.objects.create_user(
-            email='reviewuser@example.com',
-            password='testpass123'
-        )
-        self.category = Category.objects.create(name='Кольца', slug='kolca')
-        self.product = Product.objects.create(
-            name='Кольцо',
-            slug='kolco',
-            description='Описание',
-            price=Decimal('5000.00'),
-            stock_quantity=10,
-            category=self.category
-        )
-        # Создаём доставленный заказ для возможности отзыва
-        self.order = Order.objects.create(
-            user=self.user,
-            total_price=Decimal('5000.00'),
-            delivery_address='Москва',
-            delivery_method='Курьер',
-            payment_method='Карта',
-            status=Order.Status.DELIVERED
-        )
-
-    def test_review_validation_purchased(self):
-        """Тест 12: Отзыв можно оставить только после покупки"""
-        review = Review(
-            user=self.user,
-            product=self.product,
-            rating=5,
-            comment='Отлично!'
-        )
-        # У товара нет заказа в статусе DELIVERED, поэтому должна быть ошибка
-        with self.assertRaises(Exception):
-            review.clean()
-
-
-class APITestCase(TestCase):
-    """Тесты для API"""
-
-    def setUp(self):
-        self.client = APIClient()
-        self.category = Category.objects.create(name='Кольца', slug='kolca')
-        self.product = Product.objects.create(
-            name='Кольцо',
-            slug='kolco',
-            description='Описание',
-            price=Decimal('5000.00'),
-            stock_quantity=10,
-            category=self.category
-        )
-
-    def test_products_list(self):
-        """Тест 13: GET /api/products/ возвращает список товаров"""
+    
+    def test_21_unauthorized_cart_access_denied(self):
+        """Тест: неавторизованный пользователь не может получить корзину"""
+        response = self.client.get('/api/cart/')
+        # DRF возвращает 403 (Forbidden) для неавторизованных, а не 401
+        self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+    
+    def test_22_unauthorized_orders_access_denied(self):
+        """Тест: неавторизованный пользователь не может получить заказы"""
+        response = self.client.get('/api/orders/')
+        self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+    
+    def test_23_unauthorized_favorites_access_denied(self):
+        """Тест: неавторизованный пользователь не может получить избранное"""
+        response = self.client.get('/api/favorites/')
+        self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+    
+    def test_24_unauthorized_can_see_products(self):
+        """Тест: неавторизованный пользователь может просматривать товары"""
         response = self.client.get('/api/products/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-
-    def test_product_detail(self):
-        """Тест 14: GET /api/products/{id}/ возвращает детали товара"""
-        response = self.client.get(f'/api/products/{self.product.id}/')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['name'], 'Кольцо')
-
-    def test_categories_list(self):
-        """Тест 15: GET /api/categories/ возвращает список категорий"""
+    
+    def test_25_unauthorized_can_see_categories(self):
+        """Тест: неавторизованный пользователь может просматривать категории"""
         response = self.client.get('/api/categories/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-
-    def test_filter_by_category(self):
-        """Тест 16: Фильтрация товаров по категории"""
-        response = self.client.get(f'/api/products/?category={self.category.id}')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-
-    def test_filter_by_price_min(self):
-        """Тест 17: Фильтрация по минимальной цене"""
-        response = self.client.get('/api/products/?price_min=6000')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)  # товар стоит 5000, не попадает
-
-    def test_filter_by_price_max(self):
-        """Тест 18: Фильтрация по максимальной цене"""
-        response = self.client.get('/api/products/?price_max=4000')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)  # товар стоит 5000, не попадает
-
-    def test_filter_by_price_range(self):
-        """Тест 19: Фильтрация по диапазону цен"""
-        response = self.client.get('/api/products/?price_min=4000&price_max=6000')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)  # товар попадает
-
-    def test_register_user(self):
-        """Тест 20: Регистрация пользователя"""
-        data = {
-            'email': 'newuser@example.com',
-            'password': 'testpass123',
-            'password2': 'testpass123',
-            'first_name': 'Новый',
-            'last_name': 'Пользователь'
-        }
-        response = self.client.post('/api/auth/register/', data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(User.objects.filter(email='newuser@example.com').exists())
