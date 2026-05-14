@@ -16,6 +16,8 @@ from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
+from django.contrib.auth.signals import user_logged_in
+from django.dispatch import receiver
 
 
 def product_image_upload_path(instance: 'Product', filename: str) -> str:
@@ -1053,3 +1055,50 @@ class Wishlist(models.Model):
     def __str__(self) -> str:
         """Возвращает строковое представление избранного."""
         return f"{self.user.email} -> {self.product.name}"
+# В конце файла models.py, после всех классов
+
+from django.contrib.auth.signals import user_logged_in
+from allauth.account.signals import user_logged_in as allauth_user_logged_in
+from django.dispatch import receiver
+
+@receiver(user_logged_in)
+@receiver(allauth_user_logged_in)
+def merge_cart_after_login(sender, user, request, **kwargs):
+    """
+    Переносит корзину гостя в корзину пользователя после входа (и для Django, и для allauth).
+    """
+    if not request.session.session_key:
+        return
+    
+    session_key = request.session.session_key
+    print(f"Merging cart for user {user.email}, session_key: {session_key}")
+    
+    try:
+        guest_cart = Cart.objects.get(session_key=session_key, user__isnull=True)
+    except Cart.DoesNotExist:
+        print("No guest cart found")
+        return
+    
+    print(f"Guest cart found with {guest_cart.items.count()} items")
+    
+    user_cart, created = Cart.objects.get_or_create(user=user)
+    
+    # Переносим товары из корзины гостя в корзину пользователя
+    for guest_item in guest_cart.items.all():
+        user_item, item_created = CartItem.objects.get_or_create(
+            cart=user_cart,
+            product=guest_item.product,
+            size=guest_item.size,
+            defaults={'quantity': guest_item.quantity}
+        )
+        if not item_created:
+            user_item.quantity += guest_item.quantity
+            user_item.save()
+        print(f"Moved item: {guest_item.product.name} x{guest_item.quantity}")
+    
+    # Удаляем корзину гостя
+    guest_cart.delete()
+    print("Guest cart deleted")
+    
+    # Обновляем сессию
+    request.session['cart_merged'] = True

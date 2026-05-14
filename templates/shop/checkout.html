@@ -5,6 +5,23 @@
 <li class="breadcrumb-item active" aria-current="page">Оформление заказа</li>
 {% endblock %}
 {% block content %}
+{% if not user.is_authenticated %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="text-center py-5">
+                <i class="fas fa-lock fa-4x mb-4" style="color: var(--accent);"></i>
+                <h2 style="color: var(--brown);">Требуется авторизация</h2>
+                <p style="color: var(--gray); margin-bottom: 30px;">Для оформления заказа необходимо войти в свой аккаунт</p>
+                <div>
+                    <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn-gold" style="display: inline-block; padding: 12px 30px; border-radius: 30px; background: var(--accent); color: white; text-decoration: none; margin-right: 15px;">Войти</a>
+                    <a href="{% url 'account_signup' %}?next={{ request.path }}" class="btn-outline-gold" style="display: inline-block; padding: 12px 30px; border-radius: 30px; border: 1px solid var(--accent); color: var(--accent); text-decoration: none;">Зарегистрироваться</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
 <style>
 :root {
     --bg-cream: #F7F2EB;
@@ -765,10 +782,14 @@
         <button class="modal-btn" onclick="processSbpPayment()" style="margin-top: 20px;">Оплатить</button>
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
+if (!isAuthenticated()) {
+    window.location.href = '/accounts/login/?next=/checkout/';
+}
 let cartData = null;
 let userData = null;
 let deliveryPrice = 0;

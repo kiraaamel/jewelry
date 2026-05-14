@@ -199,11 +199,11 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # токен живёт 1 день
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7), # refresh токен живёт 7 дней
 }
-
+SESSION_SAVE_EVERY_REQUEST = True
 # Настройки Silk для профилирования
 SILKY_PYTHON_PROFILER = True  # Включить профайлер Python
 SILKY_PYTHON_PROFILER_BINARY = True  # Сохранять результаты в бинарном формате
-SILKY_MAX_RECORDED_REQUESTS = 1000  # Максимум записей для хранения
+SILKY_MAX_RECORDED_REQUESTS = 100  # Максимум записей для хранения
 SILKY_AUTHENTICATION = True  # Требовать авторизацию для просмотра
 SILKY_AUTHORISATION = True   # Требовать права доступа
 

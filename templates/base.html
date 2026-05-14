@@ -511,6 +511,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function isAuthenticated() {
+            return document.body.classList.contains('user-authenticated');
+        }
         function updateCartCount() {
             fetch('/api/cart/')
                 .then(response => response.json())
@@ -521,7 +524,6 @@
                 })
                 .catch(error => console.error('Error:', error));
         }
-        updateCartCount();
         
         function getCookie(name) {
             let cookieValue = null;
@@ -554,7 +556,9 @@
             })
             .catch(error => console.error('Error:', error));
         }
+
         function updateFavoritesCount() {
+            if (!isAuthenticated()) return;
             fetch('/api/favorites/')
                 .then(response => response.json())
                 .then(data => {
@@ -575,6 +579,87 @@
             setTimeout(() => notification.remove(), 2000);
         }
         
+        // Проверяем, нужно ли обновить корзину после входа
+        function checkAndUpdateCartAfterLogin() {
+            // Если пользователь авторизован
+            if (isAuthenticated()) {
+                // Проверяем, был ли вход только что (смотрим на флаг в sessionStorage)
+                const justLoggedIn = sessionStorage.getItem('just_logged_in');
+                if (justLoggedIn === 'true') {
+                    // Удаляем флаг
+                    sessionStorage.removeItem('just_logged_in');
+                    
+                    // ПРОВЕРЯЕМ ЕСТЬ ЛИ СОХРАНЁННАЯ КОРЗИНА
+                    const savedCart = localStorage.getItem('guest_cart');
+                    if (savedCart) {
+                        const cart = JSON.parse(savedCart);
+                        if (cart.items && cart.items.length > 0) {
+                            console.log('Restoring', cart.items.length, 'items from localStorage after login');
+                            
+                            const addPromises = cart.items.map(item => {
+                                return fetch('/api/cart/add_item/', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': getCookie('csrftoken')
+                                    },
+                                    body: JSON.stringify({
+                                        product_id: item.product,
+                                        quantity: item.quantity,
+                                        size: item.size || ''
+                                    })
+                                });
+                            });
+                            
+                            Promise.all(addPromises)
+                                .then(() => {
+                                    localStorage.removeItem('guest_cart');
+                                    updateCartCount();
+                                    console.log('Guest cart restored successfully after login');
+                                    // Обновляем страницу, чтобы показать актуальную корзину
+                                    setTimeout(() => location.reload(), 500);
+                                })
+                                .catch(error => console.error('Error restoring cart:', error));
+                            return;
+                        }
+                    }
+                    
+                    // Если нет сохранённой корзины, просто обновляем счётчик
+                    fetch('/api/cart/')
+                        .then(response => response.json())
+                        .then(data => {
+                            const cartCount = document.getElementById('cart-count');
+                            if (cartCount) cartCount.textContent = data.total_items || 0;
+                        })
+                        .catch(error => console.error('Error updating cart after login:', error));
+                }
+            }
+        }
+        updateCartCount();
+
+        // Вызываем при загрузке страницы только для авторизованных
+        if (isAuthenticated()) {
+            updateFavoritesCount();
+        }
+        // Вызываем проверку при загрузке страницы
+        checkAndUpdateCartAfterLogin();
+        if (isAuthenticated()) {
+            let checkCount = 0;
+            const interval = setInterval(() => {
+                checkCount++;
+                if (checkCount > 5) clearInterval(interval);
+                fetch('/api/cart/')
+                    .then(response => response.json())
+                    .then(data => {
+                        const cartCount = document.getElementById('cart-count');
+                        if (cartCount && parseInt(cartCount.textContent) !== data.total_items) {
+                            cartCount.textContent = data.total_items || 0;
+                            console.log('Cart synced:', data.total_items);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            }, 1000);
+        }
         // Поиск
         const searchBtn = document.getElementById('search-btn');
         const searchInput = document.getElementById('search-input');
@@ -602,7 +687,79 @@
                 }
             });
         }
+        // Сохранение корзины в localStorage перед выходом на страницу входа
+        function saveGuestCart() {
+            fetch('/api/cart/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.items && data.items.length > 0) {
+                        localStorage.setItem('guest_cart', JSON.stringify(data));
+                        console.log('Guest cart saved to localStorage:', data.items.length);
+                    }
+                })
+                .catch(error => console.error('Error saving guest cart:', error));
+        }
+
+        // Восстановление корзины после входа
+        function restoreGuestCart() {
+            const savedCart = localStorage.getItem('guest_cart');
+            if (savedCart) {
+                const cart = JSON.parse(savedCart);
+                if (cart.items && cart.items.length > 0) {
+                    console.log('Restoring guest cart with', cart.items.length, 'items');
+                    
+                    // Добавляем каждый товар в новую корзину
+                    const addPromises = cart.items.map(item => {
+                        return fetch('/api/cart/add_item/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({
+                                product_id: item.product,
+                                quantity: item.quantity,
+                                size: item.size || ''
+                            })
+                        });
+                    });
+                    
+                    Promise.all(addPromises)
+                        .then(() => {
+                            localStorage.removeItem('guest_cart');
+                            updateCartCount();
+                            console.log('Guest cart restored successfully');
+                        })
+                        .catch(error => console.error('Error restoring cart:', error));
+                }
+            }
+        }
+
+        // При переходе на страницу входа/регистрации - сохраняем корзину
+        const loginLinks = document.querySelectorAll('a[href*="/accounts/login/"], a[href*="/accounts/signup/"]');
+        loginLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (!isAuthenticated()) {
+                    saveGuestCart();
+                }
+            });
+        });
+
+        // Сохраняем корзину перед тем, как покинуть страницу (для гостей)
+        window.addEventListener('beforeunload', function() {
+            if (!isAuthenticated()) {
+                fetch('/api/cart/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.items && data.items.length > 0) {
+                            localStorage.setItem('guest_cart', JSON.stringify(data));
+                        }
+                    })
+                    .catch(error => console.error('Error saving cart before unload:', error));
+            }
+        });
     </script>
     {% block scripts %}{% endblock %}
+
 </body>
 </html>

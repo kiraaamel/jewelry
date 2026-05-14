@@ -236,83 +236,71 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CartViewSet(viewsets.GenericViewSet):
     """
-    ViewSet для корзины.
+    ViewSet для корзины (работает и для авторизованных, и для гостей).
     """
     serializer_class = CartSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
-    @method_decorator(ensure_csrf_cookie)
-    def dispatch(self, request: Request, *args, **kwargs) -> Response:
+    def get_session_key(self, request: Request) -> Optional[str]:
         """
-        Обрабатывает запрос с CSRF cookie.
-
-        Args:
-            request (Request): HTTP запрос
-
-        Returns:
-            Response: Ответ
+        Получает или создаёт session_key для гостя.
         """
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_queryset(self) -> Cart:
-        """
-        Возвращает корзину текущего пользователя.
-
-        Returns:
-            QuerySet: QuerySet корзины пользователя
-        """
-        return Cart.objects.filter(user=self.request.user)
+        if request.user.is_authenticated:
+            return None
+        if not request.session.session_key:
+            request.session.create()
+        return request.session.session_key
 
     def get_object(self) -> Cart:
         """
-        Возвращает или создаёт корзину для текущего пользователя.
-
-        Returns:
-            Cart: Объект корзины
+        Возвращает корзину для авторизованного пользователя или гостя.
         """
-        cart, created = Cart.objects.get_or_create(user=self.request.user)
-        return cart
+        if self.request.user.is_authenticated:
+            cart, created = Cart.objects.get_or_create(user=self.request.user)
+            return cart
+        else:
+            session_key = self.get_session_key(self.request)
+            # Ищем корзину по session_key
+            try:
+                cart = Cart.objects.get(session_key=session_key, user__isnull=True)
+            except Cart.DoesNotExist:
+                # Если не нашли - создаём новую
+                cart = Cart.objects.create(session_key=session_key)
+            return cart
 
     def list(self, request: Request) -> Response:
-        """
-        Просмотр корзины.
-
-        Args:
-            request (Request): HTTP запрос
-
-        Returns:
-            Response: Данные корзины
-        """
-        cart: Cart = self.get_object()
-        serializer = self.get_serializer(cart)
-        return Response(serializer.data)
+        """Просмотр корзины"""
+        try:
+            cart = self.get_object()
+            serializer = self.get_serializer(cart)
+            return Response(serializer.data)
+        except Exception as e:
+            print(f"Error in cart list: {e}")
+            return Response({'items': [], 'total_items': 0, 'total_price': 0})
 
     @action(detail=False, methods=['post'])
     def add_item(self, request: Request) -> Response:
-        """
-        Добавление товара в корзину.
-
-        Args:
-            request (Request): HTTP запрос с данными товара
-
-        Returns:
-            Response: Обновлённые данные корзины или ошибка
-        """
+        """Добавление товара в корзину"""
         try:
-            cart: Cart = self.get_object()
-            product_id: Optional[int] = request.data.get('product_id')
-            quantity: int = int(request.data.get('quantity', 1))
-            size: str = request.data.get('size', '')
+            print("=== ADD ITEM ===")
+            print("User:", request.user)
+            print("Session key:", request.session.session_key)
+            print("Data:", request.data)
+            
+            cart = self.get_object()
+            product_id = request.data.get('product_id')
+            quantity = int(request.data.get('quantity', 1))
+            size = request.data.get('size', '')
 
             if not product_id:
-                return Response({'error': 'product_id обязателен'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'product_id обязателен'}, status=400)
 
-            product: Product = get_object_or_404(Product, id=product_id)
+            product = get_object_or_404(Product, id=product_id)
 
             if quantity > product.available_quantity:
                 return Response(
                     {'error': f'Доступно только {product.available_quantity} единиц'},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=400
                 )
 
             cart_item, created = CartItem.objects.get_or_create(
@@ -327,73 +315,68 @@ class CartViewSet(viewsets.GenericViewSet):
                 cart_item.save()
 
             serializer = self.get_serializer(cart)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data)
 
         except Exception as e:
-            print("Ошибка в add_item:", str(e))
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            print(f"Error in add_item: {e}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=500)
 
     @action(detail=False, methods=['post'])
     def update_item(self, request: Request) -> Response:
-        """
-        Изменение количества товара в корзине.
+        """Изменение количества товара в корзине"""
+        try:
+            cart = self.get_object()
+            cart_item_id = request.data.get('cart_item_id')
+            quantity = int(request.data.get('quantity'))
 
-        Args:
-            request (Request): HTTP запрос с cart_item_id и quantity
+            cart_item = get_object_or_404(CartItem, id=cart_item_id, cart=cart)
 
-        Returns:
-            Response: Обновлённые данные корзины
-        """
-        cart: Cart = self.get_object()
-        cart_item_id: Optional[int] = request.data.get('cart_item_id')
-        quantity: int = request.data.get('quantity')
+            if quantity <= 0:
+                cart_item.delete()
+            else:
+                if quantity > cart_item.product.available_quantity:
+                    return Response(
+                        {'error': f'Доступно только {cart_item.product.available_quantity} единиц'},
+                        status=400
+                    )
+                cart_item.quantity = quantity
+                cart_item.save()
 
-        cart_item: CartItem = get_object_or_404(CartItem, id=cart_item_id, cart=cart)
+            serializer = self.get_serializer(cart)
+            return Response(serializer.data)
 
-        if quantity <= 0:
-            cart_item.delete()
-        else:
-            if quantity > cart_item.product.available_quantity:
-                return Response(
-                    {'error': f'Доступно только {cart_item.product.available_quantity} единиц'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            cart_item.quantity = quantity
-            cart_item.save()
-
-        return Response(self.get_serializer(cart).data)
+        except Exception as e:
+            print(f"Error in update_item: {e}")
+            return Response({'error': str(e)}, status=500)
 
     @action(detail=False, methods=['post'])
     def remove_item(self, request: Request) -> Response:
-        """
-        Удаление товара из корзины.
+        """Удаление товара из корзины"""
+        try:
+            cart = self.get_object()
+            cart_item_id = request.data.get('cart_item_id')
+            CartItem.objects.filter(id=cart_item_id, cart=cart).delete()
+            serializer = self.get_serializer(cart)
+            return Response(serializer.data)
 
-        Args:
-            request (Request): HTTP запрос с cart_item_id
-
-        Returns:
-            Response: Статус операции
-        """
-        cart: Cart = self.get_object()
-        cart_item_id: Optional[int] = request.data.get('cart_item_id')
-        CartItem.objects.filter(id=cart_item_id, cart=cart).delete()
-        return Response({'status': 'ok'})
+        except Exception as e:
+            print(f"Error in remove_item: {e}")
+            return Response({'error': str(e)}, status=500)
 
     @action(detail=False, methods=['post'])
     def clear(self, request: Request) -> Response:
-        """
-        Очистка корзины.
+        """Очистка корзины"""
+        try:
+            cart = self.get_object()
+            cart.items.all().delete()
+            serializer = self.get_serializer(cart)
+            return Response(serializer.data)
 
-        Args:
-            request (Request): HTTP запрос
-
-        Returns:
-            Response: Очищенная корзина
-        """
-        cart: Cart = self.get_object()
-        cart.items.all().delete()
-        return Response(self.get_serializer(cart).data)
-
+        except Exception as e:
+            print(f"Error in clear: {e}")
+            return Response({'error': str(e)}, status=500)
 
 class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -777,7 +760,7 @@ class CollectionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Collection.objects.filter(is_active=True).order_by('order', 'name')
     serializer_class = CollectionSerializer
     permission_classes = [permissions.AllowAny]
-    
+
 #def trigger_error(request):
 #    """Тестовая функция для проверки Sentry"""
 #    division_by_zero = 1 / 0

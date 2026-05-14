@@ -47,15 +47,6 @@ urlpatterns: List[Union[path, include]] = [
     path('stores/', views.stores, name='stores'),
     path('faq/', views.faq, name='faq'),
 
-    # ========== АУТЕНТИФИКАЦИЯ (allauth) ==========
-    # Вход, выход, регистрация
-    path('accounts/login/', allauth_views.LoginView.as_view(), name='account_login'),
-    path('accounts/logout/', allauth_views.LogoutView.as_view(), name='account_logout'),
-    path('accounts/signup/', allauth_views.SignupView.as_view(), name='account_signup'),
-
-    # Подтверждение email
-    path('accounts/confirm-email/<str:key>/', allauth_views.ConfirmEmailView.as_view(), name='account_confirm_email'),
-    path('accounts/verification-sent/', allauth_views.EmailVerificationSentView.as_view(), name='account_email_verification_sent'),
 
     # Все остальные маршруты allauth (сброс пароля и т.д.)
     path('accounts/', include('allauth.urls')),

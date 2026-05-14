@@ -625,10 +625,15 @@ function loadFilterOptions() {
 }
 
 function loadFavorites() {
+    if (!isAuthenticated()) {
+        currentFavorites = [];
+        return Promise.resolve([]);
+    }
+    
     return fetch('/api/favorites/')
         .then(r => r.json())
         .then(data => {
-            currentFavorites = data;
+            currentFavorites = data || [];
             return currentFavorites;
         })
         .catch(() => {
@@ -650,8 +655,17 @@ function renderProductCard(product) {
     const stars = '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
     const sizes = product.size ? product.size.split(',').map(s => s.trim()) : [];
     const sizesJson = JSON.stringify(sizes).replace(/"/g, '&quot;');
-    const inFav = isInFavorites(product.id);
+    
+    // Проверяем авторизацию для отображения сердечка
+    const isAuth = isAuthenticated();
+    const inFav = isAuth ? isInFavorites(product.id) : false;
     const heartColor = inFav ? '#ff4444' : 'white';
+    
+    const favoriteButton = isAuth ? `
+        <button class="favorite-icon-btn" data-product-id="${product.id}" onclick="toggleFavoriteInCatalog(${product.id}, event)">
+            <i class="fas fa-heart" style="color: ${heartColor};"></i>
+        </button>
+    ` : '';
     
     return `
         <div class="col-md-4 mb-4">
@@ -660,9 +674,7 @@ function renderProductCard(product) {
                     <a href="/product/${product.id}/">
                         <img src="${imageUrl}" class="product-image" onerror="this.src='/static/shop/images/placeholder.png'">
                     </a>
-                    <button class="favorite-icon-btn" data-product-id="${product.id}" onclick="toggleFavoriteInCatalog(${product.id}, event)">
-                        <i class="fas fa-heart" style="color: ${heartColor};"></i>
-                    </button>
+                    ${favoriteButton}
                     ${discount}
                 </div>
                 <div class="product-info">
@@ -686,47 +698,50 @@ function renderProductCard(product) {
         </div>
     `;
 }
+
 function loadProducts() {
     const url = buildUrl();
     const container = document.getElementById('products-container');
     container.innerHTML = '<div class="col-12 text-center py-5 text-secondary"><div class="spinner-border text-secondary"></div><p class="mt-2">Загрузка...</p></div>';
     
-    // Показываем/скрываем кнопку очистки поиска
-    const currentUrl = new URL(window.location.href);
-    const hasSearch = currentUrl.searchParams.has('search');
-    const clearBtn = document.getElementById('clear-search');
-    if (clearBtn) {
-        clearBtn.style.display = hasSearch ? 'block' : 'none';
+    // Проверяем авторизацию перед загрузкой избранного
+    if (isAuthenticated()) {
+        loadFavorites().then(() => {
+            fetchAndRenderProducts(url, container);
+        });
+    } else {
+        // Для гостей - загружаем без избранного
+        fetchAndRenderProducts(url, container);
     }
-    
-    loadFavorites().then(() => {
-        fetch(url)
-            .then(r => r.json())
-            .then(data => {
-                const products = data.results || data;
-                const totalItems = data.count || products.length;
-                totalPages = Math.ceil(totalItems / 9);
-                document.getElementById('products-count').textContent = `Найдено товаров: ${totalItems}`;
-                
-                if (products.length === 0) {
-                    container.innerHTML = '<div class="col-12 text-center py-5 text-secondary"><i class="fas fa-search fa-3x mb-3"></i><p>Товаров не найдено</p></div>';
-                    renderPagination();
-                    return;
-                }
-                
-                container.innerHTML = '';
-                products.forEach(product => {
-                    container.innerHTML += renderProductCard(product);
-                });
+}
+
+function fetchAndRenderProducts(url, container) {
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            const products = data.results || data;
+            const totalItems = data.count || products.length;
+            totalPages = Math.ceil(totalItems / 9);
+            document.getElementById('products-count').textContent = `Найдено товаров: ${totalItems}`;
+            
+            if (products.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center py-5 text-secondary"><i class="fas fa-search fa-3x mb-3"></i><p>Товаров не найдено</p></div>';
                 renderPagination();
-                window.scrollTo({ top: 400, behavior: 'smooth' });
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                container.innerHTML = '<div class="col-12 text-center py-5 text-danger">Ошибка загрузки товаров</div>';
-                renderPagination();
+                return;
+            }
+            
+            container.innerHTML = '';
+            products.forEach(product => {
+                container.innerHTML += renderProductCard(product);
             });
-    });
+            renderPagination();
+            window.scrollTo({ top: 400, behavior: 'smooth' });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            container.innerHTML = '<div class="col-12 text-center py-5 text-danger">Ошибка загрузки товаров</div>';
+            renderPagination();
+        });
 }
 
 function renderPagination() {
@@ -861,43 +876,9 @@ function updateSearchQuery(query) {
     loadProducts();
 }
 
-function addToCart() {
-    const quantity = document.getElementById('modal-quantity').value;
-    if (selectedProductSizes.length > 0 && !selectedSize) {
-        alert('Выберите размер');
-        return;
-    }
-    fetch('/api/cart/add_item/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify({
-            product_id: selectedProductId,
-            quantity: parseInt(quantity),
-            size: selectedSize || ''
-        })
-    })
-    .then(response => response.json())
-    .then(() => {
-        closeSizeModal();
-        updateCartCount();
-        showNotification('Товар добавлен в корзину!');
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Ошибка при добавлении в корзину');
-    });
-}
-
 function toggleFavoriteInCatalog(productId, event) {
     event.stopPropagation();
     event.preventDefault();
-    
-    const btn = event.currentTarget;
-    const icon = btn.querySelector('i');
-    const isActive = icon.style.color === 'rgb(255, 68, 68)' || icon.style.color === '#ff4444';
     
     if (!isAuthenticated()) {
         showNotification('Войдите, чтобы добавить в избранное');
@@ -906,6 +887,10 @@ function toggleFavoriteInCatalog(productId, event) {
         }, 1500);
         return;
     }
+    
+    const btn = event.currentTarget;
+    const icon = btn.querySelector('i');
+    const isActive = icon.style.color === 'rgb(255, 68, 68)' || icon.style.color === '#ff4444';
     
     if (isActive) {
         const favorite = currentFavorites.find(f => f.product && f.product.id === productId);
@@ -918,7 +903,7 @@ function toggleFavoriteInCatalog(productId, event) {
                 icon.style.color = 'white';
                 currentFavorites = currentFavorites.filter(f => f.id !== favorite.id);
                 showNotification('Удалено из избранного');
-                updateFavoritesCount();
+                if (typeof updateFavoritesCount === 'function') updateFavoritesCount();
             })
             .catch(error => console.error('Error:', error));
         }
@@ -936,10 +921,21 @@ function toggleFavoriteInCatalog(productId, event) {
             icon.style.color = '#ff4444';
             currentFavorites.push(data);
             showNotification('Добавлено в избранное');
-            updateFavoritesCount();
+            if (typeof updateFavoritesCount === 'function') updateFavoritesCount();
         })
         .catch(error => console.error('Error:', error));
     }
+}
+
+function updateCartCount() {
+    fetch('/api/cart/')
+        .then(response => response.json())
+        .then(data => {
+            const count = data.total_items || 0;
+            const cartCount = document.getElementById('cart-count');
+            if (cartCount) cartCount.textContent = count;
+        })
+        .catch(error => console.error('Error:', error));
 }
 
 function showNotification(message) {
@@ -963,17 +959,6 @@ function getCookie(name) {
         }
     }
     return cookieValue;
-}
-
-function updateCartCount() {
-    fetch('/api/cart/')
-        .then(response => response.json())
-        .then(data => {
-            const count = data.total_items || 0;
-            const cartCount = document.getElementById('cart-count');
-            if (cartCount) cartCount.textContent = count;
-        })
-        .catch(error => console.error('Error:', error));
 }
 
 function updateFavoritesCount() {
@@ -1029,7 +1014,33 @@ document.getElementById('reset-filters').addEventListener('click', () => {
     loadProducts();
 });
 document.getElementById('sort-select').addEventListener('change', () => { currentPage = 1; loadProducts(); });
-document.getElementById('confirm-add-to-cart').addEventListener('click', addToCart);
+document.getElementById('confirm-add-to-cart').addEventListener('click', function() {
+    const quantity = document.getElementById('modal-quantity').value;
+    if (selectedProductSizes.length > 0 && !selectedSize) {
+        alert('Выберите размер');
+        return;
+    }
+    
+    fetch('/api/cart/add_item/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ 
+            product_id: selectedProductId, 
+            quantity: parseInt(quantity),
+            size: selectedSize || '' 
+        })
+    })
+    .then(response => response.json())
+    .then(() => {
+        closeSizeModal();
+        updateCartCount();
+        showNotification('Товар добавлен в корзину!');
+    })
+    .catch(error => console.error('Error:', error));
+});
 
 document.addEventListener('click', function(e) {
     const btn = e.target.closest('.btn-cart');

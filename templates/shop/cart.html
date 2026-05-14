@@ -214,7 +214,7 @@
 
 {% block scripts %}
 <script>
-
+loadCart();
 let promoApplied=false;
 let promoDiscountAmount=0;
 let bonusApplied=false;
@@ -244,6 +244,10 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function isAuthenticated() {
+    return document.body.classList.contains('user-authenticated');
+}
+
 function showNotification(message){
     const notif=document.createElement('div');
     notif.style.cssText='position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;';
@@ -253,27 +257,46 @@ function showNotification(message){
 }
 
 function loadCart(){
-    // Сначала загружаем корзину
+    // Загружаем корзину для всех пользователей
     fetch('/api/cart/')
-    .then(r=>r.json())
-    .then(cart=>{
-        // Затем загружаем бонусы пользователя
-        return fetch('/api/auth/me/')
-            .then(r=>r.json())
-            .then(user=>{
+    .then(r => r.json())
+    .then(cart => {
+        // Проверяем авторизацию перед вызовом защищённых API
+        if (isAuthenticated()) {
+            // Авторизованный пользователь - загружаем бонусы и избранное
+            return Promise.all([
+                fetch('/api/auth/me/').then(r => r.json()),
+                fetch('/api/favorites/').then(r => r.json())
+            ]).then(([user, favorites]) => {
                 currentBonusPoints = user.bonus_points || 0;
-                return {cart, favoriteIdsPromise: fetch('/api/favorites/')};
-            });
-    })
-    .then(({cart, favoriteIdsPromise})=>{
-        return favoriteIdsPromise
-            .then(r=>r.json())
-            .then(favorites=>{
-                const favoriteIds=new Set(favorites.map(f=>f.product.id));
+                const favoriteIds = new Set(Array.isArray(favorites) ? favorites.map(f => f.product?.id) : []);
                 renderCart(cart, favoriteIds);
             });
+        } else {
+            // Гость - без бонусов и избранного
+            currentBonusPoints = 0;
+            renderCart(cart, new Set());
+        }
     })
-    .catch(e=>console.error(e));
+    .catch(e => {
+        console.error('Error loading cart:', e);
+        renderEmptyCart();
+    });
+}
+
+function renderEmptyCart(){
+    document.getElementById('cart-content').innerHTML = `
+        <div class="text-center py-5">
+            <i class="fas fa-shopping-cart fa-3x mb-3" style="color: var(--gray);"></i>
+            <h3 style="color: var(--brown);">Корзина пуста</h3>
+            <p style="color: var(--gray);">Добавьте товары в корзину</p>
+            <a href="/catalog/" class="btn-gold" style="display: inline-block; padding: 10px 30px; border-radius: 30px; background: var(--accent); color: white; text-decoration: none;">Перейти в каталог</a>
+        </div>
+    `;
+}
+
+function isAuthenticated() {
+    return document.body.classList.contains('user-authenticated');
 }
 
 function updateQuantity(cartItemId, productId, newQty, maxStock){
@@ -299,8 +322,10 @@ function renderCart(cart, favoriteIds){
     let subtotal=0;
     let oldTotal=0;
     
-    // currentBonusPoints уже загружен в loadCart
-    console.log('Бонусы пользователя:', currentBonusPoints);
+    if (!cart.items || cart.items.length === 0) {
+        renderEmptyCart();
+        return;
+    }
 
     cart.items.forEach(item=>{
         const imageUrl=item.product_image || '/static/shop/images/placeholder.png';
@@ -315,7 +340,7 @@ function renderCart(cart, favoriteIds){
         subtotal+=total;
         oldTotal+=old;
         
-        const isFavorite=favoriteIds.has(item.product);
+        const isFavorite = favoriteIds && favoriteIds.has(item.product);
         const hasDiscount=oldPrice>price;
         const discountPercent=hasDiscount ? Math.round((1-price/oldPrice)*100) : 0;
 
@@ -471,6 +496,14 @@ function toggleBonus(){
 }
 
 function toggleFav(productId, el){
+    if (!isAuthenticated()) {
+        showNotification('Войдите, чтобы добавить в избранное');
+        setTimeout(() => {
+            window.location.href = '/accounts/login/';
+        }, 1500);
+        return;
+    }
+    
     const icon=el.querySelector('.heart');
     const isActive=icon.classList.contains('active');
     
@@ -478,7 +511,7 @@ function toggleFav(productId, el){
         fetch('/api/favorites/')
             .then(r=>r.json())
             .then(favorites=>{
-                const fav=favorites.find(f=>f.product.id===productId);
+                const fav = (Array.isArray(favorites) ? favorites : []).find(f=>f.product?.id===productId);
                 if(fav){
                     return fetch(`/api/favorites/${fav.id}/`,{
                         method:'DELETE',
@@ -545,8 +578,6 @@ function deleteSelected(){
 function checkout(){
     window.location.href = '/checkout/';
 }
-
 loadCart();
-
 </script>
 {% endblock %}

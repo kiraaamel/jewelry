@@ -1208,15 +1208,6 @@
     }
     
     function addToCartWithQuantity(productId) {
-        // Проверяем авторизацию
-        if (!isAuthenticated()) {
-            showNotification('Войдите, чтобы добавить товар в корзину');
-            setTimeout(() => {
-                window.location.href = '/accounts/login/';
-            }, 1500);
-            return;
-        }
-        
         const quantity = parseInt(document.getElementById('quantity').value);
         
         // Получаем размеры товара
