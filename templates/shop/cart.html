@@ -29,6 +29,7 @@
     padding:15px;
     margin-bottom:12px;
     transition:.2s;
+    cursor:pointer;
 }
 .cart-item:hover{box-shadow:0 4px 12px rgba(0,0,0,0.05);}
 
@@ -36,9 +37,17 @@
     width:85px;height:85px;
     border-radius:12px;
     object-fit:cover;
+    cursor:pointer;
 }
 
-.cart-title{font-weight:600;color:var(--accent);}
+.cart-title{
+    font-weight:600;
+    color:var(--accent);
+    cursor:pointer;
+}
+.cart-title:hover{
+    text-decoration:underline;
+}
 .cart-size{font-size:13px;color:var(--gray);margin-top:5px;}
 
 .quantity-control{
@@ -221,6 +230,9 @@ let bonusApplied=false;
 let selectedItems=new Set();
 let allSelected=false;
 let currentBonusPoints=0;
+let appliedPromo = null;
+let promoDiscount = 0;
+let currentPromoCode = null;
 
 function getCookie(name) {
     let cookieValue = null;
@@ -253,7 +265,7 @@ function showNotification(message){
     notif.style.cssText='position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;';
     notif.innerText=message;
     document.body.appendChild(notif);
-    setTimeout(()=>notif.remove(),2000);
+    setTimeout(()=>notif.remove(),3000);
 }
 
 function loadCart(){
@@ -295,26 +307,86 @@ function renderEmptyCart(){
     `;
 }
 
-function isAuthenticated() {
-    return document.body.classList.contains('user-authenticated');
-}
-
-function updateQuantity(cartItemId, productId, newQty, maxStock){
-    if(newQty < 1) return;
-    if(newQty > maxStock){
-        showNotification(`Доступно только ${maxStock} шт.`);
+async function updateQuantity(cartItemId, productId, newQty, maxStock){
+    if(newQty < 1) {
+        showNotification('Количество не может быть меньше 1');
         return;
     }
     
-    fetch('/api/cart/update_item/',{
-        method:'POST',
-        headers:{
-            'Content-Type':'application/json',
-            'X-CSRFToken':getCookie('csrftoken')
-        },
-        body:JSON.stringify({cart_item_id:cartItemId, quantity:newQty})
-    })
-    .then(()=>loadCart());
+    // Получаем текущее количество в корзине для этого товара
+    try {
+        const cartResponse = await fetch('/api/cart/');
+        const cart = await cartResponse.json();
+        const cartItem = cart.items?.find(item => item.id === cartItemId);
+        
+        if (!cartItem) {
+            showNotification('Товар не найден в корзине');
+            return;
+        }
+        
+        const currentQty = cartItem.quantity;
+        
+        // Проверка на увеличение количества
+        if (newQty > currentQty) {
+            // Проверяем, не превышает ли новое количество доступный запас
+            if (newQty > maxStock) {
+                showNotification(`Нельзя добавить больше ${maxStock} шт. товара`);
+                return;
+            }
+            
+            // Проверяем, сколько ещё можно добавить
+            const maxCanAdd = maxStock - currentQty;
+            const addingQty = newQty - currentQty;
+            
+            if (addingQty > maxCanAdd) {
+                showNotification(`Можно добавить только ${maxCanAdd} шт. (в корзине уже ${currentQty} из ${maxStock})`);
+                return;
+            }
+        }
+        
+        // Если количество не изменилось - выходим
+        if (newQty === currentQty) return;
+        
+        // Отправляем запрос на обновление
+        const response = await fetch('/api/cart/update_item/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                cart_item_id: cartItemId, 
+                quantity: newQty
+            })
+        });
+        
+        const responseData = await response.json();
+        
+        if (!response.ok) {
+            console.error('Server error response:', responseData);
+            
+            if (responseData.error) {
+                showNotification(responseData.error);
+            } else if (responseData.message) {
+                showNotification(responseData.message);
+            } else {
+                showNotification(`Ошибка: нельзя установить количество ${newQty} шт.`);
+            }
+            return;
+        }
+        
+        // Успешное обновление
+        loadCart();
+        
+    } catch (error) {
+        console.error('Error in updateQuantity:', error);
+        showNotification('Ошибка при обновлении количества. Попробуйте позже.');
+    }
+}
+
+function goToProduct(productId, event) {
+    if (event) event.stopPropagation();
+    window.location.href = `/product/${productId}/`;
 }
 
 function renderCart(cart, favoriteIds){
@@ -343,20 +415,25 @@ function renderCart(cart, favoriteIds){
         const isFavorite = favoriteIds && favoriteIds.has(item.product);
         const hasDiscount=oldPrice>price;
         const discountPercent=hasDiscount ? Math.round((1-price/oldPrice)*100) : 0;
+        
+        // Определяем, достигнут ли лимит
+        const isMaxQuantity = qty >= maxStock;
+        const isMinQuantity = qty <= 1;
 
         html+=`
-        <div class="cart-item" data-id="${item.id}" data-product-id="${item.product}" data-max-stock="${maxStock}">
-            <input type="checkbox" onchange="toggleSelect(${item.id})">
-            <img src="${imageUrl}" class="product-image">
+        <div class="cart-item" data-id="${item.id}" data-product-id="${item.product}" data-max-stock="${maxStock}" data-current-qty="${qty}">
+            <input type="checkbox" onchange="toggleSelect(${item.id})" onclick="event.stopPropagation()">
+            <img src="${imageUrl}" class="product-image" onclick="goToProduct(${item.product}, event)">
             <div>
-                <div class="cart-title">${escapeHtml(item.product_name)}</div>
+                <div class="cart-title" onclick="goToProduct(${item.product}, event)">${escapeHtml(item.product_name)}</div>
                 <div class="cart-size">Размер: ${item.size || '-'}</div>
                 ${hasDiscount ? `<div style="font-size:12px;color:#ff4444;margin-top:4px;">-${discountPercent}%</div>` : ''}
                 <div class="quantity-control">
-                    <button onclick="updateQuantity(${item.id}, ${item.product}, ${qty-1}, ${maxStock})">-</button>
+                    <button onclick="updateQuantity(${item.id}, ${item.product}, ${qty-1}, ${maxStock})" ${isMinQuantity ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>-</button>
                     <input type="text" value="${qty}" readonly>
-                    <button onclick="updateQuantity(${item.id}, ${item.product}, ${qty+1}, ${maxStock})">+</button>
+                    <button onclick="updateQuantity(${item.id}, ${item.product}, ${qty+1}, ${maxStock})" ${isMaxQuantity ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>+</button>
                 </div>
+                ${isMaxQuantity ? `<div style="font-size:11px;color:#ff4444;margin-top:4px;">Максимальное количество</div>` : ''}
                 <div class="cart-actions">
                     <span onclick="toggleFav(${item.product}, this)">
                         <i class="heart ${isFavorite?'active':''}">❤</i>
@@ -375,12 +452,12 @@ function renderCart(cart, favoriteIds){
         </div>`;
     });
 
-    let discount = oldTotal - subtotal;
+    // Применяем скидку по промокоду
+    let promoDiscountValue = promoDiscount || 0;
     let finalPrice = subtotal;
-    let promoDiscountValue = 0;
-
-    if(promoApplied){
-        promoDiscountValue = finalPrice * 0.2;
+    let discount = oldTotal - subtotal;
+    
+    if(promoDiscountValue > 0){
         finalPrice -= promoDiscountValue;
         discount += promoDiscountValue;
     }
@@ -397,18 +474,18 @@ function renderCart(cart, favoriteIds){
 
     // Промокод блок
     let promoHtml = '';
-    if(promoApplied){
+    if(currentPromoCode && promoDiscountValue > 0){
         promoHtml = `
             <div class="promo-applied">
-                <span>✓ Промокод HELLOSILVER применён. Скидка: -${promoDiscountValue.toFixed(0)} ₽</span>
-                <i class="fas fa-times" onclick="cancelPromo()"></i>
+                <span>✓ Промокод ${currentPromoCode} применён. Скидка: -${promoDiscountValue.toFixed(0)} ₽</span>
+                <i class="fas fa-times" onclick="removePromoCode()"></i>
             </div>
         `;
     } else {
         promoHtml = `
             <div class="promo-input-group">
                 <input type="text" id="promo-code" placeholder="Введите промокод">
-                <button onclick="applyPromo()">Готово</button>
+                <button onclick="applyPromoCode()">Применить</button>
             </div>
         `;
     }
@@ -457,7 +534,7 @@ function renderCart(cart, favoriteIds){
                 <strong>${Math.max(finalPrice,0).toFixed(0)} ₽</strong>
             </div>
 
-            <button class="checkout-btn" onclick="checkout()">
+            <button class="checkout-btn" id="checkout-btn" onclick="checkout()" style="background-color: var(--accent);">
                 Перейти к оформлению
             </button>
 
@@ -473,21 +550,84 @@ function renderCart(cart, favoriteIds){
     </div>`;
 }
 
-function applyPromo(){
-    const code=document.getElementById('promo-code').value;
-    if(code && code.toUpperCase()==='HELLOSILVER'){
-        promoApplied=true;
-        loadCart();
-        showNotification('Промокод применён!');
-    } else {
-        showNotification('Неверный промокод');
+function applyPromoCode() {
+    const promoInput = document.getElementById('promo-code');
+    if (!promoInput) return;
+    
+    const code = promoInput.value.trim();
+    
+    if (!code) {
+        showNotification('Введите промокод');
+        return;
     }
+    
+    // Получаем текущую сумму корзины
+    let subtotal = 0;
+    fetch('/api/cart/')
+        .then(r => r.json())
+        .then(cart => {
+            if (cart.items) {
+                cart.items.forEach(item => {
+                    subtotal += (parseFloat(item.product_price) || 0) * (parseInt(item.quantity) || 1);
+                });
+            }
+            
+            fetch('/api/promo/apply/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    code: code,
+                    order_total: subtotal
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    appliedPromo = {
+                        code: data.promo_code,
+                        discount: data.discount_amount
+                    };
+                    promoDiscount = data.discount_amount;
+                    currentPromoCode = code;
+                    
+                    promoInput.value = '';
+                    loadCart();
+                    showNotification(data.message || 'Промокод применён!');
+                } else {
+                    let errorMsg = 'Неверный промокод';
+                    if (data.code) errorMsg = data.code[0];
+                    if (data.non_field_errors) errorMsg = data.non_field_errors[0];
+                    showNotification(errorMsg);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Ошибка при проверке промокода');
+            });
+        });
 }
 
-function cancelPromo(){
-    promoApplied=false;
-    loadCart();
-    showNotification('Промокод отменён');
+function removePromoCode() {
+    fetch('/api/promo/remove/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(() => {
+        appliedPromo = null;
+        promoDiscount = 0;
+        currentPromoCode = null;
+        loadCart();
+        showNotification('Промокод удалён');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
 }
 
 function toggleBonus(){
@@ -576,8 +716,21 @@ function deleteSelected(){
 }
 
 function checkout(){
+    // Сохраняем состояние промокода в localStorage перед переходом на checkout
+    if (currentPromoCode) {
+        localStorage.setItem('checkout_promo_code', currentPromoCode);
+        localStorage.setItem('checkout_promo_discount', promoDiscount.toString());
+    } else {
+        localStorage.removeItem('checkout_promo_code');
+        localStorage.removeItem('checkout_promo_discount');
+    }
+    
+    // Сохраняем состояние бонусов как строку 'true' или 'false'
+    localStorage.setItem('checkout_bonus_applied', bonusApplied ? 'true' : 'false');
+    
     window.location.href = '/checkout/';
 }
+
 loadCart();
 </script>
 {% endblock %}

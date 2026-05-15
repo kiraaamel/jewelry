@@ -540,21 +540,49 @@
             return cookieValue;
         }
         
-        function addToCart(productId) {
-            fetch('/api/cart/add_item/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({ product_id: productId, quantity: 1 })
-            })
-            .then(response => response.json())
-            .then(() => {
-                updateCartCount();
-                showNotification('Товар добавлен в корзину!');
-            })
-            .catch(error => console.error('Error:', error));
+        function addToCart(productId, quantity = 1) {
+            // Сначала получаем информацию о товаре, чтобы проверить наличие
+            fetch(`/api/products/${productId}/`)
+                .then(response => response.json())
+                .then(product => {
+                    // Проверяем наличие на складе
+                    if (quantity > product.available_quantity) {
+                        showNotification(`Доступно только ${product.available_quantity} шт. товара "${product.name}"`);
+                        return;
+                    }
+                    
+                    // Добавляем в корзину
+                    fetch('/api/cart/add_item/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({ 
+                            product_id: productId, 
+                            quantity: quantity,
+                            size: ''
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw new Error(err.error || 'Ошибка'); });
+                        }
+                        return response.json();
+                    })
+                    .then(() => {
+                        updateCartCount();
+                        showNotification('Товар добавлен в корзину!');
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showNotification(error.message || 'Ошибка при добавлении в корзину');
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching product:', error);
+                    showNotification('Ошибка при проверке товара');
+                });
         }
 
         function updateFavoritesCount() {

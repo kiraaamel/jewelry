@@ -23,10 +23,16 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_simplejwt.views import TokenObtainPairView
 from allauth.account.views import SignupView
-
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+import json
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 from .models import (
     Category, Product, Cart, CartItem, Order, Review, Wishlist, User, Collection,
-    PromoCode, PromoCodeUsage
+    PromoCode, PromoCodeUsage, OrderItem
 )
 from .serializers import (
     CategorySerializer, ProductSerializer, CartSerializer, OrderSerializer,
@@ -36,6 +42,107 @@ from .serializers import (
 )
 from .filters import ProductFilter
 
+@login_required
+@require_http_methods(["GET"])
+def can_review_product(request, product_id):
+    """
+    Проверяет, может ли пользователь оставить отзыв на товар.
+    Условия:
+    1. Пользователь купил этот товар
+    2. Заказ со статусом 'received' (Получен)
+    3. Пользователь ещё не оставлял отзыв на этот товар
+    """
+    # Проверяем, есть ли заказ с этим товаром и статусом 'received'
+    has_purchased = OrderItem.objects.filter(
+        order__user=request.user,
+        order__status=Order.Status.RECEIVED,  # ← изменено с DELIVERED на RECEIVED
+        product_id=product_id
+    ).exists()
+    
+    # Проверяем, не оставлял ли пользователь уже отзыв
+    has_reviewed = Review.objects.filter(
+        user=request.user,
+        product_id=product_id
+    ).exists()
+    
+    print(f"User: {request.user.email}")
+    print(f"Product ID: {product_id}")
+    print(f"Has purchased (received): {has_purchased}")
+    print(f"Has reviewed: {has_reviewed}")
+    
+    return JsonResponse({
+        'can_review': has_purchased and not has_reviewed,
+        'has_purchased': has_purchased,
+        'has_reviewed': has_reviewed
+    })
+
+
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_product_review(request):
+    """
+    Создаёт новый отзыв на товар
+    """
+    try:
+        if request.content_type and 'multipart' in request.content_type:
+            product_id = request.POST.get('product')
+            rating = request.POST.get('rating')
+            comment = request.POST.get('comment')
+            image = request.FILES.get('image')
+        else:
+            data = json.loads(request.body)
+            product_id = data.get('product')
+            rating = data.get('rating')
+            comment = data.get('comment')
+            image = None
+        
+        if not product_id or not rating or not comment:
+            return JsonResponse({'error': 'Заполните все обязательные поля'}, status=400)
+        
+        rating = int(rating)
+        if rating < 1 or rating > 5:
+            return JsonResponse({'error': 'Оценка должна быть от 1 до 5'}, status=400)
+        
+        # Проверяем, покупал ли пользователь этот товар и получил ли его (статус RECEIVED)
+        has_purchased = OrderItem.objects.filter(
+            order__user=request.user,
+            order__status=Order.Status.RECEIVED,  # ← изменено с DELIVERED на RECEIVED
+            product_id=product_id
+        ).exists()
+        
+        if not has_purchased:
+            return JsonResponse({'error': 'Вы можете оставить отзыв только после получения заказа'}, status=400)
+        
+        # Проверяем, не оставлял ли пользователь уже отзыв
+        has_reviewed = Review.objects.filter(
+            user=request.user,
+            product_id=product_id
+        ).exists()
+        
+        if has_reviewed:
+            return JsonResponse({'error': 'Вы уже оставили отзыв на этот товар'}, status=400)
+        
+        # Создаём отзыв
+        review = Review.objects.create(
+            user=request.user,
+            product_id=product_id,
+            rating=rating,
+            comment=comment,
+            image=image,
+            moderated=False
+        )
+        
+        return JsonResponse({
+            'id': review.id,
+            'message': 'Спасибо за отзыв! Он будет опубликован после проверки модератором.'
+        })
+        
+    except Exception as e:
+        print(f"Error creating review: {e}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
 
 class CustomSignupView(SignupView):
     """
@@ -284,7 +391,6 @@ class CartViewSet(viewsets.GenericViewSet):
         try:
             print("=== ADD ITEM ===")
             print("User:", request.user)
-            print("Session key:", request.session.session_key)
             print("Data:", request.data)
             
             cart = self.get_object()
@@ -297,9 +403,10 @@ class CartViewSet(viewsets.GenericViewSet):
 
             product = get_object_or_404(Product, id=product_id)
 
+            # Проверка наличия на складе
             if quantity > product.available_quantity:
                 return Response(
-                    {'error': f'Доступно только {product.available_quantity} единиц'},
+                    {'error': f'Доступно только {product.available_quantity} шт. товара "{product.name}"'},
                     status=400
                 )
 
@@ -311,7 +418,14 @@ class CartViewSet(viewsets.GenericViewSet):
             )
 
             if not created:
-                cart_item.quantity += quantity
+                # Проверка общего количества после добавления
+                new_quantity = cart_item.quantity + quantity
+                if new_quantity > product.available_quantity:
+                    return Response(
+                        {'error': f'В корзине уже {cart_item.quantity} шт. Доступно всего {product.available_quantity} шт. Нельзя добавить больше'},
+                        status=400
+                    )
+                cart_item.quantity = new_quantity
                 cart_item.save()
 
             serializer = self.get_serializer(cart)
@@ -338,7 +452,7 @@ class CartViewSet(viewsets.GenericViewSet):
             else:
                 if quantity > cart_item.product.available_quantity:
                     return Response(
-                        {'error': f'Доступно только {cart_item.product.available_quantity} единиц'},
+                        {'error': f'Доступно только {cart_item.product.available_quantity} шт.'},
                         status=400
                     )
                 cart_item.quantity = quantity
@@ -495,6 +609,51 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                 item.product.save()
 
         return Response({'status': 'ok'})
+    @action(detail=True, methods=['get'])
+    def get_pickup_code(self, request: Request, pk: Optional[int] = None) -> Response:
+        """
+        Получает или генерирует код для получения заказа.
+        Доступен только для заказов со статусом DELIVERED.
+        """
+        order: Order = self.get_object()
+        
+        # Проверяем статус заказа
+        if order.status not in [Order.Status.DELIVERED, Order.Status.RECEIVED]:
+            return Response(
+                {'error': 'Код получения доступен только для доставленных заказов'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Генерируем или обновляем код (если прошло > 10 минут)
+        order.regenerate_pickup_code()
+        
+        return Response({
+            'pickup_code': order.pickup_code,
+            'generated_at': order.code_generated_at,
+            'expires_in': 600 - (timezone.now() - order.code_generated_at).total_seconds()
+        })
+    
+    @action(detail=True, methods=['post'])
+    def mark_as_received(self, request: Request, pk: Optional[int] = None) -> Response:
+        """
+        Отмечает заказ как полученный (для пользователя).
+        """
+        order: Order = self.get_object()
+        
+        # Проверяем статус заказа
+        if order.status != Order.Status.DELIVERED:
+            return Response(
+                {'error': 'Заказ можно подтвердить как полученный только после доставки'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        order.mark_as_received()
+        
+        return Response({
+            'status': 'ok',
+            'message': 'Заказ отмечен как полученный',
+            'received_at': order.delivered_at
+        })
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

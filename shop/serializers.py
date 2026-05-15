@@ -216,24 +216,25 @@ class OrderSerializer(serializers.ModelSerializer):
     """
     items = OrderItemSerializer(many=True, read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    pickup_code = serializers.CharField(read_only=True)
+    code_generated_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = Order
         fields = (
             'id', 'order_number', 'user', 'created_at', 'status', 'status_display',
             'total_price', 'delivery_address', 'delivery_method', 'payment_method',
-            'delivery_date', 'delivery_time', 'gift_wrap', 'gift_message',
-            'comment', 'delivered_at', 'items', 'bonus_earned'
+            'gift_wrap', 'gift_message',
+            'comment', 'delivered_at', 'items', 'bonus_earned', 'pickup_code', 'code_generated_at'
         )
         read_only_fields = ('id', 'order_number', 'created_at', 'total_price')
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор для создания заказа.
-    """
     phone = serializers.CharField(write_only=True, required=True)
     promo_code = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    delivery_date = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    delivery_time = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = Order
@@ -244,23 +245,13 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data: Dict[str, Any]) -> Order:
-        """
-        Создаёт заказ из корзины пользователя.
-
-        Args:
-            validated_data (dict): Проверенные данные заказа
-
-        Returns:
-            Order: Созданный заказ
-
-        Raises:
-            ValidationError: Если корзина не найдена или пуста
-        """
         request = self.context.get('request')
         user = request.user
 
         phone = validated_data.pop('phone', None)
         promo_code_str = validated_data.pop('promo_code', None)
+        delivery_date = validated_data.pop('delivery_date', None)
+        delivery_time = validated_data.pop('delivery_time', None)
 
         if phone and user.is_authenticated:
             user.phone = phone
@@ -297,11 +288,14 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
         final_price = total_price - promo_discount
 
+        # Создаём заказ с датой и временем доставки
         order = Order.objects.create(
             user=user,
             total_price=final_price,
             promo_code=promo_obj,
             promo_discount=promo_discount,
+            delivery_date=delivery_date or '',
+            delivery_time=delivery_time or '',
             **validated_data
         )
 

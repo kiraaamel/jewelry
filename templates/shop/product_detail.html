@@ -702,6 +702,37 @@
     .login-hint a:hover {
         text-decoration: underline;
     }
+    .review-notice {
+        margin-bottom: 20px;
+        padding: 12px;
+        border-radius: 12px;
+        text-align: center;
+    }
+
+    .review-notice i {
+        margin-right: 8px;
+    }
+
+    .write-review-btn-container {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .btn-write-review {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 30px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .btn-write-review:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(93, 110, 128, 0.3);
+    }
     @keyframes slideIn {
         from {
             transform: translateX(100%);
@@ -745,11 +776,26 @@
 
 {% block scripts %}
 <script>
+// Функция для проверки, может ли пользователь оставить отзыв
+async function canUserReview(productId) {
+    if (!isAuthenticated()) return false;
     
+    try {
+        const response = await fetch(`/api/orders/can_review/${productId}/`);
+        const data = await response.json();
+        console.log('can_review response:', data); // Отладка - посмотрим что приходит
+        return data.can_review || false;
+    } catch (error) {
+        console.error('Error checking review permission:', error);
+        return false;
+    }
+}
+
     const pathParts = window.location.pathname.split('/');
     const productId = pathParts[pathParts.length - 2];
     let selectedSize = null;
     let currentProduct = null;
+    let cartItems = [];
     function isAuthenticated() {
         return document.body.classList.contains('user-authenticated');
     }
@@ -795,8 +841,11 @@
         fetch(`/api/products/${productId}/`)
             .then(response => response.json())
             .then(product => {
-                renderProductPage(product);
-                loadReviews(product);
+                // Сначала загружаем корзину, потом отображаем страницу
+                loadCartItems().then(() => {
+                    renderProductPage(product);
+                    loadReviews(product);
+                });
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -936,6 +985,7 @@
                     
                     <div class="quantity-section">
                         <div class="quantity-label">Количество</div>
+                        <div id="stock-info" style="margin-bottom: 10px; font-size: 12px;"></div>
                         <div class="quantity-price-row">
                             <div class="quantity-control">
                                 <button id="decrease-qty">-</button>
@@ -1009,7 +1059,7 @@
                 <table class="specs-table">
                     <tr><td>Артикул</td><td>${product.id}</td></tr>
                     <tr><td>Бренд</td><td>Argentic</td></tr>
-                    <tr><td>Коллекция</td><td>${product.collection || 'Основная'}</td></tr>
+                    <tr><td>Коллекция</td><td>${product.collection_name || product.collection?.name || 'Основная'}</td></tr>
                     <tr><td>Тип серебра</td><td>${product.silver_type_display || product.silver_type || 'Стерлинговое серебро'}</td></tr>
                     <tr><td>Проба</td><td>${product.fineness_display || (product.fineness ? `${product.fineness} проба` : '925 проба')}</td></tr>
                     <tr><td>Вес</td><td>${product.weight ? `${product.weight} г` : '—'}</td></tr>
@@ -1039,6 +1089,7 @@
         initTabs();
         updateFavoriteButton(product.is_in_favorites);
         updateFavoriteIcon(product.is_in_favorites);
+        updateQuantityMax();
     }
     
     function updateFavoriteIcon(isInFavorites) {
@@ -1055,11 +1106,167 @@
             }
         }
     }
-    
+    // Функция для открытия модального окна с формой отзыва
+    function openReviewModal() {
+        // Удаляем старое модальное окно, если есть
+        const oldModal = document.getElementById('review-modal');
+        if (oldModal) oldModal.remove();
+        
+        // Создаём новое модальное окно
+        const modal = document.createElement('div');
+        modal.id = 'review-modal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px;">
+                <span class="modal-close" onclick="closeReviewModal()">&times;</span>
+                <div class="modal-title">Написать отзыв</div>
+                <div class="modal-text">Поделитесь впечатлениями о товаре</div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--brown);">Оценка:</label>
+                    <div style="display: flex; gap: 8px; font-size: 24px;" id="rating-stars-select">
+                        ${[1,2,3,4,5].map(i => `<span class="rating-star" data-rating="${i}" style="cursor: pointer; color: #ccc;">★</span>`).join('')}
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--brown);">Ваш отзыв:</label>
+                    <textarea id="review-comment" class="modal-input" rows="4" placeholder="Расскажите о качестве, дизайне, впечатлениях..."></textarea>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--brown);">Фото (необязательно):</label>
+                    <input type="file" id="review-image" accept="image/*" style="width: 100%; padding: 8px;">
+                </div>
+                
+                <button class="modal-btn" onclick="submitReview()">Отправить отзыв</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Добавляем стили
+        if (!document.getElementById('review-modal-styles')) {
+            const style = document.createElement('style');
+            style.id = 'review-modal-styles';
+            style.textContent = `
+                .rating-star {
+                    font-size: 28px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .rating-star:hover, .rating-star.active {
+                    color: #ffc107;
+                }
+                .btn-write-review:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(93,110,128,0.3);
+                }
+                #review-modal .modal-content {
+                    background: var(--bg-cream);
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Инициализация звёзд
+        let selectedRating = 0;
+        const stars = document.querySelectorAll('#rating-stars-select .rating-star');
+        stars.forEach(star => {
+            star.addEventListener('click', function() {
+                selectedRating = parseInt(this.dataset.rating);
+                stars.forEach((s, index) => {
+                    if (index < selectedRating) {
+                        s.classList.add('active');
+                        s.style.color = '#ffc107';
+                    } else {
+                        s.classList.remove('active');
+                        s.style.color = '#ccc';
+                    }
+                });
+            });
+            star.addEventListener('mouseenter', function() {
+                const rating = parseInt(this.dataset.rating);
+                stars.forEach((s, index) => {
+                    if (index < rating) {
+                        s.style.color = '#ffc107';
+                    } else {
+                        s.style.color = '#ccc';
+                    }
+                });
+            });
+            star.addEventListener('mouseleave', function() {
+                stars.forEach((s, index) => {
+                    if (index < selectedRating) {
+                        s.style.color = '#ffc107';
+                    } else {
+                        s.style.color = '#ccc';
+                    }
+                });
+            });
+        });
+        
+        modal.classList.add('active');
+    }
+
+    function closeReviewModal() {
+        const modal = document.getElementById('review-modal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    function submitReview() {
+        const rating = document.querySelectorAll('#rating-stars-select .rating-star.active').length;
+        const comment = document.getElementById('review-comment').value;
+        const imageFile = document.getElementById('review-image').files[0];
+        
+        if (rating === 0) {
+            showNotification('Пожалуйста, поставьте оценку');
+            return;
+        }
+        
+        if (!comment.trim()) {
+            showNotification('Пожалуйста, напишите отзыв');
+            return;
+        }
+        
+        // Используем FormData для отправки, чтобы можно было загрузить фото
+        const formData = new FormData();
+        formData.append('product', productId);
+        formData.append('rating', rating);
+        formData.append('comment', comment);
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
+        
+        fetch('/api/reviews/create/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.id) {
+                showNotification('Спасибо за ваш отзыв!');
+                closeReviewModal();
+                // Перезагружаем отзывы
+                loadReviews(currentProduct);
+            } else {
+                let errorMsg = 'Ошибка при отправке отзыва';
+                if (data.error) errorMsg = data.error;
+                if (data.non_field_errors) errorMsg = data.non_field_errors[0];
+                showNotification(errorMsg);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Ошибка при отправке отзыва');
+        });
+    }
     function loadReviews(product) {
         fetch(`/api/products/${productId}/reviews/?ordering=-created_at&page_size=10`)
             .then(response => response.json())
-            .then(reviews => {
+            .then(async (reviews) => {
                 const container = document.getElementById('reviews-list');
                 if (!container) return;
                 
@@ -1076,12 +1283,66 @@
                     }
                 }
                 
+                let html = '';
+                
+                // Проверяем, может ли пользователь оставить отзыв
+                if (isAuthenticated()) {
+                    try {
+                        const response = await fetch(`/api/orders/can_review/${product.id}/`);
+                        const data = await response.json();
+                        
+                        // Пользователь может оставить отзыв (купил, получил, НЕ писал)
+                        if (data.can_review) {
+                            html += `
+                                <div class="write-review-btn-container" style="margin-bottom: 20px;">
+                                    <button class="btn-write-review" onclick="openReviewModal()" style="background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 30px; cursor: pointer; font-weight: 500;">
+                                        <i class="fas fa-pen"></i> Написать отзыв
+                                    </button>
+                                </div>
+                            `;
+                        }
+                        // Пользователь купил и получил, НО УЖЕ оставил отзыв
+                        else if (data.has_purchased && data.has_reviewed) {
+                            html += `
+                                <div class="review-notice" style="margin-bottom: 20px; padding: 12px; background: #e8f5e9; border-radius: 12px; text-align: center; color: #2e7d32;">
+                                    <i class="fas fa-check-circle"></i> Спасибо, вы уже оставили отзыв на этот товар
+                                </div>
+                            `;
+                        }
+                        // Пользователь купил, НО ЕЩЁ НЕ получил заказ (статус не received)
+                        else if (data.has_purchased && !data.has_reviewed && !data.can_review) {
+                            html += `
+                                <div class="review-notice" style="margin-bottom: 20px; padding: 12px; background: #fff3e0; border-radius: 12px; text-align: center; color: #ff9800;">
+                                    <i class="fas fa-truck"></i> Вы сможете оставить отзыв после получения заказа
+                                </div>
+                            `;
+                        }
+                        // Пользователь НЕ покупал этот товар
+                        else if (!data.has_purchased && !data.has_reviewed) {
+                            html += `
+                                <div class="review-notice" style="margin-bottom: 20px; padding: 12px; background: #f0f0f0; border-radius: 12px; text-align: center; color: var(--gray);">
+                                    <i class="fas fa-lock"></i> Вы можете оставить отзыв только после покупки и получения товара
+                                </div>
+                            `;
+                        }
+                    } catch (error) {
+                        console.error('Error checking review permission:', error);
+                    }
+                } else {
+                    // Неавторизованный пользователь
+                    html += `
+                        <div class="review-notice" style="margin-bottom: 20px; padding: 12px; background: #f0f0f0; border-radius: 12px; text-align: center; color: var(--gray);">
+                            <i class="fas fa-lock"></i> <a href="/accounts/login/" style="color: var(--accent);">Войдите</a>, чтобы оставить отзыв
+                        </div>
+                    `;
+                }
+                
                 if (reviews.length === 0) {
-                    container.innerHTML = '<div class="no-reviews"><i class="fas fa-star fa-2x mb-2"></i><p>Пока нет отзывов. Будьте первым!</p></div>';
+                    html += '<div class="no-reviews"><i class="fas fa-star fa-2x mb-2"></i><p>Пока нет отзывов. Будьте первым!</p></div>';
+                    container.innerHTML = html;
                     return;
                 }
                 
-                let html = '';
                 reviews.forEach(review => {
                     const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
                     const date = new Date(review.created_at).toLocaleDateString('ru-RU', {
@@ -1146,7 +1407,87 @@
         });
         element.classList.add('active');
     }
-    
+    function loadCartItems() {
+        return fetch('/api/cart/')
+            .then(response => response.json())
+            .then(data => {
+                cartItems = data.items || [];
+                return cartItems;
+            })
+            .catch(error => {
+                console.error('Error loading cart:', error);
+                cartItems = [];
+                return cartItems;
+            });
+    }
+
+    function getCartQuantity(productId, selectedSize) {
+        // Убеждаемся, что cartItems - массив
+        const items = Array.isArray(cartItems) ? cartItems : [];
+        
+        const cartItem = items.find(item => {
+            const itemProductId = item.product?.id || item.product;
+            const itemSize = item.size || '';
+            const currentSize = selectedSize || '';
+            return itemProductId == productId && itemSize === currentSize;
+        });
+        
+        return cartItem ? (cartItem.quantity || 0) : 0;
+    }
+
+    function getMaxAvailableQuantity(product, selectedSize = null) {
+        if (!product) return 0;
+        
+        const stockAvailable = product.available_quantity !== undefined ? product.available_quantity : (product.stock_quantity - product.reserved_quantity);
+        const cartQuantity = getCartQuantity(product.id, selectedSize);
+        
+        // Максимум, который можно добавить = доступно на складе - уже в корзине
+        return Math.max(0, stockAvailable - cartQuantity);
+    }
+
+    function updateQuantityMax() {
+        const quantityInput = document.getElementById('quantity');
+        if (!quantityInput || !currentProduct) return;
+        
+        // Получаем максимальное доступное количество
+        const maxQty = getMaxAvailableQuantity(currentProduct, selectedSize);
+        
+        // Получаем текущее значение из input
+        let currentQty = parseInt(quantityInput.value);
+        if (isNaN(currentQty)) currentQty = 1;
+        
+        // Если текущее количество больше максимального - корректируем
+        if (currentQty > maxQty && maxQty > 0) {
+            currentQty = maxQty;
+            quantityInput.value = currentQty;
+            const totalSpan = document.getElementById('total-price');
+            if (totalSpan && currentProduct) {
+                totalSpan.textContent = (currentProduct.price * currentQty).toFixed(0);
+            }
+        }
+        
+        // Обновляем кнопки +/-
+        const decreaseBtn = document.getElementById('decrease-qty');
+        const increaseBtn = document.getElementById('increase-qty');
+        if (decreaseBtn) decreaseBtn.disabled = (currentQty <= 1);
+        if (increaseBtn) increaseBtn.disabled = (currentQty >= maxQty);
+        
+        // ОТОБРАЖЕНИЕ ДОСТУПНОГО КОЛИЧЕСТВА
+        const stockInfo = document.getElementById('stock-info');
+        if (stockInfo && currentProduct) {
+            const cartQty = getCartQuantity(currentProduct.id, selectedSize);
+            const totalAvailable = (currentProduct.available_quantity || 0);
+            
+            if (maxQty <= 0) {
+                stockInfo.innerHTML = '<span style="color: #dc3545;"><i class="fas fa-times-circle"></i> Нет в наличии</span>';
+            } else if (maxQty < 5) {
+                stockInfo.innerHTML = `<span style="color: #fd7e14;"><i class="fas fa-exclamation-triangle"></i> Осталось всего ${maxQty} шт. (в корзине ${cartQty} шт., на складе ${totalAvailable} шт.)</span>`;
+            } else {
+                stockInfo.innerHTML = `<span style="color: #28a745;"><i class="fas fa-check-circle"></i> В наличии ${totalAvailable} шт. (можно добавить до ${maxQty} шт.)</span>`;
+            }
+        }
+    }
+
     function initQuantityControls(price) {
         const quantityInput = document.getElementById('quantity');
         const decreaseBtn = document.getElementById('decrease-qty');
@@ -1155,23 +1496,49 @@
         
         let qty = 1;
         
+        function updateTotal() {
+            totalSpan.textContent = (price * qty).toFixed(0);
+            quantityInput.value = qty;
+            
+            const maxQty = getMaxAvailableQuantity(currentProduct, selectedSize);
+            if (decreaseBtn) decreaseBtn.disabled = (qty <= 1);
+            if (increaseBtn) increaseBtn.disabled = (qty >= maxQty);
+        }
+        
         if (decreaseBtn) {
             decreaseBtn.addEventListener('click', () => {
                 if (qty > 1) {
                     qty--;
-                    quantityInput.value = qty;
-                    totalSpan.textContent = (price * qty).toFixed(0);
+                    updateTotal();
                 }
             });
         }
         
         if (increaseBtn) {
             increaseBtn.addEventListener('click', () => {
-                qty++;
-                quantityInput.value = qty;
-                totalSpan.textContent = (price * qty).toFixed(0);
+                const maxQty = getMaxAvailableQuantity(currentProduct, selectedSize);
+                if (qty < maxQty) {
+                    qty++;
+                    updateTotal();
+                } else {
+                    showNotification(`Нельзя добавить больше ${maxQty} шт. (доступно на складе: ${currentProduct.available_quantity}, в корзине уже: ${getCartQuantity(currentProduct.id, selectedSize)})`);
+                }
             });
         }
+        
+        quantityInput.addEventListener('change', function() {
+            let val = parseInt(this.value);
+            const maxQty = getMaxAvailableQuantity(currentProduct, selectedSize);
+            if (isNaN(val) || val < 1) val = 1;
+            if (val > maxQty) {
+                val = maxQty;
+                showNotification(`Доступно только ${maxQty} шт.`);
+            }
+            qty = val;
+            updateTotal();
+        });
+        
+        updateTotal();
     }
     
     function initSizeButtons() {
@@ -1180,16 +1547,28 @@
             btn.addEventListener('click', () => {
                 sizeBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                selectedSize = btn.getAttribute('data-size');  // ← сохраняем выбранный размер
+                selectedSize = btn.getAttribute('data-size');
+                
+                // СБРАСЫВАЕМ КОЛИЧЕСТВО ДО 1 ПРИ СМЕНЕ РАЗМЕРА
+                const quantityInput = document.getElementById('quantity');
+                if (quantityInput) {
+                    quantityInput.value = 1;
+                    const totalSpan = document.getElementById('total-price');
+                    if (totalSpan && currentProduct) {
+                        totalSpan.textContent = currentProduct.price;
+                    }
+                }
+                
+                // Обновляем максимальное количество при выборе размера
+                updateQuantityMax();
             });
         });
-        
         document.getElementById('size-guide-link')?.addEventListener('click', (e) => {
             e.preventDefault();
             alert('Размерная сетка: 15-20 — стандартные размеры колец.\n\nДля точного определения размера:\n• Измерьте окружность пальца\n• Сравните с таблицей размеров\n• При необходимости посетите наш магазин');
         });
     }
-    
+
     function initTabs() {
         const tabBtns = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
@@ -1210,22 +1589,19 @@
     function addToCartWithQuantity(productId) {
         const quantity = parseInt(document.getElementById('quantity').value);
         
-        // Получаем размеры товара
         const sizes = currentProduct.size ? currentProduct.size.split(',').map(s => s.trim()) : [];
         
-        // Если есть размеры, проверяем что выбран
         if (sizes.length > 0 && !selectedSize) {
             showNotification('Пожалуйста, выберите размер');
             return;
         }
         
-        // Проверяем наличие на складе
-        if (quantity > currentProduct.available_quantity) {
-            showNotification(`Доступно только ${currentProduct.available_quantity} шт.`);
+        const maxQty = getMaxAvailableQuantity(currentProduct, selectedSize);
+        if (quantity > maxQty) {
+            showNotification(`Нельзя добавить больше ${maxQty} шт. (доступно на складе: ${currentProduct.available_quantity}, в корзине уже: ${getCartQuantity(currentProduct.id, selectedSize)})`);
             return;
         }
         
-        // Отправляем запрос
         fetch('/api/cart/add_item/', {
             method: 'POST',
             headers: {
@@ -1242,6 +1618,10 @@
         .then(() => {
             updateCartCount();
             showNotification('Товар добавлен в корзину!');
+            // ОБНОВЛЯЕМ КОРЗИНУ И ПЕРЕСЧИТЫВАЕМ ДОСТУПНОЕ КОЛИЧЕСТВО
+            loadCartItems().then(() => {
+                updateQuantityMax();  // ← ЭТО ВАЖНО!
+            });
         })
         .catch(error => {
             console.error('Error:', error);

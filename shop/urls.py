@@ -12,7 +12,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter, APIRootView
 from . import views
 from allauth.account import views as allauth_views
-from .views import PromoCodeViewSet, CollectionViewSet
+from .views import PromoCodeViewSet, CollectionViewSet, can_review_product, create_product_review
 
 # Создаём роутер для API
 router: DefaultRouter = DefaultRouter()
@@ -53,6 +53,8 @@ urlpatterns: List[Union[path, include]] = [
 
     # ========== REST API ==========
     # Основные API маршруты (сгенерированы роутером)
+    path('api/orders/can_review/<int:product_id>/', views.can_review_product, name='can_review_product'),
+    path('api/reviews/create/', views.create_product_review, name='create_product_review'),
     path('api/', include(router.urls)),
 
     # Аутентификация API

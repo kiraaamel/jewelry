@@ -7,6 +7,7 @@
 
 import os
 import uuid
+import random
 from typing import List, Tuple, Optional, Union
 from decimal import Decimal
 from django.db import models
@@ -840,6 +841,7 @@ class Order(models.Model):
         CONFIRMED = 'confirmed', 'Подтверждён'
         SHIPPED = 'shipped', 'Отправлен'
         DELIVERED = 'delivered', 'Доставлен'
+        RECEIVED = 'received', 'Получен'
         CANCELLED = 'cancelled', 'Отменён'
 
     user = models.ForeignKey(
@@ -873,8 +875,10 @@ class Order(models.Model):
     delivery_address = models.TextField(verbose_name='Адрес доставки')
     delivery_method = models.CharField(max_length=100, verbose_name='Способ доставки')
     payment_method = models.CharField(max_length=100, verbose_name='Способ оплаты')
+    
     delivery_date = models.CharField(max_length=50, blank=True, null=True, verbose_name='Дата доставки')
     delivery_time = models.CharField(max_length=50, blank=True, null=True, verbose_name='Время доставки')
+
     gift_wrap = models.BooleanField(default=False, verbose_name='Подарочная упаковка')
     gift_message = models.TextField(blank=True, verbose_name='Текст открытки')
     comment = models.TextField(blank=True, verbose_name='Комментарий к заказу')
@@ -893,7 +897,9 @@ class Order(models.Model):
         default=0,
         verbose_name='Скидка по промокоду'
     )
-
+    pickup_code = models.CharField(max_length=6, blank=True, null=True, verbose_name='Код получения')
+    code_generated_at = models.DateTimeField(blank=True, null=True, verbose_name='Время генерации кода')
+   
     def save(self, *args, **kwargs) -> None:
         """
         Автоматически вычисляет общую стоимость заказа перед сохранением.
@@ -901,6 +907,38 @@ class Order(models.Model):
         if not self.total_price and self.pk:
             self.total_price = sum(item.total_price for item in self.items.all())
         super().save(*args, **kwargs)
+    
+    def generate_pickup_code(self) -> str:
+        """
+        Генерирует случайный 6-значный код для получения заказа.
+        
+        Returns:
+            str: 6-значный код
+        """
+        return str(random.randint(100000, 999999))
+    
+    def regenerate_pickup_code(self) -> None:
+        """
+        Обновляет код получения, если прошло больше 10 минут.
+        """
+        if not self.pickup_code or not self.code_generated_at:
+            self.pickup_code = self.generate_pickup_code()
+            self.code_generated_at = timezone.now()
+            self.save(update_fields=['pickup_code', 'code_generated_at'])
+        else:
+            time_diff = timezone.now() - self.code_generated_at
+            if time_diff.total_seconds() > 600:  # 10 минут = 600 секунд
+                self.pickup_code = self.generate_pickup_code()
+                self.code_generated_at = timezone.now()
+                self.save(update_fields=['pickup_code', 'code_generated_at'])
+    
+    def mark_as_received(self) -> None:
+        """
+        Отмечает заказ как полученный и устанавливает дату получения.
+        """
+        self.status = self.Status.RECEIVED
+        self.delivered_at = timezone.now()
+        self.save(update_fields=['status', 'delivered_at'])
 
     class Meta:
         verbose_name = 'Заказ'
@@ -939,8 +977,10 @@ class OrderItem(models.Model):
         verbose_name='Цена на момент заказа'
     )
     quantity = models.PositiveIntegerField(verbose_name='Количество')
-    delivery_date = models.CharField(max_length=50, blank=True, null=True, verbose_name='Дата доставки')
-    delivery_time = models.CharField(max_length=50, blank=True, null=True, verbose_name='Время доставки')
+    added_at = models.DateTimeField(
+        default=timezone.now,  # ← добавьте default
+        verbose_name='Дата добавления'
+    )
 
     class Meta:
         verbose_name = 'Позиция заказа'
@@ -1003,7 +1043,7 @@ class Review(models.Model):
         has_purchased = Order.objects.filter(
             user=self.user,
             items__product=self.product,
-            status=Order.Status.DELIVERED
+            status=Order.Status.RECEIVED
         ).exists()
 
         if not has_purchased:

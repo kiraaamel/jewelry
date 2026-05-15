@@ -15,6 +15,7 @@
     --orange: #ff9800;
     --red: #dc3545;
     --blue: #007bff;
+    --purple: #6f42c1;
 }
 
 .orders-page {
@@ -122,6 +123,7 @@
 .status-confirmed { background: var(--orange); color: white; }
 .status-shipped { background: var(--green); color: white; }
 .status-delivered { background: var(--green); color: white; }
+.status-received { background: var(--purple); color: white; }
 .status-cancelled { background: var(--red); color: white; }
 
 .order-total {
@@ -265,6 +267,44 @@
     color: white;
 }
 
+.btn-pickup-code {
+    background: var(--purple);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s;
+}
+
+.btn-pickup-code:hover {
+    background: #5a32a3;
+    transform: translateY(-2px);
+}
+
+.btn-received {
+    background: var(--green);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s;
+}
+
+.btn-received:hover {
+    background: #1e7e34;
+    transform: translateY(-2px);
+}
+
 /* Модальное окно */
 .modal {
     display: none;
@@ -390,6 +430,30 @@
     margin-bottom: 10px;
 }
 
+/* Стили для кода получения */
+.pickup-code-display {
+    background: #f0e6ff;
+    border: 2px dashed var(--purple);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    margin-top: 15px;
+}
+
+.pickup-code-number {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--purple);
+    letter-spacing: 8px;
+    font-family: monospace;
+}
+
+.pickup-code-expiry {
+    font-size: 12px;
+    color: var(--gray);
+    margin-top: 10px;
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
     .order-header {
@@ -401,9 +465,14 @@
         width: 100%;
     }
     
-    .btn-edit, .btn-cancel, .btn-repeat {
+    .btn-edit, .btn-cancel, .btn-repeat, .btn-pickup-code, .btn-received {
         flex: 1;
         justify-content: center;
+    }
+    
+    .pickup-code-number {
+        font-size: 32px;
+        letter-spacing: 4px;
     }
 }
 </style>
@@ -422,6 +491,7 @@
             <button class="tab-btn" data-status="confirmed">Подтверждённые</button>
             <button class="tab-btn" data-status="shipped">Отправленные</button>
             <button class="tab-btn" data-status="delivered">Доставленные</button>
+            <button class="tab-btn" data-status="received">Полученные</button>
             <button class="tab-btn" data-status="cancelled">Отменённые</button>
         </div>
 
@@ -454,6 +524,34 @@
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button class="modal-btn" onclick="closeCancelModal()" style="background: var(--gray);">Нет</button>
             <button class="modal-btn" onclick="confirmCancel()" style="background: var(--red);">Да, отменить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно кода получения -->
+<div id="pickup-code-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closePickupCodeModal()">&times;</span>
+        <div class="modal-title">Код получения заказа</div>
+        <div id="pickup-code-content">
+            <div class="text-center py-3">
+                <div class="spinner-border text-secondary" role="status"></div>
+                <p class="mt-2">Загрузка...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения получения -->
+<div id="received-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeReceivedModal()">&times;</span>
+        <div class="modal-title">Подтверждение получения</div>
+        <p>Вы уверены, что получили этот заказ?</p>
+        <p style="font-size: 13px; color: var(--gray); margin-top: 5px;">После подтверждения заказ будет отмечен как полученный.</p>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="modal-btn" onclick="closeReceivedModal()" style="background: var(--gray);">Нет</button>
+            <button class="modal-btn" onclick="confirmReceived()" style="background: var(--green);">Да, подтвердить</button>
         </div>
     </div>
 </div>
@@ -505,6 +603,7 @@ function getStatusText(status) {
         'confirmed': 'Подтверждён',
         'shipped': 'Отправлен',
         'delivered': 'Доставлен',
+        'received': 'Получен',
         'cancelled': 'Отменён'
     };
     return statuses[status] || status;
@@ -529,6 +628,14 @@ function canCancel(status) {
 
 function canEditAddress(status) {
     return ['new', 'confirmed'].includes(status);
+}
+
+function canShowPickupCode(status) {
+    return status === 'delivered';
+}
+
+function canMarkAsReceived(status) {
+    return status === 'delivered';
 }
 
 function renderOrders() {
@@ -557,6 +664,8 @@ function renderOrders() {
         const statusClass = getStatusClass(order.status);
         const canCancelOrder = canCancel(order.status);
         const canEdit = canEditAddress(order.status);
+        const showPickupCode = canShowPickupCode(order.status);
+        const showReceived = canMarkAsReceived(order.status);
         
         let itemsHtml = '';
         if (order.items && order.items.length > 0) {
@@ -618,6 +727,8 @@ function renderOrders() {
                     <div class="order-actions">
                         ${canEdit ? `<button class="btn-edit" onclick="openEditModal(${order.id}, '${escapeHtml(order.delivery_address)}', '${order.delivery_method}')"><i class="fas fa-edit"></i> Изменить адрес</button>` : ''}
                         ${canCancelOrder ? `<button class="btn-cancel" onclick="openCancelModal(${order.id})"><i class="fas fa-times"></i> Отменить заказ</button>` : ''}
+                        ${showPickupCode ? `<button class="btn-pickup-code" onclick="showPickupCode(${order.id})"><i class="fas fa-qrcode"></i> Показать код получения</button>` : ''}
+                        ${showReceived ? `<button class="btn-received" onclick="openReceivedModal(${order.id})"><i class="fas fa-check-circle"></i> Товар получен</button>` : ''}
                         <button class="btn-repeat" onclick="repeatOrder(${order.id})"><i class="fas fa-redo"></i> Повторить заказ</button>
                     </div>
                 </div>
@@ -653,7 +764,6 @@ function openEditModal(orderId, currentAddress, deliveryMethod) {
     const container = document.getElementById('address-edit-content');
     
     if (deliveryMethod === 'pickup') {
-        // Самовывоз: выбор пункта выдачи
         let pointsHtml = `<div class="modal-form-group">
             <label>Выберите пункт выдачи</label>
             <div id="pickup-points-list">`;
@@ -672,7 +782,6 @@ function openEditModal(orderId, currentAddress, deliveryMethod) {
         container.innerHTML = pointsHtml;
     } 
     else if (deliveryMethod === 'post') {
-        // Почта России: выбор отделения
         let pointsHtml = `<div class="modal-form-group">
             <label>Выберите отделение Почты России</label>
             <div id="post-points-list">`;
@@ -691,7 +800,6 @@ function openEditModal(orderId, currentAddress, deliveryMethod) {
         container.innerHTML = pointsHtml;
     }
     else {
-        // Курьер: ввод адреса
         container.innerHTML = `
             <div class="modal-form-group">
                 <label>Новый адрес доставки</label>
@@ -826,6 +934,104 @@ function repeatOrder(orderId) {
         });
 }
 
+// ========== НОВЫЕ ФУНКЦИИ ДЛЯ КОДА ПОЛУЧЕНИЯ ==========
+
+let currentPickupOrderId = null;
+
+function showPickupCode(orderId) {
+    currentPickupOrderId = orderId;
+    const modal = document.getElementById('pickup-code-modal');
+    const content = document.getElementById('pickup-code-content');
+    
+    content.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-secondary" role="status"></div><p class="mt-2">Загрузка кода...</p></div>';
+    modal.classList.add('active');
+    
+    fetch(`/api/orders/${orderId}/get_pickup_code/`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.pickup_code) {
+            const expiresIn = Math.floor(data.expires_in / 60);
+            const expiresText = expiresIn > 0 ? `Код действителен еще ${expiresIn} мин.` : 'Код скоро будет обновлен';
+            
+            content.innerHTML = `
+                <div class="pickup-code-display">
+                    <div class="pickup-code-number">${data.pickup_code}</div>
+                    <div class="pickup-code-expiry">
+                        <i class="fas fa-clock"></i> ${expiresText}
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <button class="modal-btn" onclick="copyPickupCode()" style="background: var(--purple); margin-top: 0;">Скопировать код</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            content.innerHTML = `<div class="text-center py-3"><p class="text-danger">${data.error || 'Ошибка получения кода'}</p></div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        content.innerHTML = '<div class="text-center py-3"><p class="text-danger">Ошибка загрузки кода</p></div>';
+    });
+}
+
+function copyPickupCode() {
+    const codeElement = document.querySelector('.pickup-code-number');
+    if (codeElement) {
+        const code = codeElement.innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            showNotification('Код скопирован в буфер обмена!');
+        }).catch(() => {
+            showNotification('Не удалось скопировать код');
+        });
+    }
+}
+
+function closePickupCodeModal() {
+    document.getElementById('pickup-code-modal').classList.remove('active');
+    currentPickupOrderId = null;
+}
+
+function openReceivedModal(orderId) {
+    currentOrderId = orderId;
+    document.getElementById('received-modal').classList.add('active');
+}
+
+function closeReceivedModal() {
+    document.getElementById('received-modal').classList.remove('active');
+    currentOrderId = null;
+}
+
+function confirmReceived() {
+    fetch(`/api/orders/${currentOrderId}/mark_as_received/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            showNotification('Заказ отмечен как полученный!');
+            closeReceivedModal();
+            loadOrders();
+        } else {
+            showNotification(data.error || 'Ошибка при подтверждении получения');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при подтверждении получения');
+    });
+}
+
+// ========== ОСТАЛЬНЫЕ ФУНКЦИИ ==========
+
 function initTabs() {
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -842,7 +1048,7 @@ function showNotification(message) {
     notif.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;';
     notif.innerText = message;
     document.body.appendChild(notif);
-    setTimeout(() => notif.remove(), 2000);
+    setTimeout(() => notif.remove(), 3000);
 }
 
 function escapeHtml(text) {

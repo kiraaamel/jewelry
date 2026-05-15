@@ -823,6 +823,38 @@ function saveToStorage() {
 function loadCheckout() {
     loadFromStorage();
     
+    // Читаем промокод из localStorage (переданный из cart.html)
+    const savedPromoCode = localStorage.getItem('checkout_promo_code');
+    const savedPromoDiscount = localStorage.getItem('checkout_promo_discount');
+    const savedBonusApplied = localStorage.getItem('checkout_bonus_applied');
+    
+    if (savedPromoCode && savedPromoDiscount) {
+        currentPromoCode = savedPromoCode;
+        promoDiscount = parseFloat(savedPromoDiscount);
+        appliedPromo = {
+            code: savedPromoCode,
+            discount: promoDiscount
+        };
+        
+        // Очищаем localStorage после прочтения
+        localStorage.removeItem('checkout_promo_code');
+        localStorage.removeItem('checkout_promo_discount');
+    }
+    
+    // Читаем бонусы из localStorage
+    if (savedBonusApplied === 'true') {
+        useBonus = true;
+    } else if (savedBonusApplied === 'false') {
+        useBonus = false;
+    }
+    localStorage.removeItem('checkout_bonus_applied');
+    
+    // Устанавливаем чекбокс бонусов
+    const useBonusCheckbox = document.getElementById('use-bonus');
+    if (useBonusCheckbox) {
+        useBonusCheckbox.checked = useBonus;
+    }
+    
     fetch('/api/cart/')
         .then(r => r.json())
         .then(cart => {
@@ -834,6 +866,29 @@ function loadCheckout() {
                     userBonus = user.bonus_points || 0;
                     renderOrderSummary();
                     fillUserData();
+                    
+                    // Если есть сохранённый промокод, применяем его после загрузки данных
+                    if (currentPromoCode && promoDiscount > 0) {
+                        // Отображаем применённый промокод
+                        const promoStatusDiv = document.getElementById('promo-status');
+                        if (promoStatusDiv) {
+                            promoStatusDiv.innerHTML = `
+                                <div class="promo-applied">
+                                    <span>✓ Промокод ${currentPromoCode} применён. Скидка: -${promoDiscount.toFixed(0)} ₽</span>
+                                    <i class="fas fa-times" onclick="removePromoCode()"></i>
+                                </div>
+                            `;
+                        }
+                        // Обновляем итоги с учётом промокода
+                        updateTotals();
+                        showNotification(`Промокод ${currentPromoCode} применён!`);
+                    }
+                    
+                    // Если бонусы были применены в корзине, обновляем итоги
+                    if (useBonus) {
+                        updateTotals();
+                        showNotification(`Бонусы применены!`);
+                    }
                 });
         })
         .catch(e => console.error('Error:', e));

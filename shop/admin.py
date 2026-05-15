@@ -7,10 +7,17 @@
 
 from typing import Any, Optional
 from decimal import Decimal
+from datetime import datetime
+from io import BytesIO
 from django.contrib import admin
-from django.db.models import QuerySet
-from django.http import HttpRequest
+from django.db.models import QuerySet, Sum, Count
+from django.http import HttpRequest, HttpResponse
+from django.utils import timezone
 from django.utils.html import format_html
+from django.shortcuts import render
+from django.template.loader import get_template
+from django.urls import path
+
 from .models import (
     User, Category, Product, Collection, Cart, CartItem, Order, OrderItem,
     Review, Wishlist, PromoCode, PromoCodeUsage
@@ -26,6 +33,8 @@ class ReviewAdmin(admin.ModelAdmin):
     search_fields: list = ['user__email', 'product__name', 'comment']
     list_editable: list = ['moderated']
     readonly_fields: list = ['created_at']
+    
+    actions: list = ['mark_as_moderated']
 
     fieldsets: tuple = (
         ('Основная информация', {
@@ -39,6 +48,14 @@ class ReviewAdmin(admin.ModelAdmin):
         }),
     )
 
+    @admin.action(description='Отметить выбранные отзывы как промодерированные')
+    def mark_as_moderated(self, request: HttpRequest, queryset: QuerySet[Review]) -> None:
+        """
+        Отмечает выбранные отзывы как промодерированные.
+        """
+        updated = queryset.update(moderated=True)
+        self.message_user(request, f'{updated} отзывов отмечено как промодерированные')
+
 
 class OrderItemInline(admin.TabularInline):
     """
@@ -46,18 +63,13 @@ class OrderItemInline(admin.TabularInline):
     """
     model = OrderItem
     extra: int = 1
-    fields: list = ['product', 'quantity', 'item_total_display']
+    fields: list = ['product', 'quantity', 'price', 'item_total_display']
     readonly_fields: list = ['item_total_display']
+    ordering = ['-id']
 
     def item_total_display(self, obj: OrderItem) -> str:
         """
         Рассчитывает стоимость позиции.
-
-        Args:
-            obj (OrderItem): Объект позиции заказа
-
-        Returns:
-            str: Стоимость позиции в формате "X ₽"
         """
         if obj.pk and obj.product and obj.quantity:
             total = obj.product.price * obj.quantity
@@ -68,29 +80,51 @@ class OrderItemInline(admin.TabularInline):
         return "0 ₽"
     item_total_display.short_description = "Стоимость"
 
+class OrderItemAdmin(admin.ModelAdmin):
+    """
+    Настройки отображения позиций заказа в админке.
+    """
+    list_display: list = ['id', 'order', 'product', 'product_name', 'quantity', 'price', 'total_price_display']
+    list_filter: list = ['order__created_at']
+    search_fields: list = ['product__name', 'product_name', 'order__order_number']
+    readonly_fields: list = ['total_price_display']
+    ordering: list = ['-id']
+    
+    def total_price_display(self, obj: OrderItem) -> str:
+        if obj.price and obj.quantity:
+            total = obj.price * obj.quantity
+            return f"{total} ₽"
+        return "0 ₽"
+    total_price_display.short_description = "Стоимость"
 
 class OrderAdmin(admin.ModelAdmin):
     """
     Настройки отображения заказа в админке.
-    total_price не вводится, а рассчитывается автоматически.
     """
     inlines: list = [OrderItemInline]
     list_display: list = [
         'order_number', 'user', 'created_at', 'status',
-        'total_price_display', 'delivery_method', 'delivery_date', 'delivery_time'
+        'total_price_display', 'delivery_method', 'delivery_date', 'delivery_time', 'pickup_code'
     ]
     list_filter: list = ['status', 'delivery_method', 'payment_method', 'created_at']
     search_fields: list = ['order_number', 'user__email', 'delivery_address']
-    readonly_fields: list = ['order_number', 'created_at', 'total_price_display']
+    readonly_fields: list = ['order_number', 'created_at', 'total_price_display', 'pickup_code', 'code_generated_at']
     list_editable: list = ['status']
     exclude: list = ['total_price']
+    date_hierarchy: str = 'created_at'
+
+    actions: list = ['generate_order_report_pdf', 'export_orders_csv']
 
     fieldsets: tuple = (
         ('Основная информация', {
             'fields': ('order_number', 'user', 'status', 'total_price_display', 'created_at')
         }),
         ('Доставка', {
-            'fields': ('delivery_address', 'delivery_method', 'delivered_at', 'delivery_date', 'delivery_time')
+            'fields': ('delivery_address', 'delivery_method', 'delivery_date', 'delivery_time', 'delivered_at')
+        }),
+        ('Получение', {
+            'fields': ('pickup_code', 'code_generated_at'),
+            'classes': ('collapse',)
         }),
         ('Оплата', {
             'fields': ('payment_method',)
@@ -104,12 +138,6 @@ class OrderAdmin(admin.ModelAdmin):
     def total_price_display(self, obj: Order) -> str:
         """
         Рассчитывает общую стоимость заказа из позиций.
-
-        Args:
-            obj (Order): Объект заказа
-
-        Returns:
-            str: Общая стоимость в формате "X ₽"
         """
         if obj.pk:
             total = 0
@@ -125,12 +153,6 @@ class OrderAdmin(admin.ModelAdmin):
     def save_related(self, request: HttpRequest, form, formsets, change: bool) -> None:
         """
         Сохраняет позиции и обновляет total_price в заказе.
-
-        Args:
-            request (HttpRequest): HTTP запрос
-            form: Форма заказа
-            formsets: Форсеты позиций
-            change (bool): Флаг изменения
         """
         super().save_related(request, form, formsets, change)
 
@@ -155,6 +177,227 @@ class OrderAdmin(admin.ModelAdmin):
             order.total_price = total
             order.save(update_fields=['total_price'])
 
+    def save_model(self, request: HttpRequest, obj: Order, form, change: bool) -> None:
+        """
+        При изменении статуса автоматически обновляет даты.
+        """
+        if change:
+            original = Order.objects.get(pk=obj.pk)
+            
+            if original.status != Order.Status.DELIVERED and obj.status == Order.Status.DELIVERED:
+                obj.delivered_at = timezone.now()
+            
+            if original.status != Order.Status.RECEIVED and obj.status == Order.Status.RECEIVED:
+                obj.delivered_at = timezone.now()
+                if not obj.pickup_code:
+                    obj.pickup_code = self.generate_pickup_code()
+                    obj.code_generated_at = timezone.now()
+        
+        super().save_model(request, obj, form, change)
+
+    def generate_pickup_code(self) -> str:
+        """
+        Генерирует случайный 6-значный код для получения заказа.
+        """
+        import random
+        return str(random.randint(100000, 999999))
+
+    @admin.action(description='Создать PDF отчёт по выбранным заказам')
+    def generate_order_report_pdf(self, request: HttpRequest, queryset: QuerySet[Order]) -> None:
+        """
+        Генерирует PDF отчёт по выбранным заказам используя reportlab.
+        """
+        if not queryset.exists():
+            self.message_user(request, 'Не выбрано ни одного заказа', level='ERROR')
+            return
+        
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import mm
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        from reportlab.pdfbase.pdfmetrics import registerFont
+        import os
+        
+        # Регистрируем шрифт для русских букв (используем стандартный)
+        try:
+            # Пробуем зарегистрировать Helvetica (она есть везде)
+            registerFont(TTFont('Helvetica', '/System/Library/Fonts/Helvetica.ttc'))
+            font_name = 'Helvetica'
+        except:
+            font_name = 'Helvetica'
+        
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="orders_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf"'
+        
+        doc = SimpleDocTemplate(response, pagesize=A4, topMargin=20*mm, bottomMargin=20*mm)
+        styles = getSampleStyleSheet()
+        
+        # Создаём стили
+        title_style = ParagraphStyle(
+            'TitleStyle',
+            parent=styles['Normal'],
+            fontName=font_name,
+            fontSize=16,
+            alignment=1,
+            spaceAfter=20
+        )
+        header_style = ParagraphStyle(
+            'HeaderStyle',
+            parent=styles['Normal'],
+            fontName=font_name,
+            fontSize=12,
+            spaceAfter=10
+        )
+        normal_style = ParagraphStyle(
+            'NormalStyle',
+            parent=styles['Normal'],
+            fontName=font_name,
+            fontSize=9,
+            leading=12
+        )
+        
+        elements = []
+        
+        # Заголовок
+        elements.append(Paragraph("Отчет по заказам", title_style))
+        elements.append(Spacer(1, 10))
+        
+        # Общая статистика
+        total_sum = queryset.aggregate(total=Sum('total_price'))['total'] or 0
+        stats_data = [
+            [f"Всего заказов: {queryset.count()}", f"Общая сумма: {total_sum:.2f} RUB"]
+        ]
+        stats_table = Table(stats_data, colWidths=[90*mm, 90*mm])
+        stats_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        elements.append(stats_table)
+        elements.append(Spacer(1, 20))
+        
+        for order in queryset:
+            # Заголовок заказа
+            elements.append(Paragraph(f"Заказ No {order.order_number}", header_style))
+            
+            # Информация о заказе
+            info_data = [
+                ["Дата создания:", order.created_at.strftime("%d.%m.%Y %H:%M") if order.created_at else "-"],
+                ["Статус:", order.get_status_display()],
+                ["Общая стоимость:", f"{order.total_price} RUB"],
+                ["Способ доставки:", self.get_delivery_method_ru(order.delivery_method)],
+                ["Адрес доставки:", order.delivery_address or "-"],
+            ]
+            if order.delivered_at:
+                info_data.append(["Дата получения:", order.delivered_at.strftime("%d.%m.%Y %H:%M")])
+            if order.comment:
+                info_data.append(["Комментарий:", order.comment[:50]])
+            
+            info_table = Table(info_data, colWidths=[45*mm, 130*mm])
+            info_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, -1), font_name),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('TOPPADDING', (0, 0), (-1, -1), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ]))
+            elements.append(info_table)
+            
+            elements.append(Spacer(1, 8))
+            
+            # Товары в заказе
+            items_data = [["Товар", "Кол-во", "Цена", "Сумма"]]
+            for item in order.items.all():
+                items_data.append([
+                    item.product_name[:40] + "..." if len(item.product_name) > 40 else item.product_name,
+                    str(item.quantity),
+                    f"{item.price:.0f} RUB",
+                    f"{item.price * item.quantity:.0f} RUB"
+                ])
+            
+            items_table = Table(items_data, colWidths=[80*mm, 30*mm, 40*mm, 40*mm])
+            items_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, -1), font_name),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('TOPPADDING', (0, 0), (-1, -1), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ]))
+            elements.append(items_table)
+            elements.append(Spacer(1, 15))
+        
+        doc.build(elements)
+        self.message_user(request, f'PDF отчёт создан для {queryset.count()} заказов')
+        return response
+
+    @admin.action(description='Экспортировать выбранные заказы в CSV')
+    def export_orders_csv(self, request: HttpRequest, queryset: QuerySet[Order]) -> None:
+        """
+        Экспортирует выбранные заказы в CSV файл.
+        """
+        import csv
+        
+        if not queryset.exists():
+            self.message_user(request, 'Не выбрано ни одного заказа', level='ERROR')
+            return
+        
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="orders_export_{timezone.now().strftime("%Y%m%d")}.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow([
+            'Номер заказа', 'Пользователь', 'Дата создания', 'Статус',
+            'Способ доставки', 'Адрес доставки', 'Способ оплаты', 
+            'Общая стоимость', 'Дата получения'
+        ])
+        
+        for order in queryset:
+            writer.writerow([
+                order.order_number,
+                order.user.email if order.user else '-',
+                order.created_at.strftime("%d.%m.%Y %H:%M") if order.created_at else '-',
+                order.get_status_display(),
+                self.get_delivery_method_ru(order.delivery_method),
+                order.delivery_address,
+                self.get_payment_method_ru(order.payment_method),
+                f"{order.total_price}",
+                order.delivered_at.strftime("%d.%m.%Y %H:%M") if order.delivered_at else '-'
+            ])
+        
+        self.message_user(request, f'Экспортировано {queryset.count()} заказов')
+        return response
+
+    def get_delivery_method_ru(self, method: str) -> str:
+        """
+        Возвращает русское название способа доставки.
+        """
+        methods = {
+            'courier': 'Курьер',
+            'pickup': 'Самовывоз',
+            'post': 'Почта'
+        }
+        return methods.get(method, method)
+
+    def get_payment_method_ru(self, method: str) -> str:
+        """
+        Возвращает русское название способа оплаты.
+        """
+        methods = {
+            'card': 'Карта онлайн',
+            'sbp': 'СБП',
+            'cash': 'Наличные'
+        }
+        return methods.get(method, method)
+
 
 class CartItemInline(admin.TabularInline):
     """
@@ -162,7 +405,9 @@ class CartItemInline(admin.TabularInline):
     """
     model = CartItem
     extra: int = 0
-    readonly_fields: list = ['product', 'quantity', 'added_at', 'total_price']
+    fields: list = ['product', 'quantity', 'size', 'added_at', 'total_price']
+    readonly_fields: list = ['added_at', 'total_price']
+    ordering = ['-added_at']
 
 
 class CartAdmin(admin.ModelAdmin):
@@ -171,10 +416,21 @@ class CartAdmin(admin.ModelAdmin):
     """
     inlines: list = [CartItemInline]
     list_display: list = ['id', 'user', 'session_key', 'total_items', 'total_price', 'updated_at']
-    list_filter: list = ['updated_at']
+    list_filter: list = ['updated_at', 'created_at']
     search_fields: list = ['user__email', 'session_key']
     readonly_fields: list = ['created_at', 'updated_at']
+    date_hierarchy: str = 'created_at' 
 
+class CartItemAdmin(admin.ModelAdmin):
+    """
+    Настройки отображения элементов корзины в админке.
+    """
+    list_display: list = ['id', 'cart', 'product', 'quantity', 'size', 'added_at', 'total_price']
+    list_filter: list = ['added_at', 'size']
+    search_fields: list = ['product__name', 'cart__user__email', 'cart__session_key']
+    readonly_fields: list = ['added_at', 'total_price']
+    ordering: list = ['-added_at']
+    date_hierarchy: str = 'added_at'
 
 class ProductAdmin(admin.ModelAdmin):
     """
@@ -196,7 +452,7 @@ class ProductAdmin(admin.ModelAdmin):
 
     fieldsets: tuple = (
         ('Основная информация', {
-            'fields': ('name', 'slug', 'description', 'category')
+            'fields': ('name', 'slug', 'description', 'category', 'collection')
         }),
         ('Цены', {
             'fields': ('price', 'old_price'),
@@ -221,23 +477,17 @@ class ProductAdmin(admin.ModelAdmin):
             'description': 'Если в изделии есть камни, укажите их характеристики'
         }),
         ('Метаданные', {
-            'fields': ('collection', 'created_by', 'created_at', 'updated_at'),
+            'fields': ('created_by', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
 
-    actions: list = ['apply_discount', 'increase_price']
+    actions: list = ['apply_discount', 'increase_price', 'duplicate_product']
 
     @admin.display(description='Цена')
     def price_display(self, obj: Product) -> str:
         """
         Отображает цену товара со скидкой, если есть.
-
-        Args:
-            obj (Product): Объект товара
-
-        Returns:
-            str: HTML с отображением цены
         """
         if obj.has_discount:
             discount_percent = int((obj.old_price - obj.price) / obj.old_price * 100)
@@ -253,12 +503,6 @@ class ProductAdmin(admin.ModelAdmin):
     def silver_info(self, obj: Product) -> str:
         """
         Отображает информацию о серебре товара.
-
-        Args:
-            obj (Product): Объект товара
-
-        Returns:
-            str: HTML с информацией о типе и пробе
         """
         silver_type_display = obj.get_silver_type_display()
         fineness_display = obj.get_fineness_display()
@@ -283,12 +527,6 @@ class ProductAdmin(admin.ModelAdmin):
     def full_silver_info(self, obj: Product) -> str:
         """
         Отображает полную информацию о серебре товара.
-
-        Args:
-            obj (Product): Объект товара
-
-        Returns:
-            str: HTML с информацией о типе, пробе, весе, размере
         """
         return format_html(
             '<div style="background: #f8f9fa; padding: 10px; border-radius: 5px;">'
@@ -306,12 +544,6 @@ class ProductAdmin(admin.ModelAdmin):
     def image_preview(self, obj: Product) -> str:
         """
         Отображает превью главного фото товара.
-
-        Args:
-            obj (Product): Объект товара
-
-        Returns:
-            str: HTML с изображением или '-'
         """
         if obj.image:
             return format_html(
@@ -324,12 +556,6 @@ class ProductAdmin(admin.ModelAdmin):
     def images_preview(self, obj: Product) -> str:
         """
         Отображает все фото товара в виде миниатюр.
-
-        Args:
-            obj (Product): Объект товара
-
-        Returns:
-            str: HTML с изображениями или текст
         """
         images_html = '<div style="display: flex; gap: 10px; flex-wrap: wrap;">'
         if obj.image:
@@ -367,12 +593,6 @@ class ProductAdmin(admin.ModelAdmin):
     def images_count_display(self, obj: Product) -> str:
         """
         Отображает количество фото товара.
-
-        Args:
-            obj (Product): Объект товара
-
-        Returns:
-            str: HTML с количеством фото
         """
         count = obj.images_count
         if count == 0:
@@ -386,12 +606,6 @@ class ProductAdmin(admin.ModelAdmin):
     def available_quantity_display(self, obj: Product) -> str:
         """
         Отображает доступное количество товара.
-
-        Args:
-            obj (Product): Объект товара
-
-        Returns:
-            str: HTML с информацией о наличии
         """
         available = obj.available_quantity
         if available <= 0:
@@ -407,12 +621,6 @@ class ProductAdmin(admin.ModelAdmin):
     def has_discount_display(self, obj: Product) -> bool:
         """
         Проверяет наличие скидки у товара.
-
-        Args:
-            obj (Product): Объект товара
-
-        Returns:
-            bool: True если есть скидка, иначе False
         """
         return obj.has_discount
 
@@ -420,12 +628,6 @@ class ProductAdmin(admin.ModelAdmin):
     def stock_status(self, obj: Product) -> str:
         """
         Возвращает статус наличия товара.
-
-        Args:
-            obj (Product): Объект товара
-
-        Returns:
-            str: Статус наличия
         """
         available = obj.available_quantity
         if available <= 0:
@@ -438,12 +640,6 @@ class ProductAdmin(admin.ModelAdmin):
     def stones_display(self, obj: Product) -> str:
         """
         Отображает информацию о камнях товара.
-
-        Args:
-            obj (Product): Объект товара
-
-        Returns:
-            str: Информация о камнях
         """
         if not obj.stones:
             return 'Без камней'
@@ -457,10 +653,6 @@ class ProductAdmin(admin.ModelAdmin):
     def apply_discount(self, request: HttpRequest, queryset: QuerySet[Product]) -> None:
         """
         Применяет скидку 10% к выбранным товарам.
-
-        Args:
-            request (HttpRequest): HTTP запрос
-            queryset (QuerySet[Product]): Выбранные товары
         """
         for product in queryset:
             if not product.old_price:
@@ -473,15 +665,43 @@ class ProductAdmin(admin.ModelAdmin):
     def increase_price(self, request: HttpRequest, queryset: QuerySet[Product]) -> None:
         """
         Увеличивает цену на 5% для выбранных товаров.
-
-        Args:
-            request (HttpRequest): HTTP запрос
-            queryset (QuerySet[Product]): Выбранные товары
         """
         for product in queryset:
             product.price = product.price * Decimal('1.05')
             product.save()
         self.message_user(request, f'Цена увеличена для {queryset.count()} товарам')
+
+    @admin.action(description='Копировать выбранные товары')
+    def duplicate_product(self, request: HttpRequest, queryset: QuerySet[Product]) -> None:
+        """
+        Создаёт копии выбранных товаров.
+        """
+        from django.utils.text import slugify
+        import copy
+        
+        count = 0
+        for product in queryset:
+            product_copy = copy.copy(product)
+            product_copy.id = None
+            product_copy.name = f"{product.name} (копия)"
+            product_copy.slug = slugify(f"{product.slug}-copy-{timezone.now().timestamp()}")
+            product_copy.stock_quantity = 0
+            product_copy.save()
+            
+            if product.image:
+                product_copy.image = product.image
+            if product.image_2:
+                product_copy.image_2 = product.image_2
+            if product.image_3:
+                product_copy.image_3 = product.image_3
+            if product.image_4:
+                product_copy.image_4 = product.image_4
+            if product.image_5:
+                product_copy.image_5 = product.image_5
+            product_copy.save()
+            count += 1
+        
+        self.message_user(request, f'Создано {count} копий товаров')
 
 
 class WishlistAdmin(admin.ModelAdmin):
@@ -499,8 +719,11 @@ class UserAdmin(admin.ModelAdmin):
     Настройки отображения пользователя в админке.
     """
     list_display: list = ['email', 'first_name', 'last_name', 'phone', 'birthday', 'bonus_points', 'is_staff', 'is_active']
-    list_filter: list = ['is_staff', 'is_active']
+    list_filter: list = ['is_staff', 'is_active', 'is_superuser']
     search_fields: list = ['email', 'first_name', 'last_name', 'phone']
+    
+    actions: list = ['add_bonus_points', 'make_active', 'make_inactive']
+    
     fieldsets: tuple = (
         ('Личная информация', {
             'fields': ('email', 'first_name', 'last_name', 'phone', 'birthday', 'bonus_points')
@@ -515,6 +738,32 @@ class UserAdmin(admin.ModelAdmin):
     )
     readonly_fields: list = ['last_login', 'date_joined']
 
+    @admin.action(description='Добавить 100 бонусных баллов выбранным пользователям')
+    def add_bonus_points(self, request: HttpRequest, queryset: QuerySet[User]) -> None:
+        """
+        Добавляет 100 бонусных баллов выбранным пользователям.
+        """
+        for user in queryset:
+            user.bonus_points += 100
+            user.save()
+        self.message_user(request, f'Добавлено 100 бонусов {queryset.count()} пользователям')
+
+    @admin.action(description='Активировать выбранных пользователей')
+    def make_active(self, request: HttpRequest, queryset: QuerySet[User]) -> None:
+        """
+        Активирует выбранных пользователей.
+        """
+        updated = queryset.update(is_active=True)
+        self.message_user(request, f'Активировано {updated} пользователей')
+
+    @admin.action(description='Деактивировать выбранных пользователей')
+    def make_inactive(self, request: HttpRequest, queryset: QuerySet[User]) -> None:
+        """
+        Деактивирует выбранных пользователей.
+        """
+        updated = queryset.update(is_active=False)
+        self.message_user(request, f'Деактивировано {updated} пользователей')
+
 
 class PromoCodeAdmin(admin.ModelAdmin):
     """
@@ -524,6 +773,9 @@ class PromoCodeAdmin(admin.ModelAdmin):
     list_filter: list = ['discount_type', 'is_active', 'only_new_users']
     search_fields: list = ['code']
     filter_horizontal: list = ['applicable_categories']
+    
+    actions: list = ['activate_promocodes', 'deactivate_promocodes']
+    
     fieldsets: tuple = (
         ('Основная информация', {
             'fields': ('code', 'discount_type', 'discount_value', 'min_order_amount', 'max_discount_amount')
@@ -542,12 +794,6 @@ class PromoCodeAdmin(admin.ModelAdmin):
     def discount_display(self, obj: PromoCode) -> str:
         """
         Отображает скидку промокода.
-
-        Args:
-            obj (PromoCode): Объект промокода
-
-        Returns:
-            str: Строковое представление скидки
         """
         return obj.discount_display
     discount_display.short_description = 'Скидка'
@@ -555,16 +801,26 @@ class PromoCodeAdmin(admin.ModelAdmin):
     def is_valid(self, obj: PromoCode) -> bool:
         """
         Проверяет активность промокода.
-
-        Args:
-            obj (PromoCode): Объект промокода
-
-        Returns:
-            bool: True если активен, иначе False
         """
         return obj.is_valid
     is_valid.boolean = True
     is_valid.short_description = 'Активен'
+
+    @admin.action(description='Активировать выбранные промокоды')
+    def activate_promocodes(self, request: HttpRequest, queryset: QuerySet[PromoCode]) -> None:
+        """
+        Активирует выбранные промокоды.
+        """
+        updated = queryset.update(is_active=True)
+        self.message_user(request, f'Активировано {updated} промокодов')
+
+    @admin.action(description='Деактивировать выбранные промокоды')
+    def deactivate_promocodes(self, request: HttpRequest, queryset: QuerySet[PromoCode]) -> None:
+        """
+        Деактивирует выбранные промокоды.
+        """
+        updated = queryset.update(is_active=False)
+        self.message_user(request, f'Деактивировано {updated} промокодов')
 
 
 class PromoCodeUsageAdmin(admin.ModelAdmin):
@@ -599,12 +855,6 @@ class CollectionAdmin(admin.ModelAdmin):
     def products_count(self, obj: Collection) -> int:
         """
         Возвращает количество товаров в коллекции.
-
-        Args:
-            obj (Collection): Объект коллекции
-
-        Returns:
-            int: Количество товаров
         """
         return obj.products.count()
     products_count.short_description = 'Товаров в коллекции'
@@ -612,12 +862,6 @@ class CollectionAdmin(admin.ModelAdmin):
     def image_preview(self, obj: Collection) -> str:
         """
         Отображает превью изображения коллекции.
-
-        Args:
-            obj (Collection): Объект коллекции
-
-        Returns:
-            str: HTML с изображением или '-'
         """
         if obj.image:
             return format_html('<img src="{}" style="max-height: 50px; border-radius: 5px;" />', obj.image.url)
@@ -633,8 +877,8 @@ admin.site.register(User, UserAdmin)
 admin.site.register(Category)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Cart, CartAdmin)
-admin.site.register(CartItem)
 admin.site.register(Order, OrderAdmin)
-admin.site.register(OrderItem)
 admin.site.register(Review, ReviewAdmin)
 admin.site.register(Wishlist, WishlistAdmin)
+admin.site.register(CartItem, CartItemAdmin)
+admin.site.register(OrderItem, OrderItemAdmin)
