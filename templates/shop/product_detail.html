@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block breadcrumb_items %}
 <li class="breadcrumb-item"><a href="{% url 'catalog' %}">Каталог</a></li>
 {% if product.category %}
@@ -7,27 +8,31 @@
 {% endif %}
 <li class="breadcrumb-item active" aria-current="page">{{ product.name|truncatechars:50 }}</li>
 {% endblock %}
+
 {% block content %}
 <style>
-    /* Цвета из вашего дизайна */
     :root {
         --bg-cream: #F7F2EB;
         --accent: #5D6E80;
         --brown: #7A6B5B;
         --gray: #808E92;
         --dark-gray: #5a5f63;
+        --focus-ring: #3b5a7a;
+        --green: #28a745;
+        --orange: #ff9800;
+        --red: #dc3545;
     }
     
     .product-detail-page {
         background-color: var(--bg-cream);
-        padding-bottom: 40px;
+        padding-bottom: 2.5rem;
         min-height: 100vh;
     }
     
     .product-main {
         display: flex;
-        gap: 40px;
-        margin-bottom: 40px;
+        gap: 2.5rem;
+        margin-bottom: 2.5rem;
         flex-wrap: wrap;
     }
     
@@ -39,38 +44,36 @@
     
     .product-image {
         background: linear-gradient(145deg, #ffffff, #f3eee8);
-        border-radius: 24px;
-        padding: 25px;
+        border-radius: 1.5rem;
+        padding: 1.5625rem;
         box-shadow: 0 10px 30px rgba(0,0,0,0.08);
         position: relative;
     }
     
-    /* Бонусная плашка */
     .bonus-badge {
         position: absolute;
-        top: 20px;
-        left: 20px;
+        top: 1.25rem;
+        left: 1.25rem;
         background: linear-gradient(135deg, #5D6E80, #7A6B5B);
         color: #fff;
-        padding: 6px 14px;
-        border-radius: 30px;
-        font-size: 12px;
+        padding: 0.375rem 0.875rem;
+        border-radius: 1.875rem;
+        font-size: 0.75rem;
         font-weight: 500;
         z-index: 10;
         box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     }
     
     .bonus-badge i {
-        font-size: 14px;
+        font-size: 0.875rem;
     }
     
-    /* Иконки на фото */
     .image-actions {
         position: absolute;
-        top: 30px;
-        right: 30px;
+        top: 1.875rem;
+        right: 1.875rem;
         display: flex;
-        gap: 10px;
+        gap: 0.625rem;
         z-index: 10;
     }
     
@@ -78,16 +81,25 @@
         background: rgba(255,255,255,0.85);
         backdrop-filter: blur(6px);
         border: none;
-        width: 42px;
-        height: 42px;
+        width: 2.625rem;
+        height: 2.625rem;
         border-radius: 50%;
         transition: all 0.25s ease;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-
+    
     .image-action-btn:hover {
         background: var(--accent);
         color: white;
         transform: scale(1.1) rotate(5deg);
+    }
+    
+    .image-action-btn:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
     }
     
     .main-image-container {
@@ -98,14 +110,14 @@
     .main-image {
         max-width: 100%;
         max-height: 400px;
-        border-radius: 12px;
+        border-radius: 0.75rem;
         object-fit: contain;
     }
     
     .product-thumbnails {
         display: flex;
-        gap: 10px;
-        margin-top: 15px;
+        gap: 0.625rem;
+        margin-top: 0.9375rem;
         flex-wrap: wrap;
         justify-content: center;
     }
@@ -114,15 +126,21 @@
         width: 70px;
         height: 70px;
         object-fit: cover;
-        border-radius: 8px;
+        border-radius: 0.5rem;
         cursor: pointer;
         border: 2px solid transparent;
         transition: all 0.3s;
     }
     
-    .thumbnail:hover, .thumbnail.active {
+    .thumbnail:hover,
+    .thumbnail.active {
         border-color: var(--accent);
         transform: scale(1.05);
+    }
+    
+    .thumbnail:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
     }
     
     .product-info-col {
@@ -131,44 +149,45 @@
     }
     
     .product-name {
-        font-size: 28px;
+        font-size: 1.75rem;
         font-weight: 600;
         color: var(--accent);
-        margin-bottom: 15px;
+        margin-bottom: 0.9375rem;
     }
     
     .rating-section {
         display: flex;
         align-items: center;
-        gap: 8px;
-        margin-bottom: 18px;
+        gap: 0.5rem;
+        margin-bottom: 1.125rem;
+        flex-wrap: wrap;
     }
-
+    
     .rating-stars {
         color: #ffc107;
-        font-size: 18px;
+        font-size: 1.125rem;
     }
     
     .rating-value {
-        font-size: 16px;
+        font-size: 1rem;
         font-weight: 600;
         color: var(--brown);
     }
     
     .rating-count {
         color: var(--gray);
-        font-size: 13px;
+        font-size: 0.8125rem;
     }
     
     .review-mini-images {
         display: flex;
-        gap: 5px;
-        margin-left: 5px;
+        gap: 0.3125rem;
+        margin-left: 0.3125rem;
     }
     
     .review-mini-img {
-        width: 28px;
-        height: 28px;
+        width: 1.75rem;
+        height: 1.75rem;
         border-radius: 50%;
         object-fit: cover;
         border: 1px solid var(--accent);
@@ -178,20 +197,20 @@
     .price-section {
         display: flex;
         align-items: baseline;
-        gap: 12px;
-        margin-bottom: 20px;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
         flex-wrap: wrap;
     }
     
     .current-price {
-        font-size: 24px;
+        font-size: 1.5rem;
         font-weight: 700;
         color: var(--accent);
         letter-spacing: 0.5px;
     }
-
+    
     .old-price {
-        font-size: 16px;
+        font-size: 1rem;
         opacity: 0.7;
         text-decoration: line-through;
     }
@@ -199,17 +218,17 @@
     .discount-badge {
         background-color: #ff4444;
         color: white;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 13px;
+        padding: 0.25rem 0.625rem;
+        border-radius: 1.25rem;
+        font-size: 0.8125rem;
         font-weight: bold;
     }
     
     .login-link {
         color: var(--accent);
         text-decoration: none;
-        font-size: 14px;
-        margin-left: 10px;
+        font-size: 0.875rem;
+        margin-left: 0.625rem;
     }
     
     .login-link:hover {
@@ -217,56 +236,62 @@
     }
     
     .delivery-section {
-        margin-top: 25px;
-        padding-top: 15px;
+        margin-top: 1.5625rem;
+        padding-top: 0.9375rem;
         border-top: 1px solid #e5e5e5;
-        font-size: 14px;
+        font-size: 0.875rem;
     }
-
+    
     .delivery-header {
         display: flex;
         justify-content: space-between;
         font-weight: 600;
         color: var(--accent);
-        margin-bottom: 12px;
-        font-size: 16px;
+        margin-bottom: 0.75rem;
+        font-size: 1rem;
     }
-
+    
     .delivery-city {
         color: #2a6ecb;
         cursor: pointer;
     }
-
+    
+    .delivery-city:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+        border-radius: 0.5rem;
+    }
+    
     .delivery-item {
         display: flex;
         align-items: center;
-        margin-bottom: 12px;
+        margin-bottom: 0.75rem;
     }
-
+    
     .delivery-left {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 0.625rem;
         color: var(--brown);
         white-space: nowrap;
     }
-
+    
     .delivery-left i {
-        font-size: 18px;
+        font-size: 1.125rem;
         color: var(--gray);
     }
-
+    
     .delivery-main {
         color: #2a6ecb;
         font-weight: 500;
     }
-
+    
     .delivery-line {
         flex: 1;
         border-bottom: 1px dashed #ccc;
-        margin: 0 10px;
+        margin: 0 0.625rem;
     }
-
+    
     .delivery-right {
         font-weight: 600;
         color: #000;
@@ -274,14 +299,14 @@
     }
     
     .size-section {
-        margin-bottom: 20px;
+        margin-bottom: 1.25rem;
     }
     
     .size-label {
         font-weight: 600;
         color: var(--accent);
-        margin-bottom: 10px;
-        font-size: 14px;
+        margin-bottom: 0.625rem;
+        font-size: 0.875rem;
         display: flex;
         justify-content: space-between;
     }
@@ -289,44 +314,56 @@
     .size-label a {
         color: var(--accent);
         text-decoration: none;
-        font-size: 12px;
+        font-size: 0.75rem;
+    }
+    
+    .size-label a:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+        border-radius: 0.5rem;
     }
     
     .size-buttons {
         display: flex;
-        gap: 8px;
+        gap: 0.5rem;
         flex-wrap: wrap;
-        margin-bottom: 10px;
+        margin-bottom: 0.625rem;
     }
     
     .size-btn {
-        width: 45px;
-        height: 45px;
-        border-radius: 10px;
+        width: 2.8125rem;
+        height: 2.8125rem;
+        border-radius: 0.625rem;
         border: 1px solid var(--accent);
         background: white;
         color: var(--accent);
         cursor: pointer;
         transition: all 0.3s;
-        font-size: 14px;
+        font-size: 0.875rem;
     }
     
-    .size-btn:hover, .size-btn.active {
+    .size-btn:hover,
+    .size-btn.active {
         background: var(--accent);
         color: white;
+    }
+    
+    .size-btn:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
     }
     
     .no-size-btn {
         background: transparent;
         border: 1px dashed var(--accent);
         color: var(--accent);
-        padding: 8px 16px;
-        border-radius: 30px;
+        padding: 0.5rem 1rem;
+        border-radius: 1.875rem;
         cursor: pointer;
-        font-size: 13px;
+        font-size: 0.8125rem;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 0.375rem;
         transition: all 0.3s;
     }
     
@@ -335,7 +372,378 @@
         color: white;
     }
     
-    /* Модальное окно */
+    .no-size-btn:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+    }
+    
+    .quantity-section {
+        margin-bottom: 1.25rem;
+    }
+    
+    .quantity-label {
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 0.625rem;
+        font-size: 0.875rem;
+    }
+    
+    .quantity-price-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.9375rem;
+    }
+    
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        border-radius: 2.5rem;
+        background: #fff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        overflow: hidden;
+        border: #5a5f63 solid 2px;
+    }
+    
+    .quantity-control button {
+        width: 1.875rem;
+        height: 1.875rem;
+        border: none;
+        background: transparent;
+        font-size: 1.125rem;
+        cursor: pointer;
+        color: var(--accent);
+    }
+    
+    .quantity-control button:hover {
+        background: var(--bg-cream);
+    }
+    
+    .quantity-control button:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+    }
+    
+    .quantity-control input {
+        width: 3.75rem;
+        text-align: center;
+        border: none;
+        font-size: 0.9375rem;
+        font-weight: 500;
+    }
+    
+    .total-price {
+        font-size: 1.375rem;
+        font-weight: 700;
+        color: var(--accent);
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.9375rem;
+        margin-top: 1.25rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-add-to-cart {
+        flex: 2;
+        background: linear-gradient(135deg, #5D6E80, #4a5a6a);
+        color: white;
+        border: none;
+        padding: 0.875rem 1.375rem;
+        border-radius: 3.125rem;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        transition: all 0.3s;
+        box-shadow: 0 6px 16px rgba(93,110,128,0.3);
+        cursor: pointer;
+    }
+    
+    .btn-add-to-cart:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 22px rgba(93,110,128,0.4);
+    }
+    
+    .btn-add-to-cart:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+    }
+    
+    .btn-favorite {
+        background: transparent;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        padding: 0.75rem 1.125rem;
+        border-radius: 2.5rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.875rem;
+    }
+    
+    .btn-favorite:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 22px rgba(93,110,128,0.4);
+    }
+    
+    .btn-favorite:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+    }
+    
+    .tabs {
+        display: flex;
+        gap: 1.875rem;
+        border-bottom: 1px solid var(--accent);
+        margin: 1.5625rem 0 1.25rem;
+    }
+    
+    .tab-btn {
+        background: none;
+        border: none;
+        padding: 0.625rem 0;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--gray);
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .tab-btn:hover {
+        color: var(--accent);
+    }
+    
+    .tab-btn:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+        border-radius: 0.5rem;
+    }
+    
+    .tab-btn.active {
+        color: var(--accent);
+    }
+    
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--accent);
+    }
+    
+    .tab-content {
+        display: none;
+        padding: 0.9375rem 0;
+        color: var(--brown);
+        line-height: 1.5;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .specs-table {
+        width: 100%;
+        font-size: 0.8125rem;
+    }
+    
+    .specs-table tr td {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .specs-table tr td:first-child {
+        width: 180px;
+        color: var(--accent);
+        font-weight: 500;
+    }
+    
+    .specs-table tr td:last-child {
+        color: var(--brown);
+    }
+    
+    .reviews-section {
+        margin-top: 2.5rem;
+    }
+    
+    .reviews-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .reviews-container {
+        max-width: 800px;
+    }
+    
+    .review-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 0.875rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+    }
+    
+    .review-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+    
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.625rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .review-author {
+        font-weight: 600;
+        color: var(--brown);
+        font-size: 0.8125rem;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    
+    .review-author i {
+        color: var(--accent);
+        font-size: 0.75rem;
+    }
+    
+    .review-stars {
+        color: #ffc107;
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+    }
+    
+    .review-date {
+        color: var(--gray);
+        font-size: 0.6875rem;
+    }
+    
+    .review-text {
+        color: var(--brown);
+        line-height: 1.45;
+        margin-top: 0.625rem;
+        font-size: 0.8125rem;
+    }
+    
+    .review-images {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .review-image {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .review-image:hover {
+        transform: scale(1.05);
+    }
+    
+    .review-image:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+    }
+    
+    .no-reviews {
+        text-align: center;
+        padding: 1.875rem;
+        background: white;
+        border-radius: 0.875rem;
+        color: var(--gray);
+        font-size: 0.8125rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    
+    .notification {
+        position: fixed;
+        bottom: 1.25rem;
+        right: 1.25rem;
+        background-color: var(--accent);
+        color: var(--bg-cream);
+        padding: 0.625rem 1.25rem;
+        border-radius: 1.875rem;
+        z-index: 1000;
+        font-size: 0.8125rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        animation: slideIn 0.3s ease;
+    }
+    
+    .login-hint {
+        font-size: 0.8125rem;
+        color: var(--gray);
+    }
+    
+    .login-hint a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .login-hint a:hover {
+        text-decoration: underline;
+    }
+    
+    .review-notice {
+        margin-bottom: 1.25rem;
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        text-align: center;
+    }
+    
+    .review-notice i {
+        margin-right: 0.5rem;
+    }
+    
+    .write-review-btn-container {
+        margin-bottom: 1.25rem;
+        text-align: center;
+    }
+    
+    .btn-write-review {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 1.875rem;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+    
+    .btn-write-review:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(93, 110, 128, 0.3);
+    }
+    
+    .btn-write-review:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+    }
+    
     .modal {
         display: none;
         position: fixed;
@@ -355,8 +763,8 @@
     
     .modal-content {
         background: var(--bg-cream);
-        border-radius: 24px;
-        padding: 30px;
+        border-radius: 1.5rem;
+        padding: 1.875rem;
         max-width: 400px;
         width: 90%;
         position: relative;
@@ -365,374 +773,75 @@
     
     .modal-close {
         position: absolute;
-        top: 15px;
-        right: 20px;
-        font-size: 24px;
+        top: 0.9375rem;
+        right: 1.25rem;
+        font-size: 1.5rem;
         cursor: pointer;
         color: var(--gray);
+        background: none;
+        border: none;
+    }
+    
+    .modal-close:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+        border-radius: 0.5rem;
     }
     
     .modal-title {
-        font-size: 20px;
+        font-size: 1.25rem;
         font-weight: 600;
         color: var(--accent);
-        margin-bottom: 10px;
+        margin-bottom: 0.625rem;
     }
     
     .modal-text {
         color: var(--brown);
-        font-size: 14px;
-        margin-bottom: 20px;
+        font-size: 0.875rem;
+        margin-bottom: 1.25rem;
     }
     
     .modal-input {
         width: 100%;
-        padding: 12px;
+        padding: 0.75rem;
         border: 1px solid var(--accent);
-        border-radius: 12px;
-        margin-bottom: 15px;
-        font-size: 14px;
+        border-radius: 0.75rem;
+        margin-bottom: 0.9375rem;
+        font-size: 0.875rem;
+    }
+    
+    .modal-input:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
     }
     
     .modal-btn {
         background: var(--accent);
         color: white;
         border: none;
-        padding: 12px;
-        border-radius: 12px;
+        padding: 0.75rem;
+        border-radius: 0.75rem;
         width: 100%;
         cursor: pointer;
         font-weight: 600;
     }
     
-    .quantity-section {
-        margin-bottom: 20px;
+    .modal-btn:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
     }
     
-    .quantity-label {
-        font-weight: 600;
-        color: var(--accent);
-        margin-bottom: 10px;
-        font-size: 14px;
-    }
-    
-    .quantity-price-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 15px;
-    }
-    
-    .quantity-control {
-        display: flex;
-        align-items: center;
-        border-radius: 40px;
-        background: #fff;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        overflow: hidden;
-        border: #5a5f63 solid 2px;
-    }
-
-    .quantity-control button {
-        width: 30px;
-        height: 30px;
-        border: none;
-        background: transparent;
-        font-size: 18px;
+    .rating-star {
+        font-size: 1.75rem;
         cursor: pointer;
-        color: var(--accent);
-    }
-
-    .quantity-control button:hover {
-        background: var(--bg-cream);
-    }
-
-    .quantity-control input {
-        width: 60px;
-        text-align: center;
-        border: none;
-        font-size: 15px;
-        font-weight: 500;
+        transition: all 0.2s;
     }
     
-    .total-price {
-        font-size: 22px;
-        font-weight: 700;
-        color: var(--accent);
-    }
-    
-    .action-buttons {
-        display: flex;
-        gap: 15px;
-        margin-top: 20px;
-        flex-wrap: wrap;
-    }
-    
-    .btn-add-to-cart {
-        flex: 2;
-        background: linear-gradient(135deg, #5D6E80, #4a5a6a);
-        color: white;
-        border: none;
-        padding: 14px 22px;
-        border-radius: 50px;
-        font-weight: 600;
-        font-size: 15px;
-        transition: all 0.3s;
-        box-shadow: 0 6px 16px rgba(93,110,128,0.3);
-    }
-
-    .btn-add-to-cart:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 22px rgba(93,110,128,0.4);
-    }
-    
-    .btn-favorite {
-        background: transparent;
-        border: 1px solid var(--accent);
-        color: var(--accent);
-        padding: 12px 18px;
-        border-radius: 40px;
-        cursor: pointer;
-        transition: all 0.3s;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 14px;
-    }
-    
-    .btn-favorite:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 22px rgba(93,110,128,0.4);
-    }
-    
-    .tabs {
-        display: flex;
-        gap: 30px;
-        border-bottom: 1px solid var(--accent);
-        margin: 25px 0 20px;
-    }
-    
-    .tab-btn {
-        background: none;
-        border: none;
-        padding: 10px 0;
-        font-size: 14px;
-        font-weight: 500;
-        color: var(--gray);
-        cursor: pointer;
-        position: relative;
-    }
-    
-    .tab-btn.active {
-        color: var(--accent);
-    }
-    
-    .tab-btn.active::after {
-        content: '';
-        position: absolute;
-        bottom: -1px;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background: var(--accent);
-    }
-    
-    .tab-content {
-        display: none;
-        padding: 15px 0;
-        color: var(--brown);
-        line-height: 1.5;
-    }
-    
-    .tab-content.active {
-        display: block;
-    }
-    
-    .specs-table {
-        width: 100%;
-        font-size: 13px;
-    }
-    
-    .specs-table tr td {
-        padding: 8px 0;
-        border-bottom: 1px solid #e9ecef;
-    }
-    
-    .specs-table tr td:first-child {
-        width: 180px;
-        color: var(--accent);
-        font-weight: 500;
-    }
-    
-    .specs-table tr td:last-child {
-        color: var(--brown);
-    }
-    
-    .reviews-section {
-        margin-top: 40px;
-    }
-    
-    .reviews-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: var(--accent);
-        margin-bottom: 20px;
-        padding-bottom: 8px;
-        border-bottom: 2px solid var(--accent);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-    
-    .reviews-container {
-        max-width: 800px;
-    }
-    
-    .review-card {
-        background: white;
-        padding: 16px;
-        border-radius: 14px;
-        margin-bottom: 16px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        transition: transform 0.2s;
-    }
-    
-    .review-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    }
-    
-    .review-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-    
-    .review-author {
-        font-weight: 600;
-        color: var(--brown);
-        font-size: 13px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    
-    .review-author i {
-        color: var(--accent);
-        font-size: 12px;
-    }
-    
-    .review-stars {
+    .rating-star:hover,
+    .rating-star.active {
         color: #ffc107;
-        font-size: 12px;
-        letter-spacing: 1px;
     }
     
-    .review-date {
-        color: var(--gray);
-        font-size: 11px;
-    }
-    
-    .review-text {
-        color: var(--brown);
-        line-height: 1.45;
-        margin-top: 10px;
-        font-size: 13px;
-    }
-    
-    .review-images {
-        display: flex;
-        gap: 8px;
-        margin-top: 12px;
-        flex-wrap: wrap;
-    }
-    
-    .review-image {
-        width: 60px;
-        height: 60px;
-        object-fit: cover;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: transform 0.2s;
-    }
-    
-    .review-image:hover {
-        transform: scale(1.05);
-    }
-    
-    .no-reviews {
-        text-align: center;
-        padding: 30px;
-        background: white;
-        border-radius: 14px;
-        color: var(--gray);
-        font-size: 13px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }
-    
-    .notification {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: var(--accent);
-        color: var(--bg-cream);
-        padding: 10px 20px;
-        border-radius: 30px;
-        z-index: 1000;
-        font-size: 13px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        animation: slideIn 0.3s ease;
-    }
-    .login-hint {
-        font-size: 13px;
-        color: var(--gray);
-    }
-
-    .login-hint a {
-        color: var(--accent);
-        text-decoration: none;
-        font-weight: 500;
-    }
-
-    .login-hint a:hover {
-        text-decoration: underline;
-    }
-    .review-notice {
-        margin-bottom: 20px;
-        padding: 12px;
-        border-radius: 12px;
-        text-align: center;
-    }
-
-    .review-notice i {
-        margin-right: 8px;
-    }
-
-    .write-review-btn-container {
-        margin-bottom: 20px;
-        text-align: center;
-    }
-
-    .btn-write-review {
-        background: var(--accent);
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 30px;
-        cursor: pointer;
-        font-weight: 500;
-        transition: all 0.3s;
-    }
-
-    .btn-write-review:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(93, 110, 128, 0.3);
-    }
     @keyframes slideIn {
         from {
             transform: translateX(100%);
@@ -744,9 +853,77 @@
         }
     }
     
+    .spinner-border {
+        display: inline-block;
+        width: 2rem;
+        height: 2rem;
+        border: 0.25rem solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border 0.75s linear infinite;
+    }
+    
+    @keyframes spinner-border {
+        to { transform: rotate(360deg); }
+    }
+    
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+    
     @media (max-width: 768px) {
         .reviews-container {
             max-width: 100%;
+        }
+        
+        .product-name {
+            font-size: 1.5rem;
+        }
+        
+        .current-price {
+            font-size: 1.25rem;
+        }
+        
+        .specs-table tr td:first-child {
+            width: 120px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .product-main {
+            gap: 1rem;
+        }
+        
+        .product-image-col {
+            min-width: 100%;
+        }
+        
+        .product-info-col {
+            min-width: 100%;
+        }
+        
+        .product-name {
+            font-size: 1.25rem;
+        }
+        
+        .tabs {
+            gap: 1rem;
+        }
+        
+        .tab-btn {
+            font-size: 0.8125rem;
+        }
+        
+        .specs-table tr td:first-child {
+            width: 100px;
         }
     }
 </style>
@@ -755,35 +932,37 @@
     <div class="container">
         <div id="product-content">
             <div class="text-center py-5">
-                <div class="spinner-border text-secondary" role="status"></div>
+                <div class="spinner-border text-secondary" role="status" aria-label="Загрузка">
+                    <span class="visually-hidden">Загрузка товара...</span>
+                </div>
                 <p class="mt-2 text-secondary">Загрузка товара...</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Модальное окно для уведомления о поступлении размера -->
-<div id="size-modal" class="modal">
+<div id="size-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="size-modal-title" hidden>
     <div class="modal-content">
-        <span class="modal-close" onclick="closeModal()">&times;</span>
-        <div class="modal-title">Сообщить о поступлении</div>
+        <button class="modal-close" onclick="closeModal()" aria-label="Закрыть окно">&times;</button>
+        <h2 id="size-modal-title" class="modal-title">Сообщить о поступлении</h2>
         <div class="modal-text">Оставьте ваш email, и мы сообщим, когда товар появится в нужном размере.</div>
-        <input type="email" id="notify-email" class="modal-input" placeholder="Ваш email">
-        <button class="modal-btn" onclick="sendNotification()">Уведомить меня</button>
+        <label for="notify-email" class="sr-only">Ваш email</label>
+        <input type="email" id="notify-email" class="modal-input" placeholder="Ваш email" aria-label="Email для уведомления">
+        <button class="modal-btn" onclick="sendNotification()" aria-label="Отправить запрос на уведомление">Уведомить меня</button>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Функция для проверки, может ли пользователь оставить отзыв
+
 async function canUserReview(productId) {
     if (!isAuthenticated()) return false;
     
     try {
         const response = await fetch(`/api/orders/can_review/${productId}/`);
         const data = await response.json();
-        console.log('can_review response:', data); // Отладка - посмотрим что приходит
+        console.log('can_review response:', data);
         return data.can_review || false;
     } catch (error) {
         console.error('Error checking review permission:', error);
@@ -791,272 +970,263 @@ async function canUserReview(productId) {
     }
 }
 
-    const pathParts = window.location.pathname.split('/');
-    const productId = pathParts[pathParts.length - 2];
-    let selectedSize = null;
-    let currentProduct = null;
-    let cartItems = [];
-    function isAuthenticated() {
-        return document.body.classList.contains('user-authenticated');
-    }
-    // Функция для форматирования даты
-    function formatDate(daysToAdd = 0) {
-        const date = new Date();
-        date.setDate(date.getDate() + daysToAdd);
-        return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-    }
-    
-    function openModal() {
-        document.getElementById('size-modal').classList.add('active');
-    }
-    
-    function closeModal() {
-        document.getElementById('size-modal').classList.remove('active');
-    }
-    
-    function sendNotification() {
-        const email = document.getElementById('notify-email').value;
-        if (!email) {
-            alert('Введите email');
-            return;
-        }
-        // Здесь будет отправка на сервер
-        showNotification('Мы сообщим, когда товар появится в нужном размере!');
-        closeModal();
-    }
-    
-    function shareProduct() {
-        if (navigator.share) {
-            navigator.share({
-                title: document.querySelector('.product-name')?.innerText || 'Argentic Jewelry',
-                url: window.location.href
-            });
-        } else {
-            navigator.clipboard.writeText(window.location.href);
-            showNotification('Ссылка скопирована в буфер обмена!');
-        }
-    }
-    
-    function loadProductDetail() {
-        fetch(`/api/products/${productId}/`)
-            .then(response => response.json())
-            .then(product => {
-                // Сначала загружаем корзину, потом отображаем страницу
-                loadCartItems().then(() => {
-                    renderProductPage(product);
-                    loadReviews(product);
-                });
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('product-content').innerHTML = `
-                    <div class="text-center py-5">
-                        <i class="fas fa-gem fa-3x text-secondary mb-3"></i>
-                        <p class="text-danger">Товар не найден</p>
-                        <a href="/catalog/" class="btn btn-gold mt-3">Вернуться в каталог</a>
-                    </div>
-                `;
-            });
-    }
-    
-    function renderProductPage(product) {
-        currentProduct = product;
-        const images = [];
-        if (product.image) images.push({ url: product.image, name: 'Главное фото' });
-        if (product.image_2) images.push({ url: product.image_2, name: 'Фото 2' });
-        if (product.image_3) images.push({ url: product.image_3, name: 'Фото 3' });
-        if (product.image_4) images.push({ url: product.image_4, name: 'Фото 4' });
-        if (product.image_5) images.push({ url: product.image_5, name: 'Фото 5' });
-        
-        const mainImage = images.length > 0 ? images[0].url : null;
-        
-        const rating = product.average_rating || 0;
-        const fullStars = Math.floor(rating);
-        const halfStar = rating % 1 >= 0.5;
-        const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-        
-        let starsHtml = '★'.repeat(fullStars);
-        if (halfStar) starsHtml += '½';
-        starsHtml += '☆'.repeat(emptyStars);
-        
-        // Размеры из БД
-        const sizes = product.size ? product.size.split(',').map(s => s.trim()) : [];
-        
-        // Даты доставки (автоматический расчёт)
-        // Даты доставки
-        const today = formatDate(0);
-        const tomorrow = formatDate(1);
-        const inTwoDays = formatDate(2);
-        const inThreeDays = formatDate(3);
+const pathParts = window.location.pathname.split('/');
+const productId = pathParts[pathParts.length - 2];
+let selectedSize = null;
+let currentProduct = null;
+let cartItems = [];
+function isAuthenticated() {
+    return document.body.classList.contains('user-authenticated');
+}
+function formatDate(daysToAdd = 0) {
+    const date = new Date();
+    date.setDate(date.getDate() + daysToAdd);
+    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+}
+function openModal() {
+    document.getElementById('size-modal').classList.add('active');
+}
 
-        const todayPlus1 = `Завтра (${tomorrow})`;
-        const todayPlus2 = `${inTwoDays}`;
-        const todayPlus3 = `${inThreeDays}`;
-        
-        // Бонусы: 5% от цены
-        const bonusPoints = Math.floor(product.price * 0.05);
-        
-        let thumbnailsHtml = '';
-        if (images.length > 1) {
-            thumbnailsHtml = '<div class="product-thumbnails">';
-            images.forEach((img, index) => {
-                thumbnailsHtml += `<img src="${img.url}" class="thumbnail ${index === 0 ? 'active' : ''}" onclick="changeMainImage('${img.url}', this)">`;
+function closeModal() {
+    document.getElementById('size-modal').classList.remove('active');
+}
+
+function sendNotification() {
+    const email = document.getElementById('notify-email').value;
+    if (!email) {
+        alert('Введите email');
+        return;
+    }
+    showNotification('Мы сообщим, когда товар появится в нужном размере!');
+    closeModal();
+}
+
+function shareProduct() {
+    const productName = document.querySelector('.product-name')?.innerText || 'Argentic Jewelry';
+    if (navigator.share) {
+        navigator.share({
+            title: productName,
+            url: window.location.href
+        });
+    } else {
+        navigator.clipboard.writeText(window.location.href);
+        showNotification('Ссылка скопирована в буфер обмена!');
+    }
+}
+function loadProductDetail() {
+    fetch(`/api/products/${productId}/`)
+        .then(response => response.json())
+        .then(product => {
+            loadCartItems().then(() => {
+                renderProductPage(product);
+                loadReviews(product);
             });
-            thumbnailsHtml += '</div>';
-        }
-        
-        const userAuthenticated = document.body.classList.contains('user-authenticated') || 
-                                    document.querySelector('.user-actions-new a[href*="profile"]') !== null;
-        
-        const priceHtml = userAuthenticated 
-            ? `
-                <div class="price-section">
-                    <span class="current-price">${product.price} ₽</span>
-                    ${product.old_price ? `<span class="old-price">${product.old_price} ₽</span>` : ''}
-                    ${product.discount_percent > 0 ? `<span class="discount-badge">-${product.discount_percent}%</span>` : ''}
-                </div>
-            `
-            : `
-                <div class="price-section">
-                    <span class="current-price">${product.price} ₽</span>
-                    <span class="login-hint">
-                        <a href="/accounts/login/">Войдите</a>, чтобы узнать итоговую цену
-                    </span>
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('product-content').innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-gem fa-3x text-secondary mb-3" aria-hidden="true"></i>
+                    <p class="text-danger">Товар не найден</p>
+                    <a href="/catalog/" class="btn btn-gold mt-3" aria-label="Вернуться в каталог">Вернуться в каталог</a>
                 </div>
             `;
-        
-        const content = `            
-            <div class="product-main">
-                <div class="product-image-col">
-                    <div class="product-image">
-                        <div class="image-actions">
-                            <button class="image-action-btn" onclick="shareProduct()" title="Поделиться">
-                                <i class="fas fa-share-alt"></i>
-                            </button>
-                            <button class="image-action-btn" onclick="toggleFavorite(${product.id})" id="favorite-icon-btn" title="В избранное">
-                                <i class="far fa-heart"></i>
-                            </button>
+        });
+}
+function renderProductPage(product) {
+    currentProduct = product;
+    const images = [];
+    if (product.image) images.push({ url: product.image, name: 'Главное фото' });
+    if (product.image_2) images.push({ url: product.image_2, name: 'Фото 2' });
+    if (product.image_3) images.push({ url: product.image_3, name: 'Фото 3' });
+    if (product.image_4) images.push({ url: product.image_4, name: 'Фото 4' });
+    if (product.image_5) images.push({ url: product.image_5, name: 'Фото 5' });
+    
+    const mainImage = images.length > 0 ? images[0].url : null;
+    
+    const rating = product.average_rating || 0;
+    const fullStars = Math.floor(rating);
+    const halfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+    
+    let starsHtml = '★'.repeat(fullStars);
+    if (halfStar) starsHtml += '½';
+    starsHtml += '☆'.repeat(emptyStars);
+    
+    const sizes = product.size ? product.size.split(',').map(s => s.trim()) : [];
+    
+    const today = formatDate(0);
+    const tomorrow = formatDate(1);
+    const inTwoDays = formatDate(2);
+    const inThreeDays = formatDate(3);
+    
+    const todayPlus1 = `Завтра (${tomorrow})`;
+    const todayPlus2 = `${inTwoDays}`;
+    const todayPlus3 = `${inThreeDays}`;
+    
+    const bonusPoints = Math.floor(product.price * 0.05);
+    
+    let thumbnailsHtml = '';
+    if (images.length > 1) {
+        thumbnailsHtml = '<div class="product-thumbnails">';
+        images.forEach((img, index) => {
+            thumbnailsHtml += `<img src="${img.url}" class="thumbnail ${index === 0 ? 'active' : ''}" onclick="changeMainImage('${img.url}', this)" onkeypress="if(event.key==='Enter') changeMainImage('${img.url}', this)" tabindex="0" role="button" aria-label="Показать ${img.name}">`;
+        });
+        thumbnailsHtml += '</div>';
+    }
+    
+    const userAuthenticated = document.body.classList.contains('user-authenticated');
+    
+    const priceHtml = userAuthenticated 
+        ? `
+            <div class="price-section">
+                <span class="current-price" aria-label="Цена ${product.price} рублей">${product.price} ₽</span>
+                ${product.old_price ? `<span class="old-price" aria-label="Старая цена ${product.old_price} рублей">${product.old_price} ₽</span>` : ''}
+                ${product.discount_percent > 0 ? `<span class="discount-badge" aria-label="Скидка ${product.discount_percent}%">-${product.discount_percent}%</span>` : ''}
+            </div>
+        `
+        : `
+            <div class="price-section">
+                <span class="current-price">${product.price} ₽</span>
+                <span class="login-hint">
+                    <a href="/accounts/login/" aria-label="Войдите, чтобы узнать итоговую цену">Войдите</a>, чтобы узнать итоговую цену
+                </span>
+            </div>
+        `;
+    
+    const content = `            
+        <div class="product-main">
+            <div class="product-image-col">
+                <div class="product-image">
+                    <div class="image-actions">
+                        <button class="image-action-btn" onclick="shareProduct()" aria-label="Поделиться товаром">
+                            <i class="fas fa-share-alt" aria-hidden="true"></i>
+                        </button>
+                        <button class="image-action-btn" onclick="toggleFavorite(${product.id})" id="favorite-icon-btn" aria-label="В избранное">
+                            <i class="far fa-heart" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="main-image-container">
+                        ${mainImage 
+                            ? `<img src="${mainImage}" alt="${product.name}" class="main-image" id="main-image">`
+                            : `<div style="height: 400px; background: #e9ecef; display: flex; align-items: center; justify-content: center; border-radius: 12px;" aria-label="Изображение отсутствует">
+                                 <i class="fas fa-gem fa-5x text-secondary" aria-hidden="true"></i>
+                               </div>`
+                        }
+                    </div>
+                    ${thumbnailsHtml}
+                    <div class="bonus-badge" aria-label="При покупке начисляется ${bonusPoints} бонусов">
+                        +${bonusPoints} бонусов
+                    </div>
+                </div>
+            </div>
+            
+            <div class="product-info-col">
+                <h1 class="product-name">${escapeHtml(product.name)}</h1>
+                
+                <div class="rating-section" id="rating-section">
+                    <span class="rating-stars" aria-hidden="true">★</span>
+                    <span class="rating-value" aria-label="Рейтинг ${rating.toFixed(1)} из 5">${rating.toFixed(1)}</span>
+                    <span class="rating-count" aria-label="Количество отзывов ${product.reviews_count || 0}">(${product.reviews_count || 0})</span>
+                    <div class="review-mini-images" id="review-mini-images"></div>
+                </div>
+                
+                ${priceHtml}
+                
+                <div class="size-section">
+                    <div class="size-label">
+                        <span>Размер:</span>
+                        <a href="#" id="size-guide-link" aria-label="Определить размер">Определить</a>
+                    </div>
+                    ${sizes.length > 0 ? `
+                        <div class="size-buttons" id="size-buttons" role="group" aria-label="Выберите размер">
+                            ${sizes.map(s => `<button class="size-btn" data-size="${s}" aria-label="Размер ${s}">${s}</button>`).join('')}
                         </div>
-                        <div class="main-image-container">
-                            ${mainImage 
-                                ? `<img src="${mainImage}" alt="${product.name}" class="main-image" id="main-image">`
-                                : `<div style="height: 400px; background: #e9ecef; display: flex; align-items: center; justify-content: center; border-radius: 12px;">
-                                     <i class="fas fa-gem fa-5x text-secondary"></i>
-                                   </div>`
-                            }
+                        <button class="no-size-btn" onclick="openModal()" aria-label="Сообщить о поступлении нужного размера">
+                            <i class="fas fa-bell" aria-hidden="true"></i> Нет нужного размера?
+                        </button>
+                    ` : `
+                        <div style="padding: 10px 0; color: var(--gray);">
+                            <i class="fas fa-times-circle" aria-hidden="true"></i> Без размера (универсальный)
                         </div>
-                        ${thumbnailsHtml}
-                        <div class="bonus-badge">
-                            +${bonusPoints} бонусов
+                    `}
+                </div>
+                
+                <div class="quantity-section">
+                    <div class="quantity-label">Количество</div>
+                    <div id="stock-info" style="margin-bottom: 10px; font-size: 12px;" aria-live="polite"></div>
+                    <div class="quantity-price-row">
+                        <div class="quantity-control">
+                            <button id="decrease-qty" aria-label="Уменьшить количество">-</button>
+                            <input type="text" id="quantity" value="1" readonly aria-label="Количество товара">
+                            <button id="increase-qty" aria-label="Увеличить количество">+</button>
+                        </div>
+                        <div class="total-price">
+                            <span id="total-price" aria-label="Общая стоимость">${product.price}</span> ₽
                         </div>
                     </div>
                 </div>
                 
-                <div class="product-info-col">
-                    <h1 class="product-name">${product.name}</h1>
-                    
-                    <div class="rating-section" id="rating-section">
-                        <span class="rating-stars">★</span>
-                        <span class="rating-value">${rating.toFixed(1)}</span>
-                        <span class="rating-count">(${product.reviews_count || 0})</span>
-                        <div class="review-mini-images" id="review-mini-images"></div>
+                <div class="action-buttons">
+                    <button class="btn-add-to-cart" onclick="addToCartWithQuantity(${product.id})" aria-label="Добавить товар в корзину">
+                        В корзину
+                    </button>
+                    <button class="btn-favorite" onclick="toggleFavorite(${product.id})" id="favorite-btn" aria-label="Добавить в избранное">
+                        <i class="far fa-heart" aria-hidden="true"></i> В избранное
+                    </button>
+                </div>
+                
+                <div class="delivery-section">
+                    <div class="delivery-header">
+                        <span>Доставка</span>
+                        <span class="delivery-city" tabindex="0" aria-label="Город доставки Москва">Москва</span>
                     </div>
-                    
-                    ${priceHtml}
-                    
-                    <div class="size-section">
-                        <div class="size-label">
-                            <span>Размер:</span>
-                            <a href="#" id="size-guide-link">Определить</a>
+                    <div class="delivery-item">
+                        <div class="delivery-left">
+                            <i class="fas fa-store" aria-hidden="true"></i>
+                            <div>
+                                <span class="delivery-main">В наличии</span>
+                            </div>
                         </div>
-                        ${sizes.length > 0 ? `
-                            <div class="size-buttons" id="size-buttons">
-                                ${sizes.map(s => `<button class="size-btn" data-size="${s}">${s}</button>`).join('')}
-                            </div>
-                            <button class="no-size-btn" onclick="openModal()">
-                                <i class="fas fa-bell"></i> Нет нужного размера?
-                            </button>
-                        ` : `
-                            <div style="padding: 10px 0; color: var(--gray);">
-                                <i class="fas fa-times-circle"></i> Без размера (универсальный)
-                            </div>
-                        `}
+                        <div class="delivery-line"></div>
+                        <div class="delivery-right">0 ₽</div>
                     </div>
-                    
-                    <div class="quantity-section">
-                        <div class="quantity-label">Количество</div>
-                        <div id="stock-info" style="margin-bottom: 10px; font-size: 12px;"></div>
-                        <div class="quantity-price-row">
-                            <div class="quantity-control">
-                                <button id="decrease-qty">-</button>
-                                <input type="text" id="quantity" value="1" readonly>
-                                <button id="increase-qty">+</button>
-                            </div>
-                            <div class="total-price">
-                                <span id="total-price">${product.price}</span> ₽
+                    <div class="delivery-item">
+                        <div class="delivery-left">
+                            <i class="fas fa-box" aria-hidden="true"></i>
+                            <div>
+                                <span class="delivery-main">${todayPlus2}</span>, в пункт выдачи
                             </div>
                         </div>
+                        <div class="delivery-line"></div>
+                        <div class="delivery-right">0 ₽</div>
                     </div>
-                    
-                    <div class="action-buttons">
-                        <button class="btn-add-to-cart" onclick="addToCartWithQuantity(${product.id})">
-                            В корзину
-                        </button>
-                        <button class="btn-favorite" onclick="toggleFavorite(${product.id})" id="favorite-btn">
-                            <i class="far fa-heart"></i> В избранное
-                        </button>
-                    </div>
-                    
-                    <div class="delivery-section">
-                        <div class="delivery-header">
-                            <span>Доставка</span>
-                            <span class="delivery-city">Москва</span>
-                        </div>
-                        <div class="delivery-item">
-                            <div class="delivery-left">
-                                <i class="fas fa-store"></i>
-                                <div>
-                                    <span class="delivery-main">В наличии</span>
-                                </div>
+                    <div class="delivery-item">
+                        <div class="delivery-left">
+                            <i class="fas fa-truck" aria-hidden="true"></i>
+                            <div>
+                                <span class="delivery-main">${todayPlus1}</span>, курьером
                             </div>
-                            <div class="delivery-line"></div>
-                            <div class="delivery-right">0 ₽</div>
                         </div>
-                        <div class="delivery-item">
-                            <div class="delivery-left">
-                                <i class="fas fa-box"></i>
-                                <div>
-                                    <span class="delivery-main">${todayPlus2}</span>, в пункт выдачи
-                                </div>
-                            </div>
-                            <div class="delivery-line"></div>
-                            <div class="delivery-right">0 ₽</div>
-                        </div>
-                        <div class="delivery-item">
-                            <div class="delivery-left">
-                                <i class="fas fa-truck"></i>
-                                <div>
-                                    <span class="delivery-main">${todayPlus1}</span>, курьером
-                                </div>
-                            </div>
-                            <div class="delivery-line"></div>
-                            <div class="delivery-right">0 ₽</div>
-                        </div>
+                        <div class="delivery-line"></div>
+                        <div class="delivery-right">0 ₽</div>
                     </div>
                 </div>
             </div>
-            
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="description">Описание</button>
-                <button class="tab-btn" data-tab="specs">Характеристики</button>
-            </div>
-            
-            <div class="tab-content active" id="tab-description">
-                <p>${product.description || 'Описание товара отсутствует.'}</p>
-            </div>
-            
-            <div class="tab-content" id="tab-specs">
-                <table class="specs-table">
+        </div>
+        
+        <div class="tabs" role="tablist">
+            <button class="tab-btn active" data-tab="description" role="tab" aria-selected="true">Описание</button>
+            <button class="tab-btn" data-tab="specs" role="tab" aria-selected="false">Характеристики</button>
+        </div>
+        
+        <div class="tab-content active" id="tab-description" role="tabpanel" aria-labelledby="description-tab">
+            <p>${product.description || 'Описание товара отсутствует.'}</p>
+        </div>
+        
+        <div class="tab-content" id="tab-specs" role="tabpanel" aria-labelledby="specs-tab">
+            <table class="specs-table">
+                <tbody>
                     <tr><td>Артикул</td><td>${product.id}</td></tr>
                     <tr><td>Бренд</td><td>Argentic</td></tr>
                     <tr><td>Коллекция</td><td>${product.collection_name || product.collection?.name || 'Основная'}</td></tr>
@@ -1066,32 +1236,31 @@ async function canUserReview(productId) {
                     <tr><td>Размер</td><td>${product.size || '—'}</td></tr>
                     <tr><td>Камни</td><td>${product.stones ? (product.stone_type_display || product.stone_type || 'Да') : 'Нет'}</td></tr>
                     <tr><td>Вес камней</td><td>${product.stone_weight ? `${product.stone_weight} карат` : '—'}</td></tr>
-                </table>
-            </div>
-            
-            <div class="reviews-section">
-                <div class="reviews-title">
-                    <span>Отзывы покупателей</span>
-                    <span class="rating-value">${rating.toFixed(1)}</span>
-                    <div class="rating-stars" style="font-size: 14px;">${starsHtml}</div>
-                </div>
-                <div class="reviews-container" id="reviews-list">
-                    <div class="text-center py-3 text-secondary">Загрузка отзывов...</div>
-                </div>
-            </div>
-        `;
+                </tbody>
+            </table>
+        </div>
         
-        document.getElementById('product-content').innerHTML = content;
-        
-        // Инициализация
-        initQuantityControls(product.price);
-        initSizeButtons();
-        initTabs();
-        updateFavoriteButton(product.is_in_favorites);
-        updateFavoriteIcon(product.is_in_favorites);
-        updateQuantityMax();
-    }
+        <div class="reviews-section">
+            <div class="reviews-title">
+                <span>Отзывы покупателей</span>
+                <span class="rating-value">${rating.toFixed(1)}</span>
+                <div class="rating-stars" style="font-size: 14px;" aria-hidden="true">${starsHtml}</div>
+            </div>
+            <div class="reviews-container" id="reviews-list">
+                <div class="text-center py-3 text-secondary">Загрузка отзывов...</div>
+            </div>
+        </div>
+    `;
     
+    document.getElementById('product-content').innerHTML = content;
+    
+    initQuantityControls(product.price);
+    initSizeButtons();
+    initTabs();
+    updateFavoriteButton(product.is_in_favorites);
+    updateFavoriteIcon(product.is_in_favorites);
+    updateQuantityMax();
+}    
     function updateFavoriteIcon(isInFavorites) {
         const iconBtn = document.getElementById('favorite-icon-btn');
         if (iconBtn) {
@@ -1106,13 +1275,11 @@ async function canUserReview(productId) {
             }
         }
     }
-    // Функция для открытия модального окна с формой отзыва
+
     function openReviewModal() {
-        // Удаляем старое модальное окно, если есть
         const oldModal = document.getElementById('review-modal');
         if (oldModal) oldModal.remove();
         
-        // Создаём новое модальное окно
         const modal = document.createElement('div');
         modal.id = 'review-modal';
         modal.className = 'modal';
@@ -1144,7 +1311,6 @@ async function canUserReview(productId) {
         `;
         document.body.appendChild(modal);
         
-        // Добавляем стили
         if (!document.getElementById('review-modal-styles')) {
             const style = document.createElement('style');
             style.id = 'review-modal-styles';
@@ -1168,7 +1334,6 @@ async function canUserReview(productId) {
             document.head.appendChild(style);
         }
         
-        // Инициализация звёзд
         let selectedRating = 0;
         const stars = document.querySelectorAll('#rating-stars-select .rating-star');
         stars.forEach(star => {
@@ -1228,7 +1393,6 @@ async function canUserReview(productId) {
             return;
         }
         
-        // Используем FormData для отправки, чтобы можно было загрузить фото
         const formData = new FormData();
         formData.append('product', productId);
         formData.append('rating', rating);
@@ -1249,7 +1413,6 @@ async function canUserReview(productId) {
             if (data.id) {
                 showNotification('Спасибо за ваш отзыв!');
                 closeReviewModal();
-                // Перезагружаем отзывы
                 loadReviews(currentProduct);
             } else {
                 let errorMsg = 'Ошибка при отправке отзыва';
@@ -1285,13 +1448,11 @@ async function canUserReview(productId) {
                 
                 let html = '';
                 
-                // Проверяем, может ли пользователь оставить отзыв
                 if (isAuthenticated()) {
                     try {
                         const response = await fetch(`/api/orders/can_review/${product.id}/`);
                         const data = await response.json();
                         
-                        // Пользователь может оставить отзыв (купил, получил, НЕ писал)
                         if (data.can_review) {
                             html += `
                                 <div class="write-review-btn-container" style="margin-bottom: 20px;">
@@ -1301,7 +1462,6 @@ async function canUserReview(productId) {
                                 </div>
                             `;
                         }
-                        // Пользователь купил и получил, НО УЖЕ оставил отзыв
                         else if (data.has_purchased && data.has_reviewed) {
                             html += `
                                 <div class="review-notice" style="margin-bottom: 20px; padding: 12px; background: #e8f5e9; border-radius: 12px; text-align: center; color: #2e7d32;">
@@ -1309,7 +1469,6 @@ async function canUserReview(productId) {
                                 </div>
                             `;
                         }
-                        // Пользователь купил, НО ЕЩЁ НЕ получил заказ (статус не received)
                         else if (data.has_purchased && !data.has_reviewed && !data.can_review) {
                             html += `
                                 <div class="review-notice" style="margin-bottom: 20px; padding: 12px; background: #fff3e0; border-radius: 12px; text-align: center; color: #ff9800;">
@@ -1317,7 +1476,6 @@ async function canUserReview(productId) {
                                 </div>
                             `;
                         }
-                        // Пользователь НЕ покупал этот товар
                         else if (!data.has_purchased && !data.has_reviewed) {
                             html += `
                                 <div class="review-notice" style="margin-bottom: 20px; padding: 12px; background: #f0f0f0; border-radius: 12px; text-align: center; color: var(--gray);">
@@ -1329,7 +1487,6 @@ async function canUserReview(productId) {
                         console.error('Error checking review permission:', error);
                     }
                 } else {
-                    // Неавторизованный пользователь
                     html += `
                         <div class="review-notice" style="margin-bottom: 20px; padding: 12px; background: #f0f0f0; border-radius: 12px; text-align: center; color: var(--gray);">
                             <i class="fas fa-lock"></i> <a href="/accounts/login/" style="color: var(--accent);">Войдите</a>, чтобы оставить отзыв
@@ -1422,7 +1579,6 @@ async function canUserReview(productId) {
     }
 
     function getCartQuantity(productId, selectedSize) {
-        // Убеждаемся, что cartItems - массив
         const items = Array.isArray(cartItems) ? cartItems : [];
         
         const cartItem = items.find(item => {
@@ -1441,7 +1597,6 @@ async function canUserReview(productId) {
         const stockAvailable = product.available_quantity !== undefined ? product.available_quantity : (product.stock_quantity - product.reserved_quantity);
         const cartQuantity = getCartQuantity(product.id, selectedSize);
         
-        // Максимум, который можно добавить = доступно на складе - уже в корзине
         return Math.max(0, stockAvailable - cartQuantity);
     }
 
@@ -1449,14 +1604,11 @@ async function canUserReview(productId) {
         const quantityInput = document.getElementById('quantity');
         if (!quantityInput || !currentProduct) return;
         
-        // Получаем максимальное доступное количество
         const maxQty = getMaxAvailableQuantity(currentProduct, selectedSize);
         
-        // Получаем текущее значение из input
         let currentQty = parseInt(quantityInput.value);
         if (isNaN(currentQty)) currentQty = 1;
         
-        // Если текущее количество больше максимального - корректируем
         if (currentQty > maxQty && maxQty > 0) {
             currentQty = maxQty;
             quantityInput.value = currentQty;
@@ -1466,13 +1618,11 @@ async function canUserReview(productId) {
             }
         }
         
-        // Обновляем кнопки +/-
         const decreaseBtn = document.getElementById('decrease-qty');
         const increaseBtn = document.getElementById('increase-qty');
         if (decreaseBtn) decreaseBtn.disabled = (currentQty <= 1);
         if (increaseBtn) increaseBtn.disabled = (currentQty >= maxQty);
         
-        // ОТОБРАЖЕНИЕ ДОСТУПНОГО КОЛИЧЕСТВА
         const stockInfo = document.getElementById('stock-info');
         if (stockInfo && currentProduct) {
             const cartQty = getCartQuantity(currentProduct.id, selectedSize);
@@ -1549,7 +1699,6 @@ async function canUserReview(productId) {
                 btn.classList.add('active');
                 selectedSize = btn.getAttribute('data-size');
                 
-                // СБРАСЫВАЕМ КОЛИЧЕСТВО ДО 1 ПРИ СМЕНЕ РАЗМЕРА
                 const quantityInput = document.getElementById('quantity');
                 if (quantityInput) {
                     quantityInput.value = 1;
@@ -1559,7 +1708,6 @@ async function canUserReview(productId) {
                     }
                 }
                 
-                // Обновляем максимальное количество при выборе размера
                 updateQuantityMax();
             });
         });
@@ -1618,9 +1766,8 @@ async function canUserReview(productId) {
         .then(() => {
             updateCartCount();
             showNotification('Товар добавлен в корзину!');
-            // ОБНОВЛЯЕМ КОРЗИНУ И ПЕРЕСЧИТЫВАЕМ ДОСТУПНОЕ КОЛИЧЕСТВО
             loadCartItems().then(() => {
-                updateQuantityMax();  // ← ЭТО ВАЖНО!
+                updateQuantityMax();  
             });
         })
         .catch(error => {
@@ -1628,7 +1775,6 @@ async function canUserReview(productId) {
             showNotification('Ошибка при добавлении в корзину');
         });
     }
-    // Функция для проверки корзины (вызовите её после добавления)
     function checkCart() {
         fetch('/api/cart/')
             .then(response => response.json())
@@ -1646,7 +1792,6 @@ async function canUserReview(productId) {
             .catch(error => console.error('Ошибка при проверке корзины:', error));
     }
     function toggleFavorite(productId) {
-        // Проверяем авторизацию
         const isAuth = document.body.classList.contains('user-authenticated');
 
         if (!isAuth) {
@@ -1661,7 +1806,6 @@ async function canUserReview(productId) {
         const isInFavorites = btn.innerHTML.includes('В избранном');
 
         if (isInFavorites) {
-            // Удаление из избранного
             fetch('/api/favorites/')
                 .then(response => response.json())
                 .then(favorites => {
@@ -1688,7 +1832,6 @@ async function canUserReview(productId) {
                     showNotification('Ошибка при удалении');
                 });
         } else {
-            // Добавление в избранное
             fetch('/api/favorites/', {
                 method: 'POST',
                 headers: {
@@ -1720,6 +1863,64 @@ async function canUserReview(productId) {
         setTimeout(() => notification.remove(), 2000);
     }
     
+    document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('size-modal');
+                if (modal && modal.classList.contains('active')) {
+                    closeModal();
+                }
+                const reviewModal = document.getElementById('review-modal');
+                if (reviewModal && reviewModal.classList.contains('active')) {
+                    closeReviewModal();
+                }
+            }
+        });
+    });
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function updateCartCount() {
+        fetch('/api/cart/')
+            .then(response => response.json())
+            .then(data => {
+                const count = data.total_items || 0;
+                const cartCount = document.getElementById('cart-count');
+                if (cartCount) cartCount.textContent = count;
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function updateFavoritesCount() {
+        if (!isAuthenticated()) return;
+        fetch('/api/favorites/')
+            .then(response => response.json())
+            .then(data => {
+                const count = data.length || 0;
+                const favoritesCount = document.getElementById('favorites-count');
+                if (favoritesCount) favoritesCount.textContent = count;
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
     loadProductDetail();
 </script>
 {% endblock %}

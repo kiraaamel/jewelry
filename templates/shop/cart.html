@@ -1,223 +1,549 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block breadcrumb_items %}
 <li class="breadcrumb-item active" aria-current="page">Корзина</li>
 {% endblock %}
+
 {% block content %}
 <style>
 :root {
-    --bg-cream:#F7F2EB;
-    --accent:#5D6E80;
-    --gray:#808E92;
+    --bg-cream: #F7F2EB;
+    --accent: #5D6E80;
+    --gray: #808E92;
+    --brown: #7A6B5B;
+    --focus-ring: #3b5a7a;
+    --red: #dc3545;
+    --green: #28a745;
 }
 
-.cart-page{background:var(--bg-cream);padding:30px 0;}
-
-.cart-grid{
-    display:grid;
-    grid-template-columns:1fr 340px;
-    gap:30px;
+.cart-page {
+    background: var(--bg-cream);
+    padding: 1.875rem 0;
+    min-height: 70vh;
 }
 
-.cart-item{
-    display:grid;
-    grid-template-columns:30px 90px 1fr 120px;
-    gap:15px;
-    align-items:center;
-    background:#fff;
-    border-radius:16px;
-    padding:15px;
-    margin-bottom:12px;
-    transition:.2s;
-    cursor:pointer;
-}
-.cart-item:hover{box-shadow:0 4px 12px rgba(0,0,0,0.05);}
-
-.product-image{
-    width:85px;height:85px;
-    border-radius:12px;
-    object-fit:cover;
-    cursor:pointer;
+.cart-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.875rem;
 }
 
-.cart-title{
-    font-weight:600;
-    color:var(--accent);
-    cursor:pointer;
-}
-.cart-title:hover{
-    text-decoration:underline;
-}
-.cart-size{font-size:13px;color:var(--gray);margin-top:5px;}
-
-.quantity-control{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-top:10px;
-}
-.quantity-control button{
-    width:28px;
-    height:28px;
-    border-radius:8px;
-    border:1px solid var(--accent);
-    background:white;
-    color:var(--accent);
-    cursor:pointer;
-    font-size:16px;
-}
-.quantity-control button:hover{
-    background:var(--accent);
-    color:white;
-}
-.quantity-control input{
-    width:45px;
-    text-align:center;
-    border:1px solid #ddd;
-    border-radius:8px;
-    padding:4px;
+.cart-item {
+    display: grid;
+    grid-template-columns: 30px 90px 1fr 120px;
+    gap: 0.9375rem;
+    align-items: center;
+    background: #fff;
+    border-radius: 1rem;
+    padding: 0.9375rem;
+    margin-bottom: 0.75rem;
+    transition: 0.2s;
+    cursor: pointer;
 }
 
-.cart-actions{
-    display:flex;
-    gap:12px;
-    margin-top:8px;
-    font-size:13px;
+@media (max-width: 576px) {
+    .cart-page {
+        padding: 1rem 0;
+    }
+
+    .cart-summary {
+        order: 2;
+        margin-top: 1rem;
+        position: static;
+    }
+    
+    .cart-items-list {
+        order: 1;
+    }
+    
+    .cart-item {
+        display: flex;
+        flex-direction: row;
+        gap: 0.75rem;
+        padding: 0.875rem;
+        position: relative;
+    }
+
+    .cart-item input[type="checkbox"] {
+        position: absolute;
+        top: 0.875rem;
+        left: 0.875rem;
+        z-index: 1;
+        width: 1.125rem;
+        height: 1.125rem;
+    }
+    
+    .cart-item .product-image {
+        width: 90px;
+        height: 90px;
+        flex-shrink: 0;
+        margin-left: 1.5rem;
+    }
+    
+    .cart-item > div:not(.cart-price) {
+        flex: 1;
+        text-align: left;
+    }
+    
+    .cart-price {
+        position: absolute;
+        top: 0.875rem;
+        right: 0.875rem;
+        text-align: right;
+    }
+    
+    .cart-price .new-price {
+        font-size: 1rem;
+    }
+    
+    .cart-price .old-price {
+        font-size: 0.6875rem;
+    }
+    
+    .cart-title {
+        font-size: 0.9375rem;
+        padding-right: 70px;
+    }
+    
+    .cart-size {
+        font-size: 0.75rem;
+    }
+    
+    .quantity-control {
+        margin-top: 0.5rem;
+        justify-content: flex-start;
+    }
+    
+    .quantity-control button {
+        width: 1.5rem;
+        height: 1.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .quantity-control input {
+        width: 40px;
+    }
+    
+    .cart-actions {
+        margin-top: 0.5rem;
+        justify-content: flex-start;
+        font-size: 0.75rem;
+    }
+
+    .cart-item > div:not(.cart-price) > div:first-child {
+        margin-bottom: 0.25rem;
+    }
+    
+    .top-actions {
+        padding: 0 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .summary-row {
+        font-size: 0.875rem;
+    }
+    
+    .checkout-btn {
+        padding: 0.625rem;
+        font-size: 0.875rem;
+    }
+    
+    .bonus-box {
+        font-size: 0.75rem;
+    }
+    
+    .promo-input-group input,
+    .promo-input-group button {
+        font-size: 0.75rem;
+        padding: 0.5rem;
+    }
 }
 
-.cart-actions span{
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    gap:4px;
-    color:var(--gray);
-}
-.cart-actions span:hover{color:var(--accent);}
-
-.heart{
-    font-size:16px;
-    transition:.2s;
-}
-.heart.active{color:red;}
-
-.cart-price{text-align:right;}
-.old-price{
-    text-decoration:line-through;
-    font-size:12px;
-    color:var(--gray);
-}
-.new-price{
-    font-size:18px;
-    font-weight:700;
-    color:var(--accent);
+@media (min-width: 577px) and (max-width: 768px) {
+    .cart-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    
+    .cart-summary {
+        position: static;
+    }
+    
+    .cart-item {
+        grid-template-columns: 30px 90px 1fr 120px;
+        gap: 0.75rem;
+    }
+    
+    .cart-price .new-price {
+        font-size: 1rem;
+    }
+    
+    .cart-title {
+        font-size: 0.9375rem;
+    }
 }
 
-.cart-summary{
-    background:#fff;
-    border-radius:16px;
-    padding:20px;
+@media (min-width: 769px) and (max-width: 992px) {
+    .cart-grid {
+        display: flex;
+        flex-direction: column;
+    }
+
+    
+    .cart-summary {
+        position: static;
+    }
 }
 
-.summary-row{
-    display:flex;
-    justify-content:space-between;
-    margin-bottom:10px;
+.cart-item:focus-within {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
-.checkout-btn{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:10px;
-    background:var(--accent);
-    color:white;
-    cursor:pointer;
-    margin:10px 0;
+.cart-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.top-actions{
-    display:flex;
-    justify-content:space-between;
-    margin-bottom:15px;
-    font-size:14px;
+.product-image {
+    width: 85px;
+    height: 85px;
+    border-radius: 0.75rem;
+    object-fit: cover;
+    cursor: pointer;
 }
 
-.top-actions span{cursor:pointer;color:var(--accent);}
+.cart-title {
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+}
 
-/* Промокод блок */
-.promo-section{
-    margin:10px 0;
-    padding:8px;
-    background:#f8f9fa;
-    border-radius:12px;
+.cart-title:hover {
+    text-decoration: underline;
 }
-.promo-input-group{
-    display:flex;
-    gap:8px;
-}
-.promo-input-group input{
-    flex:1;
-    padding:10px;
-    border-radius:8px;
-    border:1px solid #ddd;
-}
-.promo-input-group button{
-    padding:5px 8px;
-    border:none;
-    border-radius:8px;
-    background:var(--accent);
-    color:#fff;
-    cursor:pointer;
-}
-.promo-applied{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    background:#e8f5e9;
-    padding:10px;
-    border-radius:8px;
-    margin-top:8px;
-}
-.promo-applied span{
-    font-size:13px;
-    color:#2e7d32;
-}
-.promo-applied i{
-    cursor:pointer;
-    color:var(--gray);
-}
-.promo-applied i:hover{color:#d32f2f;}
 
-.bonus-box{
-    background:#f5f5f5;
-    padding:12px;
-    border-radius:10px;
-    font-size:13px;
-    margin-top:10px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+.cart-size {
+    font-size: 0.8125rem;
+    color: var(--gray);
+    margin-top: 0.3125rem;
 }
-.bonus-apply{
-    color:var(--accent);
-    cursor:pointer;
-    font-weight:500;
-    text-decoration:underline;
-}
-.bonus-apply:hover{opacity:0.7;}
 
-.bonus-note{
-    font-size:10px;
-    color:var(--gray);
-    margin-top:8px;
-    text-align:center;
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.625rem;
+}
+
+.quantity-control button {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--accent);
+    background: white;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.quantity-control button:hover:not(:disabled) {
+    background: var(--accent);
+    color: white;
+}
+
+.quantity-control button:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.quantity-control button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.quantity-control input {
+    width: 45px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+}
+
+.cart-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+}
+
+.cart-actions span {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--gray);
+}
+
+.cart-actions span:hover {
+    color: var(--accent);
+}
+
+.cart-actions span:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
+.heart {
+    font-size: 1rem;
+    transition: 0.2s;
+}
+
+.heart.active {
+    color: red;
+}
+
+.cart-price {
+    text-align: right;
+}
+
+.old-price {
+    text-decoration: line-through;
+    font-size: 0.75rem;
+    color: var(--gray);
+}
+
+.new-price {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.cart-summary {
+    background: #fff;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    position: sticky;
+    top: 1.25rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.625rem;
+}
+
+.checkout-btn {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 0.625rem;
+    background: var(--accent);
+    color: white;
+    cursor: pointer;
+    margin: 0.625rem 0;
+    font-weight: 600;
+}
+
+.checkout-btn:hover {
+    background: #4a5a6a;
+    transform: translateY(-2px);
+}
+
+.checkout-btn:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.top-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.9375rem;
+    font-size: 0.875rem;
+}
+
+.top-actions span {
+    cursor: pointer;
+    color: var(--accent);
+}
+
+.top-actions span:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
+.promo-section {
+    margin: 0.625rem 0;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+}
+
+.promo-input-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.promo-input-group input {
+    flex: 1;
+    padding: 0.625rem;
+    border-radius: 0.5rem;
+    border: 1px solid #ddd;
+}
+
+.promo-input-group input:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.promo-input-group button {
+    padding: 0.3125rem 0.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+}
+
+.promo-input-group button:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.promo-applied {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #e8f5e9;
+    padding: 0.625rem;
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.promo-applied span {
+    font-size: 0.8125rem;
+    color: #2e7d32;
+}
+
+.promo-applied i {
+    cursor: pointer;
+    color: var(--gray);
+}
+
+.promo-applied i:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.promo-applied i:hover {
+    color: #d32f2f;
+}
+
+.bonus-box {
+    background: #f5f5f5;
+    padding: 0.75rem;
+    border-radius: 0.625rem;
+    font-size: 0.8125rem;
+    margin-top: 0.625rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bonus-apply {
+    color: var(--accent);
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: underline;
+}
+
+.bonus-apply:hover {
+    opacity: 0.7;
+}
+
+.bonus-apply:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
+.bonus-note {
+    font-size: 0.625rem;
+    color: var(--gray);
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+.cart-item input[type="checkbox"] {
+    width: 1.125rem;
+    height: 1.125rem;
+    cursor: pointer;
+}
+
+.cart-item input[type="checkbox"]:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.empty-cart {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-cart i {
+    font-size: 3rem;
+    color: var(--gray);
+    margin-bottom: 1rem;
+}
+
+.empty-cart h3 {
+    color: var(--brown);
+    margin-bottom: 0.5rem;
+}
+
+.empty-cart p {
+    color: var(--gray);
+    margin-bottom: 1.5rem;
+}
+
+.empty-cart .btn-gold {
+    display: inline-block;
+    padding: 0.625rem 1.875rem;
+    border-radius: 1.875rem;
+    background: var(--accent);
+    color: white;
+    text-decoration: none;
+}
+
+.empty-cart .btn-gold:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
 </style>
 
 <div class="cart-page">
-<div class="container">
-<div id="cart-content">Загрузка...</div>
-</div>
+    <div class="container">
+        <div id="cart-content" aria-live="polite">Загрузка...</div>
+    </div>
 </div>
 {% endblock %}
 
@@ -262,20 +588,19 @@ function isAuthenticated() {
 
 function showNotification(message){
     const notif=document.createElement('div');
-    notif.style.cssText='position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;';
+    notif.setAttribute('role', 'status');
+    notif.setAttribute('aria-live', 'polite');
+    notif.style.cssText='position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;animation:slideIn 0.3s ease;';
     notif.innerText=message;
     document.body.appendChild(notif);
     setTimeout(()=>notif.remove(),3000);
 }
 
 function loadCart(){
-    // Загружаем корзину для всех пользователей
     fetch('/api/cart/')
     .then(r => r.json())
     .then(cart => {
-        // Проверяем авторизацию перед вызовом защищённых API
         if (isAuthenticated()) {
-            // Авторизованный пользователь - загружаем бонусы и избранное
             return Promise.all([
                 fetch('/api/auth/me/').then(r => r.json()),
                 fetch('/api/favorites/').then(r => r.json())
@@ -285,7 +610,6 @@ function loadCart(){
                 renderCart(cart, favoriteIds);
             });
         } else {
-            // Гость - без бонусов и избранного
             currentBonusPoints = 0;
             renderCart(cart, new Set());
         }
@@ -298,11 +622,11 @@ function loadCart(){
 
 function renderEmptyCart(){
     document.getElementById('cart-content').innerHTML = `
-        <div class="text-center py-5">
-            <i class="fas fa-shopping-cart fa-3x mb-3" style="color: var(--gray);"></i>
-            <h3 style="color: var(--brown);">Корзина пуста</h3>
-            <p style="color: var(--gray);">Добавьте товары в корзину</p>
-            <a href="/catalog/" class="btn-gold" style="display: inline-block; padding: 10px 30px; border-radius: 30px; background: var(--accent); color: white; text-decoration: none;">Перейти в каталог</a>
+        <div class="empty-cart" role="alert">
+            <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+            <h3>Корзина пуста</h3>
+            <p>Добавьте товары в корзину</p>
+            <a href="/catalog/" class="btn-gold" aria-label="Перейти в каталог товаров">Перейти в каталог</a>
         </div>
     `;
 }
@@ -313,7 +637,6 @@ async function updateQuantity(cartItemId, productId, newQty, maxStock){
         return;
     }
     
-    // Получаем текущее количество в корзине для этого товара
     try {
         const cartResponse = await fetch('/api/cart/');
         const cart = await cartResponse.json();
@@ -326,15 +649,12 @@ async function updateQuantity(cartItemId, productId, newQty, maxStock){
         
         const currentQty = cartItem.quantity;
         
-        // Проверка на увеличение количества
         if (newQty > currentQty) {
-            // Проверяем, не превышает ли новое количество доступный запас
             if (newQty > maxStock) {
                 showNotification(`Нельзя добавить больше ${maxStock} шт. товара`);
                 return;
             }
             
-            // Проверяем, сколько ещё можно добавить
             const maxCanAdd = maxStock - currentQty;
             const addingQty = newQty - currentQty;
             
@@ -344,10 +664,8 @@ async function updateQuantity(cartItemId, productId, newQty, maxStock){
             }
         }
         
-        // Если количество не изменилось - выходим
         if (newQty === currentQty) return;
         
-        // Отправляем запрос на обновление
         const response = await fetch('/api/cart/update_item/', {
             method: 'POST',
             headers: {
@@ -363,8 +681,6 @@ async function updateQuantity(cartItemId, productId, newQty, maxStock){
         const responseData = await response.json();
         
         if (!response.ok) {
-            console.error('Server error response:', responseData);
-            
             if (responseData.error) {
                 showNotification(responseData.error);
             } else if (responseData.message) {
@@ -375,7 +691,6 @@ async function updateQuantity(cartItemId, productId, newQty, maxStock){
             return;
         }
         
-        // Успешное обновление
         loadCart();
         
     } catch (error) {
@@ -416,43 +731,41 @@ function renderCart(cart, favoriteIds){
         const hasDiscount=oldPrice>price;
         const discountPercent=hasDiscount ? Math.round((1-price/oldPrice)*100) : 0;
         
-        // Определяем, достигнут ли лимит
         const isMaxQuantity = qty >= maxStock;
         const isMinQuantity = qty <= 1;
 
         html+=`
         <div class="cart-item" data-id="${item.id}" data-product-id="${item.product}" data-max-stock="${maxStock}" data-current-qty="${qty}">
-            <input type="checkbox" onchange="toggleSelect(${item.id})" onclick="event.stopPropagation()">
-            <img src="${imageUrl}" class="product-image" onclick="goToProduct(${item.product}, event)">
+            <input type="checkbox" onchange="toggleSelect(${item.id})" onclick="event.stopPropagation()" aria-label="Выбрать товар ${escapeHtml(item.product_name)}">
+            <img src="${imageUrl}" class="product-image" onclick="goToProduct(${item.product}, event)" alt="${escapeHtml(item.product_name)}" onerror="this.src='/static/shop/images/placeholder.png'">
             <div>
-                <div class="cart-title" onclick="goToProduct(${item.product}, event)">${escapeHtml(item.product_name)}</div>
+                <div class="cart-title" onclick="goToProduct(${item.product}, event)" role="link" tabindex="0" onkeypress="if(event.key==='Enter') goToProduct(${item.product}, event)">${escapeHtml(item.product_name)}</div>
                 <div class="cart-size">Размер: ${item.size || '-'}</div>
                 ${hasDiscount ? `<div style="font-size:12px;color:#ff4444;margin-top:4px;">-${discountPercent}%</div>` : ''}
                 <div class="quantity-control">
-                    <button onclick="updateQuantity(${item.id}, ${item.product}, ${qty-1}, ${maxStock})" ${isMinQuantity ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>-</button>
-                    <input type="text" value="${qty}" readonly>
-                    <button onclick="updateQuantity(${item.id}, ${item.product}, ${qty+1}, ${maxStock})" ${isMaxQuantity ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>+</button>
+                    <button onclick="updateQuantity(${item.id}, ${item.product}, ${qty-1}, ${maxStock})" ${isMinQuantity ? 'disabled' : ''} aria-label="Уменьшить количество">-</button>
+                    <input type="text" value="${qty}" readonly aria-label="Количество товара ${escapeHtml(item.product_name)}">
+                    <button onclick="updateQuantity(${item.id}, ${item.product}, ${qty+1}, ${maxStock})" ${isMaxQuantity ? 'disabled' : ''} aria-label="Увеличить количество">+</button>
                 </div>
                 ${isMaxQuantity ? `<div style="font-size:11px;color:#ff4444;margin-top:4px;">Максимальное количество</div>` : ''}
                 <div class="cart-actions">
-                    <span onclick="toggleFav(${item.product}, this)">
-                        <i class="heart ${isFavorite?'active':''}">❤</i>
+                    <span onclick="toggleFav(${item.product}, this)" onkeypress="if(event.key==='Enter') toggleFav(${item.product}, this)" tabindex="0" role="button" aria-label="${isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}">
+                        <i class="heart ${isFavorite?'active':''}" aria-hidden="true">❤</i>
                         избранное
                     </span>
-                    <span onclick="removeFromCart(${item.id})">
-                        <i class="fas fa-trash"></i>
+                    <span onclick="removeFromCart(${item.id})" onkeypress="if(event.key==='Enter') removeFromCart(${item.id})" tabindex="0" role="button" aria-label="Удалить товар из корзины">
+                        <i class="fas fa-trash" aria-hidden="true"></i>
                         удалить
                     </span>
                 </div>
             </div>
             <div class="cart-price">
-                ${hasDiscount ? `<div class="old-price">${old.toFixed(0)} ₽</div>` : ''}
-                <div class="new-price">${total.toFixed(0)} ₽</div>
+                ${hasDiscount ? `<div class="old-price" aria-label="Старая цена">${old.toFixed(0)} ₽</div>` : ''}
+                <div class="new-price" aria-label="Итоговая цена">${total.toFixed(0)} ₽</div>
             </div>
         </div>`;
     });
 
-    // Применяем скидку по промокоду
     let promoDiscountValue = promoDiscount || 0;
     let finalPrice = subtotal;
     let discount = oldTotal - subtotal;
@@ -472,81 +785,65 @@ function renderCart(cart, favoriteIds){
 
     const earnBonus = Math.floor(finalPrice * 0.05);
 
-    // Промокод блок
     let promoHtml = '';
     if(currentPromoCode && promoDiscountValue > 0){
         promoHtml = `
             <div class="promo-applied">
                 <span>✓ Промокод ${currentPromoCode} применён. Скидка: -${promoDiscountValue.toFixed(0)} ₽</span>
-                <i class="fas fa-times" onclick="removePromoCode()"></i>
+                <i class="fas fa-times" onclick="removePromoCode()" onkeypress="if(event.key==='Enter') removePromoCode()" tabindex="0" role="button" aria-label="Удалить промокод"></i>
             </div>
         `;
     } else {
         promoHtml = `
             <div class="promo-input-group">
-                <input type="text" id="promo-code" placeholder="Введите промокод">
-                <button onclick="applyPromoCode()">Применить</button>
+                <input type="text" id="promo-code" placeholder="Введите промокод" aria-label="Поле ввода промокода">
+                <button onclick="applyPromoCode()" aria-label="Применить промокод">Применить</button>
             </div>
         `;
     }
 
     document.getElementById('cart-content').innerHTML=`
-
     <div class="cart-grid">
-
-        <div>
-
+        <div class="cart-items-list">
             <div class="top-actions">
-                <span onclick="toggleSelectAll()">✔ Выбрать всё</span>
-                <span onclick="deleteSelected()">Удалить</span>
+                <span onclick="toggleSelectAll()" onkeypress="if(event.key==='Enter') toggleSelectAll()" tabindex="0" role="button" aria-label="Выбрать все товары">✔ Выбрать всё</span>
+                <span onclick="deleteSelected()" onkeypress="if(event.key==='Enter') deleteSelected()" tabindex="0" role="button" aria-label="Удалить выбранные товары">Удалить</span>
             </div>
-
             ${html}
-
         </div>
-
-        <div class="cart-summary">
-
+        <div class="cart-summary" aria-label="Итоговая информация о заказе">
             <div class="summary-row">
                 <span>Товары</span>
                 <span>${oldTotal.toFixed(0)} ₽</span>
             </div>
-
             <div class="summary-row">
                 <span>Скидка</span>
                 <span>-${discount.toFixed(0)} ₽</span>
             </div>
-
             <div class="promo-section">
                 ${promoHtml}
             </div>
-
             <div class="summary-row">
                 <span>Бонусы (${currentBonusPoints})</span>
-                <span class="bonus-apply" onclick="toggleBonus()">
+                <span class="bonus-apply" onclick="toggleBonus()" onkeypress="if(event.key==='Enter') toggleBonus()" tabindex="0" role="button" aria-label="${bonusApplied ? 'Отменить применение бонусов' : 'Применить бонусы'}">
                     ${bonusApplied ? 'Отменить' : 'Применить'}
                 </span>
             </div>
             ${bonusApplied ? `<div style="font-size:12px;color:green;margin-top:5px;">✓ Списано ${bonusToUse} бонусов</div>` : ''}
-
             <div class="summary-row">
                 <strong>Итого</strong>
                 <strong>${Math.max(finalPrice,0).toFixed(0)} ₽</strong>
             </div>
-
-            <button class="checkout-btn" id="checkout-btn" onclick="checkout()" style="background-color: var(--accent);">
+            <button class="checkout-btn" id="checkout-btn" onclick="checkout()" aria-label="Перейти к оформлению заказа">
                 Перейти к оформлению
             </button>
-
             <div class="bonus-box">
                 <span>Начислим ${earnBonus} бонусов</span>
             </div>
             <div class="bonus-note">
                 Бонусы будут начислены на следующий день после получения заказа.
             </div>
-
         </div>
-
     </div>`;
 }
 
@@ -561,7 +858,6 @@ function applyPromoCode() {
         return;
     }
     
-    // Получаем текущую сумму корзины
     let subtotal = 0;
     fetch('/api/cart/')
         .then(r => r.json())
@@ -716,7 +1012,6 @@ function deleteSelected(){
 }
 
 function checkout(){
-    // Сохраняем состояние промокода в localStorage перед переходом на checkout
     if (currentPromoCode) {
         localStorage.setItem('checkout_promo_code', currentPromoCode);
         localStorage.setItem('checkout_promo_discount', promoDiscount.toString());
@@ -725,11 +1020,21 @@ function checkout(){
         localStorage.removeItem('checkout_promo_discount');
     }
     
-    // Сохраняем состояние бонусов как строку 'true' или 'false'
     localStorage.setItem('checkout_bonus_applied', bonusApplied ? 'true' : 'false');
     
     window.location.href = '/checkout/';
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.classList.contains('cart-title')) {
+            const productId = e.target.closest('.cart-item')?.dataset.productId;
+            if (productId) {
+                goToProduct(productId, e);
+            }
+        }
+    });
+});
 
 loadCart();
 </script>

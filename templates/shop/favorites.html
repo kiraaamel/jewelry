@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block breadcrumb_items %}
 <li class="breadcrumb-item active" aria-current="page">Избранное</li>
 {% endblock %}
+
 {% block content %}
 <style>
 :root {
@@ -10,69 +12,76 @@
     --accent: #5D6E80;
     --brown: #7A6B5B;
     --gray: #808E92;
+    --focus-ring: #3b5a7a;
+    --red: #dc3545;
 }
+
 .favorites-page {
     background: var(--bg-cream);
-    padding: 40px 0;
+    padding: 2.5rem 0;
     min-height: 70vh;
 }
+
 .favorites-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 1.25rem;
 }
+
 .favorites-title {
-    font-size: 28px;
+    font-size: 1.75rem;
     font-weight: 600;
     color: var(--accent);
-    margin-bottom: 30px;
+    margin-bottom: 1.875rem;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 0.625rem;
 }
+
 .favorites-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 25px;
+    gap: 1.5625rem;
 }
-@media (max-width: 992px) {
-    .favorites-grid { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 768px) {
-    .favorites-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 480px) {
-    .favorites-grid { grid-template-columns: 1fr; }
-}
+
 .favorite-card {
     background: white;
-    border-radius: 20px;
+    border-radius: 1.25rem;
     overflow: hidden;
     box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-    transition: transform 0.3s;
+    transition: transform 0.3s, box-shadow 0.3s;
     position: relative;
 }
+
 .favorite-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0,0,0,0.1);
 }
+
+.favorite-card:focus-within {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
 .favorite-image {
     position: relative;
     cursor: pointer;
 }
+
 .favorite-image img {
     width: 100%;
     height: 250px;
     object-fit: cover;
 }
+
 .remove-favorite {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 0.625rem;
+    right: 0.625rem;
     background: rgba(255,255,255,0.9);
     border: none;
-    width: 36px;
-    height: 36px;
+    width: 2.25rem;
+    height: 2.25rem;
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.3s;
@@ -81,108 +90,148 @@
     justify-content: center;
     color: var(--gray);
 }
+
 .remove-favorite:hover {
     background: var(--accent);
     color: white;
     transform: scale(1.05);
 }
+
+.remove-favorite:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
 .discount-badge {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: 0.625rem;
+    left: 0.625rem;
     background: #ff4444;
     color: white;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11px;
+    padding: 0.25rem 0.625rem;
+    border-radius: 1.25rem;
+    font-size: 0.6875rem;
     font-weight: bold;
 }
+
 .favorite-info {
-    padding: 15px;
+    padding: 0.9375rem;
 }
+
 .favorite-category {
-    font-size: 11px;
+    font-size: 0.6875rem;
     color: var(--gray);
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 5px;
+    margin-bottom: 0.3125rem;
 }
+
 .favorite-name {
-    font-size: 16px;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--brown);
-    margin-bottom: 8px;
+    margin-bottom: 0.5rem;
     cursor: pointer;
+    text-decoration: none;
 }
+
 .favorite-name:hover {
     color: var(--accent);
 }
-.rating {
-    margin: 8px 0;
+
+.favorite-name:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
 }
+
+.rating {
+    margin: 0.5rem 0;
+}
+
 .rating-stars {
     color: #ffc107;
-    font-size: 12px;
+    font-size: 0.75rem;
 }
+
 .favorite-price {
-    font-size: 18px;
+    font-size: 1.125rem;
     font-weight: 700;
     color: var(--accent);
-    margin: 10px 0;
+    margin: 0.625rem 0;
 }
+
 .old-price {
-    font-size: 13px;
+    font-size: 0.8125rem;
     color: var(--gray);
     text-decoration: line-through;
-    margin-left: 8px;
+    margin-left: 0.5rem;
     font-weight: normal;
 }
+
 .btn-add-to-cart {
     width: 100%;
-    padding: 10px;
+    padding: 0.625rem;
     background: var(--accent);
     color: white;
     border: none;
-    border-radius: 30px;
-    font-size: 13px;
+    border-radius: 1.875rem;
+    font-size: 0.8125rem;
     cursor: pointer;
     transition: all 0.3s;
-    margin-top: 10px;
+    margin-top: 0.625rem;
 }
+
 .btn-add-to-cart:hover {
     background: #4a5a6a;
     transform: translateY(-2px);
 }
+
+.btn-add-to-cart:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
 .empty-favorites {
     text-align: center;
-    padding: 60px 20px;
+    padding: 3.75rem 1.25rem;
     background: white;
-    border-radius: 20px;
+    border-radius: 1.25rem;
 }
+
 .empty-favorites i {
-    font-size: 64px;
+    font-size: 4rem;
     color: var(--gray);
-    margin-bottom: 20px;
+    margin-bottom: 1.25rem;
 }
+
 .empty-favorites h3 {
-    font-size: 20px;
+    font-size: 1.25rem;
     color: var(--brown);
-    margin-bottom: 10px;
+    margin-bottom: 0.625rem;
 }
+
 .empty-favorites p {
     color: var(--gray);
-    margin-bottom: 25px;
+    margin-bottom: 1.5625rem;
 }
+
 .btn-catalog {
     background: var(--accent);
     color: white;
     border: none;
-    padding: 12px 30px;
-    border-radius: 30px;
+    padding: 0.75rem 1.875rem;
+    border-radius: 1.875rem;
     cursor: pointer;
     text-decoration: none;
     display: inline-block;
 }
+
+.btn-catalog:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -195,79 +244,280 @@
     align-items: center;
     justify-content: center;
 }
+
 .modal.active {
     display: flex;
 }
+
 .modal-content {
     background: white;
-    border-radius: 24px;
-    padding: 30px;
+    border-radius: 1.5rem;
+    padding: 1.875rem;
     max-width: 350px;
     width: 90%;
     text-align: center;
+    position: relative;
 }
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 1.25rem;
+}
+
+.modal-close {
+    position: absolute;
+    top: 0.9375rem;
+    right: 1.25rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--gray);
+    background: none;
+    border: none;
+}
+
+.modal-close:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
 .size-buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 0.625rem;
     justify-content: center;
-    margin: 20px 0;
+    margin: 1.25rem 0;
 }
+
 .size-btn {
-    padding: 10px 20px;
+    padding: 0.625rem 1.25rem;
     border: 1px solid var(--accent);
-    border-radius: 30px;
+    border-radius: 1.875rem;
     background: white;
     cursor: pointer;
 }
-.size-btn:hover, .size-btn.selected {
+
+.size-btn:hover,
+.size-btn.selected {
     background: var(--accent);
     color: white;
 }
+
+.size-btn:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.modal-quantity-group {
+    margin: 1.25rem 0;
+}
+
+.modal-quantity-group label {
+    margin-right: 0.625rem;
+    color: var(--brown);
+}
+
+.modal-quantity-group input {
+    width: 80px;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+}
+
+.modal-quantity-group input:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.modal-btn-confirm {
+    margin-top: 1.25rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 1.875rem;
+    cursor: pointer;
+    width: 100%;
+}
+
+.modal-btn-confirm:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.modal-btn-cancel {
+    margin-top: 0.625rem;
+    padding: 0.5rem 1.25rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--gray);
+}
+
+.modal-btn-cancel:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
 .notification {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 1.25rem;
+    right: 1.25rem;
     background: var(--accent);
     color: var(--bg-cream);
-    padding: 12px 24px;
-    border-radius: 30px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 1.875rem;
     z-index: 1000;
     animation: slideIn 0.3s ease;
+    font-size: 0.875rem;
 }
+
 @keyframes slideIn {
     from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0%); opacity: 1; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.spinner-border {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border: 0.25rem solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 992px) {
+    .favorites-grid { 
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .favorites-page {
+        padding: 1.5rem 0;
+    }
+    
+    .favorites-title {
+        font-size: 1.5rem;
+    }
+    
+    .favorites-grid { 
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .favorite-image img {
+        height: 200px;
+    }
+    
+    .favorite-name {
+        font-size: 0.875rem;
+    }
+    
+    .favorite-price {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .favorites-container {
+        padding: 0 1rem;
+    }
+    
+    .favorites-title {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+    
+    .favorites-grid { 
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .favorite-image img {
+        height: 220px;
+    }
+    
+    .favorite-info {
+        padding: 0.75rem;
+    }
+    
+    .favorite-name {
+        font-size: 0.8125rem;
+    }
+    
+    .btn-add-to-cart {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .modal-content {
+        padding: 1.25rem;
+    }
+    
+    .size-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.8125rem;
+    }
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 </style>
 
 <div class="favorites-page">
     <div class="favorites-container">
-        <div class="favorites-title">
-            <i class="far fa-heart"></i>
+        <h1 class="favorites-title">
+            <i class="far fa-heart" aria-hidden="true"></i>
             <span>Избранное</span>
-        </div>
-        <div id="favorites-content">
+        </h1>
+        <div id="favorites-content" aria-live="polite">
             <div class="text-center py-5">
-                <div class="spinner-border text-secondary" role="status"></div>
+                <div class="spinner-border text-secondary" role="status" aria-label="Загрузка">
+                    <span class="visually-hidden">Загрузка избранных товаров...</span>
+                </div>
                 <p class="mt-2 text-secondary">Загрузка...</p>
             </div>
         </div>
     </div>
 </div>
 
-<div id="size-modal" class="modal">
+<div id="size-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="size-modal-title" hidden>
     <div class="modal-content">
-        <h3 style="margin-bottom:20px; color:var(--accent);">Выберите размер</h3>
-        <div id="size-options" class="size-buttons"></div>
-        <div>
-            <label>Количество:</label>
-            <input type="number" id="modal-quantity" value="1" min="1" style="width:80px; padding:8px; margin-left:10px; border:1px solid #ddd; border-radius:8px;">
+        <button class="modal-close" onclick="closeSizeModal()" aria-label="Закрыть окно выбора размера">&times;</button>
+        <h2 id="size-modal-title" class="modal-title">Выберите размер</h2>
+        <div id="size-options" class="size-buttons" role="group" aria-label="Доступные размеры"></div>
+        <div class="modal-quantity-group">
+            <label for="modal-quantity">Количество:</label>
+            <input type="number" id="modal-quantity" value="1" min="1" aria-label="Количество товара">
         </div>
-        <button id="confirm-add-to-cart" style="margin-top:20px; padding:12px 24px; background:var(--accent); color:white; border:none; border-radius:30px; cursor:pointer;">Добавить в корзину</button>
-        <button onclick="closeSizeModal()" style="margin-top:10px; padding:8px 20px; background:transparent; border:none; cursor:pointer;">Отмена</button>
+        <button id="confirm-add-to-cart" class="modal-btn-confirm" aria-label="Подтвердить добавление в корзину">
+            Добавить в корзину
+        </button>
+        <button onclick="closeSizeModal()" class="modal-btn-cancel" aria-label="Отменить добавление">
+            Отмена
+        </button>
     </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -283,10 +533,10 @@ function loadFavorites() {
             if (response.status === 401) {
                 document.getElementById('favorites-content').innerHTML = `
                     <div class="empty-favorites">
-                        <i class="fas fa-lock"></i>
+                        <i class="fas fa-lock" aria-hidden="true"></i>
                         <h3>Войдите, чтобы увидеть избранное</h3>
                         <p>Войдите в свой аккаунт или зарегистрируйтесь</p>
-                        <a href="/accounts/login/" class="btn-catalog">Войти</a>
+                        <a href="/accounts/login/" class="btn-catalog" aria-label="Перейти на страницу входа">Войти</a>
                     </div>
                 `;
                 return null;
@@ -303,10 +553,10 @@ function loadFavorites() {
             console.error('Error:', error);
             document.getElementById('favorites-content').innerHTML = `
                 <div class="empty-favorites">
-                    <i class="fas fa-exclamation-triangle"></i>
+                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
                     <h3>Ошибка загрузки</h3>
                     <p>Попробуйте обновить страницу</p>
-                    <button onclick="location.reload()" class="btn-catalog">Обновить</button>
+                    <button onclick="location.reload()" class="btn-catalog" aria-label="Обновить страницу">Обновить</button>
                 </div>
             `;
         });
@@ -317,48 +567,50 @@ function renderFavorites() {
     if (favoritesList.length === 0) {
         container.innerHTML = `
             <div class="empty-favorites">
-                <i class="far fa-heart"></i>
+                <i class="far fa-heart" aria-hidden="true"></i>
                 <h3>В избранном пока пусто</h3>
                 <p>Добавляйте понравившиеся товары, чтобы не потерять их</p>
-                <a href="/catalog/" class="btn-catalog">Перейти в каталог</a>
+                <a href="/catalog/" class="btn-catalog" aria-label="Перейти в каталог">Перейти в каталог</a>
             </div>
         `;
         return;
     }
-    let html = '<div class="favorites-grid">';
+    
+    let html = '<div class="favorites-grid" role="list" aria-label="Список избранных товаров">';
     favoritesList.forEach(fav => {
         const product = fav.product;
-        const discount = product.discount_percent > 0 ? `<span class="discount-badge">-${product.discount_percent}%</span>` : '';
-        const oldPrice = product.old_price ? `<span class="old-price">${product.old_price} ₽</span>` : '';
+        const discount = product.discount_percent > 0 ? `<span class="discount-badge" aria-label="Скидка ${product.discount_percent}%">-${product.discount_percent}%</span>` : '';
+        const oldPrice = product.old_price ? `<span class="old-price" aria-label="Старая цена ${product.old_price} ₽">${product.old_price} ₽</span>` : '';
         const imageUrl = product.image || '/static/shop/images/placeholder.png';
         const rating = product.average_rating || 0;
-        const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
-        const sizes = product.size ? product.size.split(',').map(s => s.trim()) : [];
+        const fullStars = Math.round(rating);
+        const stars = '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
+        const sizes = product.size ? product.size.split(',').map(s => s.trim()).filter(s => s) : [];
+        const sizesJson = JSON.stringify(sizes).replace(/"/g, '&quot;');
+        
         html += `
-            <div class="favorite-card" data-favorite-id="${fav.id}" data-product-id="${product.id}">
+            <div class="favorite-card" data-favorite-id="${fav.id}" data-product-id="${product.id}" role="listitem">
                 <div class="favorite-image">
-                    <a href="/product/${product.id}/">
+                    <a href="/product/${product.id}/" aria-label="Перейти к странице товара ${escapeHtml(product.name)}">
                         <img src="${imageUrl}" alt="${escapeHtml(product.name)}" onerror="this.src='/static/shop/images/placeholder.png'">
                     </a>
-                    <button class="remove-favorite" onclick="removeFromFavorites(${fav.id}, ${product.id})" title="Удалить из избранного">
-                        <i class="fas fa-times"></i>
+                    <button class="remove-favorite" onclick="removeFromFavorites(${fav.id}, ${product.id})" aria-label="Удалить ${escapeHtml(product.name)} из избранного">
+                        <i class="fas fa-times" aria-hidden="true"></i>
                     </button>
                     ${discount}
                 </div>
                 <div class="favorite-info">
-                    <div class="favorite-category">${product.category_name || 'Украшение'}</div>
-                    <a href="/product/${product.id}/" class="text-decoration-none">
-                        <div class="favorite-name">${escapeHtml(product.name)}</div>
-                    </a>
-                    <div class="rating">
-                        <span class="rating-stars">${stars}</span>
+                    <div class="favorite-category">${escapeHtml(product.category_name || 'Украшение')}</div>
+                    <a href="/product/${product.id}/" class="favorite-name" aria-label="${escapeHtml(product.name)}">${escapeHtml(product.name)}</a>
+                    <div class="rating" aria-label="Рейтинг ${rating} из 5">
+                        <span class="rating-stars" aria-hidden="true">${stars}</span>
                         <span class="text-secondary ms-1">(${product.reviews_count || 0})</span>
                     </div>
                     <div class="favorite-price">
-                        ${product.price} ₽ ${oldPrice}
+                        <span aria-label="Цена ${product.price} рублей">${product.price} ₽</span> ${oldPrice}
                     </div>
-                    <button class="btn-add-to-cart" onclick="openSizeModal(${product.id}, '${escapeHtml(product.name)}', ${JSON.stringify(sizes)})">
-                        <i class="fas fa-shopping-cart"></i> В корзину
+                    <button class="btn-add-to-cart" onclick="openSizeModal(${product.id}, '${escapeHtml(product.name)}', ${sizesJson})" aria-label="Добавить ${escapeHtml(product.name)} в корзину">
+                        <i class="fas fa-shopping-cart" aria-hidden="true"></i> В корзину
                     </button>
                 </div>
             </div>
@@ -389,40 +641,57 @@ function openSizeModal(productId, productName, sizes) {
     selectedProductId = productId;
     selectedProductSizes = sizes;
     selectedSize = null;
+    
     const container = document.getElementById('size-options');
     if (!container) return;
+    
     if (sizes.length === 0) {
         container.innerHTML = '<div class="text-secondary">Размер не указан</div>';
     } else {
         let html = '';
         sizes.forEach(size => {
-            html += `<button class="size-btn" data-size="${size}">${size}</button>`;
+            html += `<button class="size-btn" data-size="${size}" aria-label="Выбрать размер ${size}">${size}</button>`;
         });
         container.innerHTML = html;
+        
         document.querySelectorAll('.size-btn').forEach(btn => {
             btn.onclick = function() {
                 document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
                 selectedSize = this.dataset.size;
             };
+            btn.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
         });
     }
+    
     document.getElementById('modal-quantity').value = 1;
-    document.getElementById('size-modal').classList.add('active');
+    const modal = document.getElementById('size-modal');
+    modal.classList.add('active');
+    modal.hidden = false;
 }
 
 function closeSizeModal() {
-    document.getElementById('size-modal').classList.remove('active');
+    const modal = document.getElementById('size-modal');
+    modal.classList.remove('active');
+    modal.hidden = true;
     selectedProductId = null;
     selectedSize = null;
+    selectedProductSizes = [];
 }
 
 function addToCart() {
-    const quantity = document.getElementById('modal-quantity').value;
+    const quantity = parseInt(document.getElementById('modal-quantity').value) || 1;
+    
     if (selectedProductSizes.length > 0 && !selectedSize) {
-        alert('Выберите размер');
+        showNotification('Пожалуйста, выберите размер');
         return;
     }
+    
     fetch('/api/cart/add_item/', {
         method: 'POST',
         headers: {
@@ -431,15 +700,19 @@ function addToCart() {
         },
         body: JSON.stringify({
             product_id: selectedProductId,
-            quantity: parseInt(quantity),
+            quantity: quantity,
             size: selectedSize || ''
         })
     })
     .then(response => response.json())
-    .then(() => {
-        closeSizeModal();
-        updateCartCount();
-        showNotification('Товар добавлен в корзину!');
+    .then(data => {
+        if (data.error) {
+            showNotification(data.error);
+        } else {
+            closeSizeModal();
+            updateCartCount();
+            showNotification('Товар добавлен в корзину!');
+        }
     })
     .catch(error => {
         console.error('Error:', error);
@@ -451,8 +724,10 @@ function showNotification(message) {
     const notification = document.createElement('div');
     notification.className = 'notification';
     notification.textContent = message;
+    notification.setAttribute('role', 'status');
+    notification.setAttribute('aria-live', 'polite');
     document.body.appendChild(notification);
-    setTimeout(() => notification.remove(), 2000);
+    setTimeout(() => notification.remove(), 3000);
 }
 
 function getCookie(name) {
@@ -481,6 +756,13 @@ function updateCartCount() {
         .catch(error => console.error('Error:', error));
 }
 
+function updateFavoritesCount() {
+    const favoritesCount = document.getElementById('favorites-count');
+    if (favoritesCount) {
+        favoritesCount.textContent = favoritesList.length;
+    }
+}
+
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -489,6 +771,30 @@ function escapeHtml(text) {
 }
 
 document.getElementById('confirm-add-to-cart').addEventListener('click', addToCart);
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('size-modal');
+        if (modal && modal.classList.contains('active')) {
+            closeSizeModal();
+        }
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('favorites-content');
+    if (container) {
+        container.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.target.closest('.favorite-card')) {
+                const link = e.target.closest('.favorite-card').querySelector('.favorite-name');
+                if (link) {
+                    window.location.href = link.href;
+                }
+            }
+        });
+    }
+});
+
 loadFavorites();
 </script>
 {% endblock %}

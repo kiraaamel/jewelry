@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block breadcrumb_items %}
 <li class="breadcrumb-item active" aria-current="page">Профиль</li>
 {% endblock %}
+
 {% block content %}
 <style>
 :root {
@@ -13,59 +15,59 @@
     --green: #28a745;
     --red: #dc3545;
     --orange: #ff9800;
+    --focus-ring: #3b5a7a;
 }
 
 .profile-page {
     background: var(--bg-cream);
-    padding: 40px 0;
+    padding: 2.5rem 0;
     min-height: 70vh;
 }
 
 .profile-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 1.25rem;
 }
 
 .profile-grid {
     display: grid;
     grid-template-columns: 280px 1fr;
-    gap: 30px;
+    gap: 1.875rem;
 }
 
-/* Боковое меню */
 .profile-sidebar {
     background: white;
-    border-radius: 20px;
-    padding: 25px;
+    border-radius: 1.25rem;
+    padding: 1.5625rem;
     box-shadow: 0 2px 12px rgba(0,0,0,0.05);
     position: sticky;
-    top: 20px;
+    top: 1.25rem;
 }
 
 .profile-avatar {
     text-align: center;
-    margin-bottom: 25px;
+    margin-bottom: 1.5625rem;
 }
 
 .profile-avatar i {
-    font-size: 80px;
+    font-size: 5rem;
     color: var(--accent);
 }
 
 .profile-name {
-    font-size: 18px;
+    font-size: 1.125rem;
     font-weight: 600;
     color: var(--brown);
     text-align: center;
-    margin-top: 10px;
+    margin-top: 0.625rem;
 }
 
 .profile-email {
-    font-size: 13px;
+    font-size: 0.8125rem;
     color: var(--gray);
     text-align: center;
-    margin-bottom: 25px;
+    margin-bottom: 1.5625rem;
 }
 
 .sidebar-menu {
@@ -75,28 +77,33 @@
 }
 
 .sidebar-menu li {
-    margin-bottom: 8px;
+    margin-bottom: 0.5rem;
 }
 
 .sidebar-menu a {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 15px;
-    border-radius: 12px;
+    gap: 0.75rem;
+    padding: 0.75rem 0.9375rem;
+    border-radius: 0.75rem;
     color: var(--brown);
     text-decoration: none;
     transition: all 0.3s;
 }
 
 .sidebar-menu a i {
-    width: 22px;
+    width: 1.375rem;
     color: var(--gray);
 }
 
 .sidebar-menu a:hover {
     background: #f8f9fa;
     color: var(--accent);
+}
+
+.sidebar-menu a:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
 .sidebar-menu a.active {
@@ -108,56 +115,57 @@
     color: white;
 }
 
-/* Основной контент */
 .profile-content {
     background: white;
-    border-radius: 20px;
-    padding: 30px;
+    border-radius: 1.25rem;
+    padding: 1.875rem;
     box-shadow: 0 2px 12px rgba(0,0,0,0.05);
 }
 
 .content-title {
-    font-size: 24px;
+    font-size: 1.5rem;
     font-weight: 600;
     color: var(--accent);
-    margin-bottom: 25px;
-    padding-bottom: 15px;
+    margin-bottom: 1.5625rem;
+    padding-bottom: 0.9375rem;
     border-bottom: 2px solid var(--accent);
 }
 
-/* Форма профиля */
 .profile-form {
     max-width: 500px;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 1.25rem;
 }
 
 .form-group label {
     display: block;
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 500;
     color: var(--brown);
-    margin-bottom: 8px;
+    margin-bottom: 0.5rem;
 }
 
-.form-group input {
+.form-group input,
+.form-group textarea {
     width: 100%;
-    padding: 12px 15px;
+    padding: 0.75rem 0.9375rem;
     border: 1px solid #ddd;
-    border-radius: 12px;
-    font-size: 14px;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
     transition: all 0.3s;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group textarea:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 2px rgba(93,110,128,0.1);
 }
 
-.form-group input:read-only, .form-group input:disabled {
+.form-group input:read-only,
+.form-group input:disabled {
     background: #f8f9fa;
     cursor: not-allowed;
 }
@@ -166,9 +174,9 @@
     background: var(--accent);
     color: white;
     border: none;
-    padding: 12px 30px;
-    border-radius: 30px;
-    font-size: 14px;
+    padding: 0.75rem 1.875rem;
+    border-radius: 1.875rem;
+    font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
@@ -179,13 +187,17 @@
     transform: translateY(-2px);
 }
 
-/* Карточка промокода */
+.btn-save:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
 .promo-card {
     background: linear-gradient(135deg, #fff9e6, #fff0cc);
     border-left: 4px solid var(--orange);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 20px;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
     transition: all 0.3s;
     position: relative;
     overflow: hidden;
@@ -207,19 +219,19 @@
 }
 
 .promo-code {
-    font-size: 24px;
+    font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: 2px;
     color: var(--brown);
-    margin-bottom: 10px;
+    margin-bottom: 0.625rem;
     font-family: monospace;
 }
 
 .promo-discount {
-    font-size: 32px;
+    font-size: 2rem;
     font-weight: 800;
     color: var(--orange);
-    margin-bottom: 10px;
+    margin-bottom: 0.625rem;
 }
 
 .promo-card.discount-fixed .promo-discount {
@@ -228,40 +240,40 @@
 
 .promo-desc {
     color: var(--gray);
-    font-size: 13px;
-    margin-bottom: 15px;
+    font-size: 0.8125rem;
+    margin-bottom: 0.9375rem;
 }
 
 .promo-terms {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
-    margin-top: 10px;
-    padding-top: 10px;
+    gap: 0.9375rem;
+    margin-top: 0.625rem;
+    padding-top: 0.625rem;
     border-top: 1px dashed rgba(0,0,0,0.1);
 }
 
 .promo-term {
-    font-size: 11px;
+    font-size: 0.6875rem;
     color: var(--gray);
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 0.3125rem;
 }
 
 .promo-term i {
-    font-size: 12px;
+    font-size: 0.75rem;
 }
 
 .promo-expiry {
     position: absolute;
-    top: 15px;
-    right: 15px;
-    font-size: 11px;
+    top: 0.9375rem;
+    right: 0.9375rem;
+    font-size: 0.6875rem;
     color: var(--gray);
     background: rgba(255,255,255,0.8);
-    padding: 4px 8px;
-    border-radius: 20px;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1.25rem;
 }
 
 .promo-expiry.urgent {
@@ -273,12 +285,12 @@
     background: var(--accent);
     color: white;
     border: none;
-    padding: 8px 20px;
-    border-radius: 30px;
-    font-size: 13px;
+    padding: 0.5rem 1.25rem;
+    border-radius: 1.875rem;
+    font-size: 0.8125rem;
     cursor: pointer;
     transition: all 0.3s;
-    margin-top: 10px;
+    margin-top: 0.625rem;
 }
 
 .copy-btn:hover {
@@ -286,50 +298,42 @@
     transform: translateY(-2px);
 }
 
-.empty-promo {
-    text-align: center;
-    padding: 40px;
-    color: var(--gray);
+.copy-btn:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
-.empty-promo i {
-    font-size: 48px;
-    margin-bottom: 15px;
-    opacity: 0.5;
-}
-
-/* Бонусы */
 .bonus-card {
     background: linear-gradient(135deg, var(--accent), #4a5a6a);
-    border-radius: 16px;
-    padding: 25px;
+    border-radius: 1rem;
+    padding: 1.5625rem;
     color: white;
-    margin-bottom: 30px;
+    margin-bottom: 1.875rem;
 }
 
 .bonus-card h3 {
-    font-size: 14px;
+    font-size: 0.875rem;
     opacity: 0.8;
-    margin-bottom: 10px;
+    margin-bottom: 0.625rem;
 }
 
 .bonus-card .bonus-value {
-    font-size: 48px;
+    font-size: 3rem;
     font-weight: 700;
 }
 
 .bonus-card .bonus-note {
-    font-size: 12px;
+    font-size: 0.75rem;
     opacity: 0.7;
-    margin-top: 10px;
+    margin-top: 0.625rem;
 }
 
 .birthday-bonus-card {
     background: linear-gradient(135deg, #ff9800, #ff5722);
-    border-radius: 16px;
-    padding: 20px;
+    border-radius: 1rem;
+    padding: 1.25rem;
     color: white;
-    margin-bottom: 20px;
+    margin-bottom: 1.25rem;
     animation: pulse 2s infinite;
 }
 
@@ -339,12 +343,11 @@
     100% { transform: scale(1); }
 }
 
-/* Отзывы */
 .review-card {
     background: #f8f9fa;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 20px;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
     transition: all 0.3s;
 }
 
@@ -356,20 +359,20 @@
 .review-product {
     font-weight: 600;
     color: var(--accent);
-    margin-bottom: 10px;
+    margin-bottom: 0.625rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 0.625rem;
 }
 
 .review-product-name {
-    font-size: 16px;
+    font-size: 1rem;
 }
 
 .review-product-link {
-    font-size: 12px;
+    font-size: 0.75rem;
     color: var(--gray);
     text-decoration: none;
 }
@@ -380,31 +383,31 @@
 }
 
 .review-stars {
-    margin: 10px 0;
+    margin: 0.625rem 0;
 }
 
 .review-stars i {
     color: #ffc107;
-    font-size: 16px;
-    margin-right: 2px;
+    font-size: 1rem;
+    margin-right: 0.125rem;
 }
 
 .review-text {
     color: var(--brown);
-    font-size: 14px;
+    font-size: 0.875rem;
     line-height: 1.5;
-    margin: 10px 0;
+    margin: 0.625rem 0;
 }
 
 .review-date {
-    font-size: 12px;
+    font-size: 0.75rem;
     color: var(--gray);
 }
 
 .review-image {
-    margin-top: 10px;
+    margin-top: 0.625rem;
     max-width: 150px;
-    border-radius: 8px;
+    border-radius: 0.5rem;
 }
 
 .delete-review-btn {
@@ -412,24 +415,29 @@
     border: none;
     color: var(--red);
     cursor: pointer;
-    padding: 5px;
-    font-size: 14px;
+    padding: 0.3125rem;
+    font-size: 0.875rem;
 }
 
 .delete-review-btn:hover {
     opacity: 0.7;
 }
 
-/* Адреса */
+.delete-review-btn:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
 .addresses-list {
-    margin-top: 20px;
+    margin-top: 1.25rem;
 }
 
 .address-card {
     background: #f8f9fa;
-    border-radius: 16px;
-    padding: 18px;
-    margin-bottom: 15px;
+    border-radius: 1rem;
+    padding: 1.125rem;
+    margin-bottom: 0.9375rem;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -447,24 +455,24 @@
 .address-type {
     font-weight: 600;
     color: var(--accent);
-    margin-bottom: 8px;
+    margin-bottom: 0.5rem;
 }
 
 .address-text {
     color: var(--brown);
-    font-size: 14px;
+    font-size: 0.875rem;
     line-height: 1.4;
 }
 
 .address-delivery-method {
-    font-size: 12px;
+    font-size: 0.75rem;
     color: var(--gray);
-    margin-top: 6px;
+    margin-top: 0.375rem;
 }
 
 .address-actions {
     display: flex;
-    gap: 10px;
+    gap: 0.625rem;
 }
 
 .address-actions button {
@@ -473,37 +481,47 @@
     cursor: pointer;
     color: var(--gray);
     transition: all 0.3s;
-    padding: 5px;
+    padding: 0.3125rem;
 }
 
 .address-actions button:hover {
     color: var(--red);
 }
 
-/* Кнопка перехода к заказам */
+.address-actions button:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
 .btn-orders {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 0.625rem;
     background: var(--accent);
     color: white;
     border: none;
-    padding: 12px 24px;
-    border-radius: 30px;
-    font-size: 14px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 1.875rem;
+    font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
     text-decoration: none;
-    margin-bottom: 20px;
+    margin-bottom: 1.25rem;
 }
 
 .btn-orders:hover {
     background: #4a5a6a;
     transform: translateY(-2px);
+    color: white;
 }
 
-/* Модальное окно */
+.btn-orders:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -523,56 +541,83 @@
 
 .modal-content {
     background: white;
-    border-radius: 24px;
-    padding: 30px;
+    border-radius: 1.5rem;
+    padding: 1.875rem;
     max-width: 500px;
     width: 90%;
     position: relative;
 }
 
 .modal-title {
-    font-size: 22px;
+    font-size: 1.375rem;
     font-weight: 600;
     color: var(--accent);
-    margin-bottom: 20px;
+    margin-bottom: 1.25rem;
 }
 
 .modal-close {
     position: absolute;
-    top: 20px;
-    right: 25px;
-    font-size: 24px;
+    top: 1.25rem;
+    right: 1.5625rem;
+    font-size: 1.5rem;
     cursor: pointer;
     color: var(--gray);
+    background: none;
+    border: none;
+}
+
+.modal-close:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
 }
 
 .modal-btn {
     width: 100%;
-    padding: 12px;
+    padding: 0.75rem;
     background: var(--accent);
     color: white;
     border: none;
-    border-radius: 12px;
-    font-size: 14px;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
-    margin-top: 15px;
+    margin-top: 0.9375rem;
 }
 
-/* Адаптивность */
-@media (max-width: 768px) {
+.modal-btn:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+@media (max-width: 992px) {
     .profile-grid {
-        grid-template-columns: 1fr;
+        gap: 1.25rem;
     }
     
     .profile-sidebar {
         position: static;
     }
+}
+
+@media (max-width: 768px) {
+    .profile-page {
+        padding: 1.5rem 0;
+    }
+    
+    .profile-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .profile-sidebar {
+        padding: 1.25rem;
+    }
     
     .sidebar-menu {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 0.5rem;
     }
     
     .sidebar-menu li {
@@ -580,129 +625,312 @@
     }
     
     .sidebar-menu a {
-        padding: 8px 16px;
+        padding: 0.5rem 1rem;
+        font-size: 0.8125rem;
+    }
+    
+    .profile-content {
+        padding: 1.25rem;
+    }
+    
+    .content-title {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+    
+    .profile-form {
+        max-width: 100%;
     }
     
     .promo-code {
-        font-size: 18px;
+        font-size: 1.125rem;
     }
     
     .promo-discount {
-        font-size: 24px;
+        font-size: 1.5rem;
     }
+    
+    .bonus-card .bonus-value {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .profile-container {
+        padding: 0 1rem;
+    }
+    
+    .profile-sidebar {
+        padding: 1rem;
+    }
+    
+    .profile-avatar i {
+        font-size: 3.5rem;
+    }
+    
+    .profile-name {
+        font-size: 1rem;
+    }
+    
+    .profile-email {
+        font-size: 0.75rem;
+    }
+    
+    .sidebar-menu a {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        gap: 0.5rem;
+    }
+    
+    .sidebar-menu a i {
+        width: 1rem;
+        font-size: 0.75rem;
+    }
+    
+    .profile-content {
+        padding: 1rem;
+    }
+    
+    .content-title {
+        font-size: 1.125rem;
+    }
+    
+    .form-group label {
+        font-size: 0.8125rem;
+    }
+    
+    .form-group input {
+        padding: 0.625rem 0.75rem;
+        font-size: 0.8125rem;
+    }
+    
+    .btn-save,
+    .btn-orders {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+    
+    .promo-card {
+        padding: 0.875rem;
+    }
+    
+    .promo-code {
+        font-size: 1rem;
+    }
+    
+    .promo-discount {
+        font-size: 1.25rem;
+    }
+    
+    .review-card {
+        padding: 0.875rem;
+    }
+    
+    .review-product-name {
+        font-size: 0.875rem;
+    }
+    
+    .review-stars i {
+        font-size: 0.875rem;
+    }
+    
+    .review-text {
+        font-size: 0.8125rem;
+    }
+    
+    .address-card {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .address-actions {
+        justify-content: flex-end;
+        width: 100%;
+    }
+    
+    .bonus-card {
+        padding: 1rem;
+    }
+    
+    .bonus-card .bonus-value {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 426px) {
+    .profile-page {
+        padding: 1rem 0;
+    }
+    
+    .profile-sidebar {
+        padding: 0.75rem;
+    }
+    
+    .profile-avatar i {
+        font-size: 2.5rem;
+    }
+    
+    .profile-name {
+        font-size: 0.875rem;
+    }
+    
+    .sidebar-menu {
+        gap: 0.375rem;
+    }
+    
+    .sidebar-menu a {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.6875rem;
+    }
+    
+    .content-title {
+        font-size: 1rem;
+    }
+    
+    .promo-terms {
+        flex-direction: column;
+        gap: 0.375rem;
+    }
+    
+    .promo-expiry {
+        position: static;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+}
+
+.form-group label {
+    font-weight: 600;
+}
+
+.btn-save,
+.btn-orders,
+.copy-btn {
+    font-weight: 600;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
 </style>
 
 <div class="profile-page">
     <div class="profile-container">
         <div class="profile-grid">
-            <!-- Боковое меню -->
-            <div class="profile-sidebar">
+            <aside class="profile-sidebar" aria-label="Навигация профиля">
                 <div class="profile-avatar">
-                    <i class="fas fa-user-circle"></i>
-                    <div class="profile-name" id="profile-name-display">Загрузка...</div>
-                    <div class="profile-email" id="profile-email-display"></div>
+                    <i class="fas fa-user-circle" aria-hidden="true"></i>
+                    <div class="profile-name" id="profile-name-display" aria-live="polite">Загрузка...</div>
+                    <div class="profile-email" id="profile-email-display" aria-live="polite"></div>
                 </div>
-                <ul class="sidebar-menu">
-                    <li><a href="#" class="active" data-tab="profile"><i class="fas fa-user"></i> Профиль</a></li>
-                    <li><a href="#" data-tab="addresses"><i class="fas fa-map-marker-alt"></i> Мои адреса</a></li>
-                    <li><a href="#" data-tab="reviews"><i class="fas fa-star"></i> Мои отзывы</a></li>
-                    <li><a href="#" data-tab="promocodes"><i class="fas fa-tags"></i> Промокоды и акции</a></li>
-                    <li><a href="#" data-tab="bonus"><i class="fas fa-coins"></i> Бонусы</a></li>
-                </ul>
-            </div>
+                <nav aria-label="Разделы профиля">
+                    <ul class="sidebar-menu">
+                        <li><a href="#" class="active" data-tab="profile" aria-label="Личные данные"><i class="fas fa-user" aria-hidden="true"></i> Профиль</a></li>
+                        <li><a href="#" data-tab="addresses" aria-label="Мои адреса доставки"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Мои адреса</a></li>
+                        <li><a href="#" data-tab="reviews" aria-label="Мои отзывы о товарах"><i class="fas fa-star" aria-hidden="true"></i> Мои отзывы</a></li>
+                        <li><a href="#" data-tab="promocodes" aria-label="Доступные промокоды и акции"><i class="fas fa-tags" aria-hidden="true"></i> Промокоды и акции</a></li>
+                        <li><a href="#" data-tab="bonus" aria-label="Мои бонусы"><i class="fas fa-coins" aria-hidden="true"></i> Бонусы</a></li>
+                    </ul>
+                </nav>
+            </aside>
 
-            <!-- Основной контент -->
-            <div class="profile-content">
-                <!-- Кнопка перехода к заказам -->
-                <a href="/orders/" class="btn-orders">
-                    <i class="fas fa-list-alt"></i> Мои заказы
+            <main class="profile-content">
+                <a href="/orders/" class="btn-orders" aria-label="Перейти к списку заказов">
+                    <i class="fas fa-list-alt" aria-hidden="true"></i> Мои заказы
                 </a>
 
-                <!-- Вкладка Профиль -->
-                <div id="profile-tab" class="tab-content active">
-                    <div class="content-title">Личные данные</div>
-                    <form class="profile-form" id="profile-form">
+                <div id="profile-tab" class="tab-content active" role="tabpanel" aria-labelledby="profile-tab-title">
+                    <h2 id="profile-tab-title" class="content-title">Личные данные</h2>
+                    <form class="profile-form" id="profile-form" aria-label="Форма редактирования профиля">
                         <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" id="profile-email" readonly disabled>
+                            <label for="profile-email">Email</label>
+                            <input type="email" id="profile-email" readonly disabled aria-readonly="true">
                         </div>
                         <div class="form-group">
-                            <label>Имя</label>
-                            <input type="text" id="profile-first-name">
+                            <label for="profile-first-name">Имя</label>
+                            <input type="text" id="profile-first-name" aria-label="Ваше имя">
                         </div>
                         <div class="form-group">
-                            <label>Фамилия</label>
-                            <input type="text" id="profile-last-name">
+                            <label for="profile-last-name">Фамилия</label>
+                            <input type="text" id="profile-last-name" aria-label="Ваша фамилия">
                         </div>
                         <div class="form-group">
-                            <label>Телефон</label>
-                            <input type="tel" id="profile-phone" placeholder="+7 (___) ___-__-__">
+                            <label for="profile-phone">Телефон</label>
+                            <input type="tel" id="profile-phone" placeholder="+7 (___) ___-__-__" aria-label="Номер телефона">
                         </div>
                         <div class="form-group">
-                            <label>Дата рождения</label>
-                            <input type="date" id="profile-birthday" max="2013-05-11">
-                            <small id="birthday-hint" style="font-size: 12px; color: var(--gray); display: block; margin-top: 5px;"></small>
+                            <label for="profile-birthday">Дата рождения</label>
+                            <input type="date" id="profile-birthday" max="2013-05-11" aria-label="Дата рождения">
+                            <small id="birthday-hint" style="font-size: 0.75rem; color: var(--gray); display: block; margin-top: 0.3125rem;" aria-live="polite"></small>
                         </div>
-                        <button type="submit" class="btn-save" id="save-profile-btn">Сохранить изменения</button>
+                        <button type="submit" class="btn-save" id="save-profile-btn" aria-label="Сохранить изменения профиля">Сохранить изменения</button>
                     </form>
                 </div>
 
-                <!-- Вкладка Адреса -->
-                <div id="addresses-tab" class="tab-content" style="display: none;">
-                    <div class="content-title">Мои адреса доставки</div>
-                    <div id="addresses-list">
+                <div id="addresses-tab" class="tab-content" style="display: none;" role="tabpanel" aria-labelledby="addresses-tab-title">
+                    <h2 id="addresses-tab-title" class="content-title">Мои адреса доставки</h2>
+                    <div id="addresses-list" aria-live="polite">
                         <div class="text-center py-3 text-secondary">Загрузка адресов...</div>
                     </div>
                 </div>
 
-                <!-- Вкладка Мои отзывы -->
-                <div id="reviews-tab" class="tab-content" style="display: none;">
-                    <div class="content-title">Мои отзывы</div>
-                    <div id="reviews-list">
+                <div id="reviews-tab" class="tab-content" style="display: none;" role="tabpanel" aria-labelledby="reviews-tab-title">
+                    <h2 id="reviews-tab-title" class="content-title">Мои отзывы</h2>
+                    <div id="reviews-list" aria-live="polite">
                         <div class="text-center py-3 text-secondary">Загрузка отзывов...</div>
                     </div>
                 </div>
 
-                <!-- Вкладка Промокоды и акции -->
-                <div id="promocodes-tab" class="tab-content" style="display: none;">
-                    <div class="content-title">Доступные промокоды и акции</div>
-                    <div id="promocodes-list">
+                <div id="promocodes-tab" class="tab-content" style="display: none;" role="tabpanel" aria-labelledby="promocodes-tab-title">
+                    <h2 id="promocodes-tab-title" class="content-title">Доступные промокоды и акции</h2>
+                    <div id="promocodes-list" aria-live="polite">
                         <div class="text-center py-3 text-secondary">Загрузка промокодов...</div>
                     </div>
                 </div>
 
-                <!-- Вкладка Бонусы -->
-                <div id="bonus-tab" class="tab-content" style="display: none;">
-                    <div class="content-title">Мои бонусы</div>
-                    <div id="birthday-bonus-container"></div>
+                <div id="bonus-tab" class="tab-content" style="display: none;" role="tabpanel" aria-labelledby="bonus-tab-title">
+                    <h2 id="bonus-tab-title" class="content-title">Мои бонусы</h2>
+                    <div id="birthday-bonus-container" aria-live="polite"></div>
                     <div class="bonus-card">
                         <h3>Доступно бонусов</h3>
-                        <div class="bonus-value" id="bonus-points">0</div>
+                        <div class="bonus-value" id="bonus-points" aria-live="polite">0</div>
                         <div class="bonus-note">1 бонус = 1 рубль. Можно списать до 50% от суммы заказа</div>
                     </div>
                     <div class="bonus-history">
-                        <h3 style="font-size: 16px; color: var(--brown); margin-bottom: 15px;">История начисления</h3>
-                        <div id="bonus-history-list">
+                        <h3 style="font-size: 1rem; color: var(--brown); margin-bottom: 0.9375rem;">История начисления</h3>
+                        <div id="bonus-history-list" aria-live="polite">
                             <div class="text-center py-3 text-secondary">Загрузка...</div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     </div>
 </div>
 
-<!-- Модальное окно редактирования адреса -->
-<div id="edit-address-modal" class="modal">
+<div id="edit-address-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-address-title" hidden>
     <div class="modal-content">
-        <span class="modal-close" onclick="closeAddressModal()">&times;</span>
-        <div class="modal-title">Редактировать адрес</div>
+        <button class="modal-close" onclick="closeAddressModal()" aria-label="Закрыть окно редактирования адреса">&times;</button>
+        <h2 id="edit-address-title" class="modal-title">Редактировать адрес</h2>
         <div class="form-group">
-            <label>Адрес</label>
-            <textarea id="edit-address-text" rows="3" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px;"></textarea>
+            <label for="edit-address-text">Адрес</label>
+            <textarea id="edit-address-text" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 0.75rem;" aria-label="Текст адреса"></textarea>
         </div>
-        <button class="modal-btn" onclick="saveAddressEdit()">Сохранить</button>
+        <button class="modal-btn" onclick="saveAddressEdit()" aria-label="Сохранить изменения адреса">Сохранить</button>
     </div>
 </div>
 
@@ -827,18 +1055,16 @@ function claimBirthdayBonus() {
             
             localStorage.setItem(`birthday_bonus_${currentUser.id}_${currentYear}`, 'true');
             loadBonusHistory();
-            showNotification('✅ 1000 бонусов успешно начислены!');
+            showNotification('1000 бонусов успешно начислены!');
         } else {
             showNotification('Ошибка при начислении бонусов');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('❌ Ошибка при начислении бонусов');
+        showNotification('Ошибка при начислении бонусов');
     });
 }
-
-// ========== ФУНКЦИИ ДЛЯ ПРОМОКОДОВ ==========
 
 function loadPromoCodes() {
     fetch('/api/promo/')
@@ -914,13 +1140,11 @@ function renderPromoCodes(promoCodes) {
 
 function copyPromoCode(code) {
     navigator.clipboard.writeText(code).then(() => {
-        showNotification(`✅ Промокод "${code}" скопирован!`);
+        showNotification(`Промокод "${code}" скопирован!`);
     }).catch(() => {
-        showNotification('❌ Не удалось скопировать код');
+        showNotification('Не удалось скопировать код');
     });
 }
-
-// ========== ОСТАЛЬНЫЕ ФУНКЦИИ ==========
 
 function loadAddresses() {
     fetch('/api/orders/')
@@ -1149,14 +1373,13 @@ function loadBonusHistory() {
         });
 }
 
-// Сохранение профиля
 document.getElementById('profile-form').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const birthday = document.getElementById('profile-birthday').value;
     
     if (birthday && !validateAge(birthday)) {
-        showNotification('❌ Пользователь должен быть старше 12 лет');
+        showNotification('Пользователь должен быть старше 12 лет');
         return;
     }
     
@@ -1184,7 +1407,7 @@ document.getElementById('profile-form').addEventListener('submit', function(e) {
             currentUser = data;
             renderProfile(data);
             setTimeout(() => checkBirthdayBonus(data), 500);
-            showNotification('✅ Профиль успешно обновлён');
+            showNotification('Профиль успешно обновлён');
         } else {
             showNotification('Ошибка при обновлении профиля');
         }
@@ -1195,7 +1418,6 @@ document.getElementById('profile-form').addEventListener('submit', function(e) {
     });
 });
 
-// Переключение вкладок
 function initTabs() {
     document.querySelectorAll('.sidebar-menu a').forEach(link => {
         link.addEventListener('click', (e) => {
@@ -1230,11 +1452,36 @@ function initTabs() {
 
 function showNotification(message) {
     const notif = document.createElement('div');
-    notif.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;';
+    notif.setAttribute('role', 'status');
+    notif.setAttribute('aria-live', 'polite');
+    notif.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;animation:slideIn 0.3s ease;';
     notif.innerText = message;
     document.body.appendChild(notif);
     setTimeout(() => notif.remove(), 3000);
 }
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('edit-address-modal');
+        if (modal && modal.classList.contains('active')) {
+            closeAddressModal();
+        }
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadProfile();
+    initTabs();
+    
+    document.querySelectorAll('.sidebar-menu a').forEach(link => {
+        link.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+});
 
 function escapeHtml(text) {
     if (!text) return '';
@@ -1257,7 +1504,6 @@ function getCookie(name) {
     }
     return cookieValue;
 }
-
 loadProfile();
 initTabs();
 </script>

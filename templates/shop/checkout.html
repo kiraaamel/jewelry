@@ -1,21 +1,23 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block breadcrumb_items %}
 <li class="breadcrumb-item"><a href="{% url 'cart' %}">Корзина</a></li>
 <li class="breadcrumb-item active" aria-current="page">Оформление заказа</li>
 {% endblock %}
+
 {% block content %}
 {% if not user.is_authenticated %}
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="text-center py-5">
-                <i class="fas fa-lock fa-4x mb-4" style="color: var(--accent);"></i>
+                <i class="fas fa-lock fa-4x mb-4" style="color: var(--accent);" aria-hidden="true"></i>
                 <h2 style="color: var(--brown);">Требуется авторизация</h2>
                 <p style="color: var(--gray); margin-bottom: 30px;">Для оформления заказа необходимо войти в свой аккаунт</p>
                 <div>
-                    <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn-gold" style="display: inline-block; padding: 12px 30px; border-radius: 30px; background: var(--accent); color: white; text-decoration: none; margin-right: 15px;">Войти</a>
-                    <a href="{% url 'account_signup' %}?next={{ request.path }}" class="btn-outline-gold" style="display: inline-block; padding: 12px 30px; border-radius: 30px; border: 1px solid var(--accent); color: var(--accent); text-decoration: none;">Зарегистрироваться</a>
+                    <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn-gold" style="display: inline-block; padding: 12px 30px; border-radius: 30px; background: var(--accent); color: white; text-decoration: none; margin-right: 15px;" aria-label="Войти в аккаунт">Войти</a>
+                    <a href="{% url 'account_signup' %}?next={{ request.path }}" class="btn-outline-gold" style="display: inline-block; padding: 12px 30px; border-radius: 30px; border: 1px solid var(--accent); color: var(--accent); text-decoration: none;" aria-label="Зарегистрироваться">Зарегистрироваться</a>
                 </div>
             </div>
         </div>
@@ -28,93 +30,106 @@
     --accent: #5D6E80;
     --brown: #7A6B5B;
     --gray: #808E92;
+    --focus-ring: #3b5a7a;
+    --green: #28a745;
+    --red: #dc3545;
 }
 
 .checkout-page {
     background: var(--bg-cream);
-    padding: 40px 0;
+    padding: 2.5rem 0;
     min-height: 70vh;
 }
 
 .checkout-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 1.25rem;
 }
 
 .checkout-title {
-    font-size: 28px;
+    font-size: 1.75rem;
     font-weight: 600;
     color: var(--accent);
-    margin-bottom: 30px;
+    margin-bottom: 1.875rem;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 0.625rem;
 }
 
 .checkout-grid {
     display: grid;
     grid-template-columns: 1fr 380px;
-    gap: 30px;
+    gap: 1.875rem;
     align-items: start;
 }
 
-/* Форма */
 .checkout-form {
     background: white;
-    border-radius: 20px;
-    padding: 25px;
+    border-radius: 1.25rem;
+    padding: 1.5625rem;
     box-shadow: 0 2px 12px rgba(0,0,0,0.05);
 }
 
 .form-section {
-    margin-bottom: 30px;
-    padding-bottom: 20px;
+    margin-bottom: 1.875rem;
+    padding-bottom: 1.25rem;
     border-bottom: 1px solid #e9ecef;
 }
 
 .section-title {
-    font-size: 18px;
+    font-size: 1.125rem;
     font-weight: 600;
     color: var(--accent);
-    margin-bottom: 20px;
+    margin-bottom: 1.25rem;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 0.625rem;
 }
 
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 15px;
+    gap: 0.9375rem;
+    margin-bottom: 0.9375rem;
 }
 
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 0.9375rem;
 }
 
 .form-group label {
     display: block;
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 500;
     color: var(--brown);
-    margin-bottom: 6px;
+    margin-bottom: 0.375rem;
 }
 
-.form-group input, .form-group select, .form-group textarea {
+.form-group input,
+.form-group select,
+.form-group textarea {
     width: 100%;
-    padding: 12px;
+    padding: 0.75rem;
     border: 1px solid #ddd;
-    border-radius: 12px;
-    font-size: 14px;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
     transition: all 0.3s;
 }
 
-.form-group input:focus, .form-group select:focus {
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 2px rgba(93,110,128,0.1);
+}
+
+.form-group input:focus-visible,
+.form-group select:focus-visible,
+.form-group textarea:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
 .form-group textarea {
@@ -122,20 +137,20 @@
     min-height: 80px;
 }
 
-/* Способы доставки */
-.delivery-methods, .payment-methods {
+.delivery-methods,
+.payment-methods {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0.75rem;
 }
 
 .method-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px;
+    gap: 0.75rem;
+    padding: 0.75rem;
     border: 1px solid #e9ecef;
-    border-radius: 12px;
+    border-radius: 0.75rem;
     cursor: pointer;
     transition: all 0.3s;
 }
@@ -145,15 +160,21 @@
     background: #f8f9fa;
 }
 
+.method-item:focus-within {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
 .method-item.selected {
     border-color: var(--accent);
     background: #f0f4f8;
 }
 
 .method-item input {
-    width: 18px;
-    height: 18px;
+    width: 1.125rem;
+    height: 1.125rem;
     accent-color: var(--accent);
+    cursor: pointer;
 }
 
 .method-info {
@@ -166,16 +187,21 @@
 }
 
 .method-price {
-    font-size: 12px;
+    font-size: 0.75rem;
     color: var(--gray);
 }
 
-/* Пункты выдачи */
+.method-note {
+    font-size: 0.6875rem;
+    color: #d32f2f;
+    margin-top: 0.25rem;
+}
+
 .pickup-points {
-    margin-top: 15px;
-    padding: 15px;
+    margin-top: 0.9375rem;
+    padding: 0.9375rem;
     background: #f8f9fa;
-    border-radius: 12px;
+    border-radius: 0.75rem;
     display: none;
 }
 
@@ -184,9 +210,9 @@
 }
 
 .pickup-point {
-    padding: 10px;
-    margin-bottom: 8px;
-    border-radius: 10px;
+    padding: 0.625rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.625rem;
     cursor: pointer;
     transition: all 0.2s;
     border: 1px solid transparent;
@@ -195,6 +221,11 @@
 .pickup-point:hover {
     background: white;
     border-color: var(--accent);
+}
+
+.pickup-point:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
 .pickup-point.selected {
@@ -208,47 +239,46 @@
 }
 
 .pickup-point-address {
-    font-size: 12px;
+    font-size: 0.75rem;
     color: var(--gray);
-    margin-top: 4px;
+    margin-top: 0.25rem;
 }
 
-/* Боковая панель (sticky) */
 .order-summary {
     background: white;
-    border-radius: 20px;
-    padding: 25px;
+    border-radius: 1.25rem;
+    padding: 1.5625rem;
     box-shadow: 0 2px 12px rgba(0,0,0,0.05);
     position: sticky;
-    top: 20px;
+    top: 1.25rem;
 }
 
 .summary-title {
-    font-size: 18px;
+    font-size: 1.125rem;
     font-weight: 600;
     color: var(--accent);
-    margin-bottom: 20px;
-    padding-bottom: 12px;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
     border-bottom: 2px solid var(--accent);
 }
 
 .summary-items {
     max-height: 300px;
     overflow-y: auto;
-    margin-bottom: 20px;
+    margin-bottom: 1.25rem;
 }
 
 .summary-item {
     display: flex;
-    gap: 12px;
-    padding: 10px 0;
+    gap: 0.75rem;
+    padding: 0.625rem 0;
     border-bottom: 1px solid #e9ecef;
 }
 
 .summary-item-image {
     width: 50px;
     height: 50px;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     object-fit: cover;
 }
 
@@ -257,19 +287,19 @@
 }
 
 .summary-item-title {
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 500;
     color: var(--brown);
-    margin-bottom: 4px;
+    margin-bottom: 0.25rem;
 }
 
 .summary-item-size {
-    font-size: 11px;
+    font-size: 0.6875rem;
     color: var(--gray);
 }
 
 .summary-item-price {
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 600;
     color: var(--accent);
 }
@@ -277,31 +307,41 @@
 .summary-row {
     display: flex;
     justify-content: space-between;
-    padding: 10px 0;
-    font-size: 14px;
+    padding: 0.625rem 0;
+    font-size: 0.875rem;
 }
 
 .summary-row.total {
-    font-size: 18px;
+    font-size: 1.125rem;
     font-weight: 700;
     color: var(--accent);
     border-top: 2px solid var(--accent);
-    margin-top: 10px;
-    padding-top: 15px;
+    margin-top: 0.625rem;
+    padding-top: 0.9375rem;
 }
 
 .submit-btn {
     width: 100%;
-    padding: 16px;
+    padding: 1rem;
     background: var(--accent);
     color: white;
     border: none;
-    border-radius: 12px;
-    font-size: 16px;
+    border-radius: 0.75rem;
+    font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    margin-top: 20px;
+    margin-top: 1.25rem;
     transition: all 0.3s;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background: #4a5a6a;
+    transform: translateY(-2px);
+}
+
+.submit-btn:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
 .submit-btn:disabled {
@@ -314,45 +354,65 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
+    padding: 0.625rem 0;
     background: #f8f9fa;
-    border-radius: 12px;
-    margin: 10px 0;
-    padding: 12px;
+    border-radius: 0.75rem;
+    margin: 0.625rem 0;
+    padding: 0.75rem;
 }
 
 .bonus-check {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
+}
+
+.bonus-check input {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+}
+
+.bonus-check label {
+    cursor: pointer;
 }
 
 .promo-section {
-    margin: 10px 0;
-    padding: 12px;
+    margin: 0.625rem 0;
+    padding: 0.75rem;
     background: #f8f9fa;
-    border-radius: 12px;
+    border-radius: 0.75rem;
 }
 
 .promo-input-group {
     display: flex;
-    gap: 8px;
+    gap: 0.5rem;
 }
 
 .promo-input-group input {
     flex: 1;
-    padding: 10px;
-    border-radius: 8px;
+    padding: 0.625rem;
+    border-radius: 0.5rem;
     border: 1px solid #ddd;
 }
 
+.promo-input-group input:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
 .promo-input-group button {
-    padding: 10px 16px;
+    padding: 0.625rem 1rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     background: var(--accent);
     color: #fff;
     cursor: pointer;
+}
+
+.promo-input-group button:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
 .promo-applied {
@@ -360,13 +420,13 @@
     justify-content: space-between;
     align-items: center;
     background: #e8f5e9;
-    padding: 10px;
-    border-radius: 8px;
-    margin-top: 8px;
+    padding: 0.625rem;
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
 }
 
 .promo-applied span {
-    font-size: 13px;
+    font-size: 0.8125rem;
     color: #2e7d32;
 }
 
@@ -375,18 +435,22 @@
     color: var(--gray);
 }
 
+.promo-applied i:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
 .promo-applied i:hover {
     color: #d32f2f;
 }
 
 .bonus-note {
-    font-size: 10px;
+    font-size: 0.625rem;
     color: var(--gray);
-    margin-top: 8px;
+    margin-top: 0.5rem;
     text-align: center;
 }
 
-/* Модальное окно оплаты */
 .modal {
     display: none;
     position: fixed;
@@ -406,8 +470,8 @@
 
 .modal-content {
     background: white;
-    border-radius: 24px;
-    padding: 30px;
+    border-radius: 1.5rem;
+    padding: 1.875rem;
     max-width: 450px;
     width: 90%;
     text-align: center;
@@ -415,134 +479,252 @@
 }
 
 .modal-title {
-    font-size: 24px;
+    font-size: 1.5rem;
     font-weight: 600;
     color: var(--accent);
-    margin-bottom: 20px;
+    margin-bottom: 1.25rem;
 }
 
 .modal-amount {
-    font-size: 32px;
+    font-size: 2rem;
     font-weight: 700;
     color: var(--accent);
-    margin: 20px 0;
+    margin: 1.25rem 0;
 }
 
 .modal-card-input {
     width: 100%;
-    padding: 14px;
+    padding: 0.875rem;
     border: 1px solid #ddd;
-    border-radius: 12px;
-    margin-bottom: 15px;
-    font-size: 16px;
+    border-radius: 0.75rem;
+    margin-bottom: 0.9375rem;
+    font-size: 1rem;
+}
+
+.modal-card-input:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
 .modal-row {
     display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
+    gap: 0.9375rem;
+    margin-bottom: 1.25rem;
 }
 
 .modal-row input {
     flex: 1;
-    padding: 14px;
+    padding: 0.875rem;
     border: 1px solid #ddd;
-    border-radius: 12px;
+    border-radius: 0.75rem;
+}
+
+.modal-row input:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
 .modal-btn {
     width: 100%;
-    padding: 14px;
+    padding: 0.875rem;
     background: var(--accent);
     color: white;
     border: none;
-    border-radius: 12px;
-    font-size: 16px;
+    border-radius: 0.75rem;
+    font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    margin-top: 10px;
+    margin-top: 0.625rem;
+}
+
+.modal-btn:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
 .modal-close {
     position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 24px;
+    top: 0.9375rem;
+    right: 1.25rem;
+    font-size: 1.5rem;
     cursor: pointer;
     color: var(--gray);
+    background: none;
+    border: none;
 }
 
-/* Адаптивность */
+.modal-close:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
+.sbp-app-btn {
+    padding: 0.75rem;
+    border: 1px solid var(--accent);
+    border-radius: 0.75rem;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.sbp-app-btn:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+@media (max-width: 992px) {
+    .checkout-grid {
+        gap: 1.25rem;
+    }
+    
+    .order-summary {
+        position: static;
+    }
+}
+
 @media (max-width: 768px) {
+    .checkout-page {
+        padding: 1.5rem 0;
+    }
+    
     .checkout-grid {
         grid-template-columns: 1fr;
     }
     
     .form-row {
         grid-template-columns: 1fr;
+        gap: 0;
     }
+    
+    .checkout-title {
+        font-size: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1rem;
+    }
+    
+    .order-summary {
+        margin-top: 1.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .checkout-container {
+        padding: 0 1rem;
+    }
+    
+    .checkout-form,
+    .order-summary {
+        padding: 1rem;
+    }
+    
+    .checkout-title {
+        font-size: 1.25rem;
+    }
+    
+    .modal-content {
+        padding: 1.25rem;
+    }
+    
+    .modal-title {
+        font-size: 1.25rem;
+    }
+    
+    .modal-amount {
+        font-size: 1.5rem;
+    }
+    
+    .promo-input-group {
+        flex-direction: column;
+    }
+    
+    .promo-input-group button {
+        width: 100%;
+    }
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
 </style>
 
 <div class="checkout-page">
     <div class="checkout-container">
-        <div class="checkout-title">
-            <i class="fas fa-clipboard-list"></i>
+        <h1 class="checkout-title">
+            <i class="fas fa-clipboard-list" aria-hidden="true"></i>
             <span>Оформление заказа</span>
-        </div>
+        </h1>
 
         <div class="checkout-grid">
-            <!-- Левая колонка: форма -->
             <div class="checkout-form">
-                <form id="checkout-form">
-                    <!-- Контактные данные -->
-                    <div class="form-section">
-                        <div class="section-title">
-                            <i class="fas fa-user"></i>
+                <form id="checkout-form" aria-label="Форма оформления заказа">
+
+                    <fieldset class="form-section">
+                        <legend class="section-title">
+                            <i class="fas fa-user" aria-hidden="true"></i>
                             <span>Контактные данные</span>
-                        </div>
+                        </legend>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Имя *</label>
-                                <input type="text" id="first_name" name="first_name" required>
+                                <label for="first_name">Имя *</label>
+                                <input type="text" id="first_name" name="first_name" required aria-required="true">
                             </div>
                             <div class="form-group">
-                                <label>Фамилия</label>
+                                <label for="last_name">Фамилия</label>
                                 <input type="text" id="last_name" name="last_name">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>Email *</label>
-                            <input type="email" id="email" name="email" required>
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" required aria-required="true">
                         </div>
                         <div class="form-group">
-                            <label>Телефон *</label>
-                            <input type="tel" id="phone" name="phone" placeholder="+7 (___)-___-__-__" required>
+                            <label for="phone">Телефон *</label>
+                            <input type="tel" id="phone" name="phone" placeholder="+7 (___)-___-__-__" required aria-required="true">
                         </div>
-                    </div>
-                    <!-- Способ доставки -->
-                    <div class="form-section">
-                        <div class="section-title">
-                            <i class="fas fa-truck"></i>
+                    </fieldset>
+
+   
+                    <fieldset class="form-section">
+                        <legend class="section-title">
+                            <i class="fas fa-truck" aria-hidden="true"></i>
                             <span>Способ доставки</span>
-                        </div>
-                        <div class="delivery-methods" id="delivery-methods">
-                            <div class="method-item" data-delivery="pickup" data-price="0">
-                                <input type="radio" name="delivery" value="pickup">
+                        </legend>
+                        <div class="delivery-methods" id="delivery-methods" role="radiogroup" aria-label="Способы доставки">
+                            <div class="method-item" data-delivery="pickup" data-price="0" role="radio" aria-checked="false" tabindex="0">
+                                <input type="radio" name="delivery" value="pickup" id="delivery-pickup">
                                 <div class="method-info">
                                     <div class="method-name">Самовывоз</div>
                                     <div class="method-price">Бесплатно</div>
                                 </div>
                             </div>
-                            <div class="method-item" data-delivery="courier" data-price="300">
-                                <input type="radio" name="delivery" value="courier">
+                            <div class="method-item" data-delivery="courier" data-price="300" role="radio" aria-checked="false" tabindex="0">
+                                <input type="radio" name="delivery" value="courier" id="delivery-courier">
                                 <div class="method-info">
                                     <div class="method-name">Курьерская доставка</div>
                                     <div class="method-price">300 ₽</div>
                                 </div>
                             </div>
-                            <div class="method-item" data-delivery="post" data-price="200">
-                                <input type="radio" name="delivery" value="post">
+                            <div class="method-item" data-delivery="post" data-price="200" role="radio" aria-checked="false" tabindex="0">
+                                <input type="radio" name="delivery" value="post" id="delivery-post">
                                 <div class="method-info">
                                     <div class="method-name">Почта России</div>
                                     <div class="method-price">200 ₽</div>
@@ -550,114 +732,111 @@
                             </div>
                         </div>
 
-                        <!-- Пункты самовывоза -->
-                        <div id="pickup-points" class="pickup-points">
-                            <div class="pickup-point" data-point="1">
+                        <div id="pickup-points" class="pickup-points" role="group" aria-label="Пункты самовывоза">
+                            <div class="pickup-point" data-point="1" tabindex="0" role="radio" aria-checked="false">
                                 <div class="pickup-point-name">Пункт выдачи №1</div>
                                 <div class="pickup-point-address">Москва, ул. Тверская, д. 1 (ТЦ "Галерея")</div>
                             </div>
-                            <div class="pickup-point" data-point="2">
+                            <div class="pickup-point" data-point="2" tabindex="0" role="radio" aria-checked="false">
                                 <div class="pickup-point-name">Пункт выдачи №2</div>
                                 <div class="pickup-point-address">Москва, м. Курская, ул. Земляной Вал, д. 33</div>
                             </div>
-                            <div class="pickup-point" data-point="3">
+                            <div class="pickup-point" data-point="3" tabindex="0" role="radio" aria-checked="false">
                                 <div class="pickup-point-name">Пункт выдачи №3</div>
                                 <div class="pickup-point-address">Москва, м. Дмитровская, ул. Бутырская, д. 46</div>
                             </div>
                         </div>
 
-                        <!-- Отделения Почты России -->
-                        <div id="post-points" class="pickup-points">
-                            <div class="pickup-point" data-point="post1">
+                        <div id="post-points" class="pickup-points" role="group" aria-label="Отделения почты России">
+                            <div class="pickup-point" data-point="post1" tabindex="0" role="radio" aria-checked="false">
                                 <div class="pickup-point-name">Почта России №1</div>
                                 <div class="pickup-point-address">Москва, ул. Новый Арбат, д. 15</div>
                             </div>
-                            <div class="pickup-point" data-point="post2">
+                            <div class="pickup-point" data-point="post2" tabindex="0" role="radio" aria-checked="false">
                                 <div class="pickup-point-name">Почта России №2</div>
                                 <div class="pickup-point-address">Москва, Ленинградский пр-т, д. 80</div>
                             </div>
-                            <div class="pickup-point" data-point="post3">
+                            <div class="pickup-point" data-point="post3" tabindex="0" role="radio" aria-checked="false">
                                 <div class="pickup-point-name">Почта России №3</div>
                                 <div class="pickup-point-address">Москва, ул. Профсоюзная, д. 56</div>
                             </div>
                         </div>
-                    </div>
-                    <!-- Адрес доставки (только для курьера) -->
-                    <div class="form-section" id="address-section" style="display: none;">
-                        <div class="section-title">
-                            <i class="fas fa-map-marker-alt"></i>
+                    </fieldset>
+
+                    <fieldset class="form-section" id="address-section" style="display: none;">
+                        <legend class="section-title">
+                            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
                             <span>Адрес доставки</span>
-                        </div>
+                        </legend>
                         <div class="form-group">
-                            <label>Город *</label>
+                            <label for="city">Город *</label>
                             <input type="text" id="city" name="city" value="Москва" readonly>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Улица *</label>
+                                <label for="street">Улица *</label>
                                 <input type="text" id="street" name="street">
                             </div>
                             <div class="form-group">
-                                <label>Дом *</label>
+                                <label for="house">Дом *</label>
                                 <input type="text" id="house" name="house">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Квартира</label>
+                                <label for="apartment">Квартира</label>
                                 <input type="text" id="apartment" name="apartment">
                             </div>
                             <div class="form-group">
-                                <label>Индекс</label>
+                                <label for="postal_code">Индекс</label>
                                 <input type="text" id="postal_code" name="postal_code" placeholder="123456">
                             </div>
                         </div>
-                    </div>
-                    <!-- Дата и время доставки -->
-                    <div class="form-section" id="delivery-date-section" style="display: none;">
-                        <div class="section-title">
-                            <i class="fas fa-calendar-alt"></i>
+                    </fieldset>
+
+                    <fieldset class="form-section" id="delivery-date-section" style="display: none;">
+                        <legend class="section-title">
+                            <i class="fas fa-calendar-alt" aria-hidden="true"></i>
                             <span>Дата и время доставки</span>
-                        </div>
+                        </legend>
                         <div id="delivery-date-content" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
-                    </div>
-                    <!-- Способ оплаты -->
-                    <div class="form-section">
-                        <div class="section-title">
-                            <i class="fas fa-credit-card"></i>
+                    </fieldset>
+
+                    <fieldset class="form-section">
+                        <legend class="section-title">
+                            <i class="fas fa-credit-card" aria-hidden="true"></i>
                             <span>Способ оплаты</span>
-                        </div>
-                        <div class="payment-methods" id="payment-methods">
-                            <div class="method-item" data-payment="card">
-                                <input type="radio" name="payment" value="card" checked>
+                        </legend>
+                        <div class="payment-methods" id="payment-methods" role="radiogroup" aria-label="Способы оплаты">
+                            <div class="method-item" data-payment="card" role="radio" aria-checked="true" tabindex="0">
+                                <input type="radio" name="payment" value="card" checked id="payment-card">
                                 <div class="method-info">
                                     <div class="method-name">Банковская карта онлайн</div>
                                     <div class="method-price">Visa, Mastercard, МИР</div>
                                 </div>
                             </div>
-                            <div class="method-item" data-payment="sbp">
-                                <input type="radio" name="payment" value="sbp">
+                            <div class="method-item" data-payment="sbp" role="radio" aria-checked="false" tabindex="0">
+                                <input type="radio" name="payment" value="sbp" id="payment-sbp">
                                 <div class="method-info">
                                     <div class="method-name">СБП</div>
                                     <div class="method-price">Система быстрых платежей</div>
                                 </div>
                             </div>
-                            <div class="method-item" data-payment="cash">
-                                <input type="radio" name="payment" value="cash">
+                            <div class="method-item" data-payment="cash" role="radio" aria-checked="false" tabindex="0">
+                                <input type="radio" name="payment" value="cash" id="payment-cash">
                                 <div class="method-info">
                                     <div class="method-name">Наличными при получении</div>
                                     <div class="method-price">Оплата курьеру</div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </fieldset>
 
-                    <!-- Подарочная упаковка -->
-                    <div class="form-section">
-                        <div class="section-title">
-                            <i class="fas fa-gift"></i>
+                    <fieldset class="form-section">
+                        <legend class="section-title">
+                            <i class="fas fa-gift" aria-hidden="true"></i>
                             <span>Подарочная упаковка</span>
-                        </div>
+                        </legend>
                         <div class="form-group">
                             <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                                 <input type="checkbox" id="gift_wrap">
@@ -665,20 +844,19 @@
                             </label>
                         </div>
                         <div class="form-group" id="gift-message-group" style="display: none;">
-                            <label>Текст поздравления</label>
+                            <label for="gift_message">Текст поздравления</label>
                             <textarea id="gift_message" placeholder="С днём рождения! Люблю тебя!"></textarea>
                         </div>
-                    </div>
+                    </fieldset>
                 </form>
             </div>
 
-            <!-- Правая колонка: итоги (sticky) -->
-            <div class="order-summary">
-                <div class="summary-title">Ваш заказ</div>
-                <div id="order-items" class="summary-items">
+            <div class="order-summary" aria-label="Итоговая информация о заказе">
+                <h2 class="summary-title">Ваш заказ</h2>
+                <div id="order-items" class="summary-items" aria-live="polite">
                     <div class="text-center text-secondary py-3">Загрузка...</div>
                 </div>
-                <div id="order-totals">
+                <div id="order-totals" aria-live="polite">
                     <div class="summary-row">
                         <span>Товары</span>
                         <span id="subtotal">0 ₽</span>
@@ -696,20 +874,19 @@
                         <span id="delivery-cost">0 ₽</span>
                     </div>
                     
-                    <!-- Промокод -->
                     <div class="promo-section">
                         <div class="promo-input-group">
+                            <label for="promo-code" class="sr-only">Промокод</label>
                             <input type="text" id="promo-code" placeholder="Введите промокод">
-                            <button onclick="applyPromoCode()">Применить</button>
+                            <button onclick="applyPromoCode()" aria-label="Применить промокод">Применить</button>
                         </div>
-                        <div id="promo-status"></div>
+                        <div id="promo-status" aria-live="polite"></div>
                     </div>
 
-                    <!-- Бонусы -->
                     <div class="bonus-row">
                         <div class="bonus-check">
                             <input type="checkbox" id="use-bonus">
-                            <span>Списать бонусы</span>
+                            <label for="use-bonus">Списать бонусы</label>
                         </div>
                         <span id="bonus-available">0 бонусов</span>
                     </div>
@@ -723,7 +900,7 @@
                         <span id="bonus-earn">0 бонусов</span>
                     </div>
                 </div>
-                <button class="submit-btn" id="submit-order-btn" onclick="showPaymentModal()" disabled>Выберите способ доставки</button>
+                <button class="submit-btn" id="submit-order-btn" onclick="showPaymentModal()" disabled aria-label="Подтвердить заказ">Выберите способ доставки</button>
                 <div class="bonus-note">
                     Нажимая «Подтвердить заказ», вы соглашаетесь с условиями оферты
                 </div>
@@ -732,54 +909,60 @@
     </div>
 </div>
 
-<!-- Модальное окно оплаты -->
-<div id="payment-modal" class="modal">
+<div id="payment-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title" hidden>
     <div class="modal-content">
-        <span class="modal-close" onclick="closePaymentModal()">&times;</span>
-        <div class="modal-title">Оплата заказа</div>
-        <div class="modal-amount" id="payment-amount">0 ₽</div>
+        <button class="modal-close" onclick="closePaymentModal()" aria-label="Закрыть окно оплаты">&times;</button>
+        <h2 id="payment-modal-title" class="modal-title">Оплата заказа</h2>
+        <div class="modal-amount" id="payment-amount" aria-live="polite">0 ₽</div>
         <div id="payment-fields">
-            <input type="text" class="modal-card-input" id="card-number" placeholder="Номер карты" maxlength="19">
+            <label for="card-number" class="sr-only">Номер карты</label>
+            <input type="text" class="modal-card-input" id="card-number" placeholder="Номер карты" maxlength="19" aria-label="Номер карты">
             <div class="modal-row">
-                <input type="text" id="card-expiry" placeholder="ММ/ГГ" maxlength="5">
-                <input type="text" id="card-cvv" placeholder="CVV" maxlength="3">
+                <div>
+                    <label for="card-expiry" class="sr-only">Срок действия</label>
+                    <input type="text" id="card-expiry" placeholder="ММ/ГГ" maxlength="5" aria-label="Срок действия карты ММ/ГГ">
+                </div>
+                <div>
+                    <label for="card-cvv" class="sr-only">CVV код</label>
+                    <input type="text" id="card-cvv" placeholder="CVV" maxlength="3" aria-label="CVV код">
+                </div>
             </div>
         </div>
-        <button class="modal-btn" onclick="processPayment()">Оплатить</button>
+        <button class="modal-btn" onclick="processPayment()" aria-label="Оплатить заказ">Оплатить</button>
         <div style="font-size: 12px; color: var(--gray); margin-top: 15px;">
             Для теста введите любые 16 цифр, срок ММ/ГГ и 3 цифры CVV
         </div>
     </div>
 </div>
 
-<div id="sbp-modal" class="modal">
+<div id="sbp-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="sbp-modal-title" hidden>
     <div class="modal-content">
-        <span class="modal-close" onclick="closeSbpModal()">&times;</span>
-        <div class="modal-title">Оплата через СБП</div>
-        <div class="modal-amount" id="sbp-amount">0 ₽</div>
+        <button class="modal-close" onclick="closeSbpModal()" aria-label="Закрыть окно оплаты СБП">&times;</button>
+        <h2 id="sbp-modal-title" class="modal-title">Оплата через СБП</h2>
+        <div class="modal-amount" id="sbp-amount" aria-live="polite">0 ₽</div>
         <div style="text-align: left; margin: 20px 0;">
             <p style="margin-bottom: 15px;">Выберите приложение для оплаты:</p>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button class="sbp-app-btn" data-app="sbp" style="padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;">
-                    <i class="fas fa-mobile-alt" style="font-size: 24px;"></i>
+            <div style="display: flex; flex-direction: column; gap: 10px;" role="group" aria-label="Приложения для оплаты">
+                <button class="sbp-app-btn" data-app="sbp" style="padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;" aria-label="Оплатить через СБПэй">
+                    <i class="fas fa-mobile-alt" style="font-size: 24px;" aria-hidden="true"></i>
                     <span>СБПэй</span>
                 </button>
-                <button class="sbp-app-btn" data-app="tbank" style="padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;">
-                    <i class="fas fa-university" style="font-size: 24px;"></i>
+                <button class="sbp-app-btn" data-app="tbank" style="padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;" aria-label="Оплатить через Т-Банк">
+                    <i class="fas fa-university" style="font-size: 24px;" aria-hidden="true"></i>
                     <span>Т-Банк</span>
                 </button>
-                <button class="sbp-app-btn" data-app="alfa" style="padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;">
-                    <i class="fas fa-building" style="font-size: 24px;"></i>
+                <button class="sbp-app-btn" data-app="alfa" style="padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;" aria-label="Оплатить через Альфа-Банк">
+                    <i class="fas fa-building" style="font-size: 24px;" aria-hidden="true"></i>
                     <span>Альфа-Банк</span>
                 </button>
-                <button class="sbp-app-btn" data-app="sber" style="padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;">
-                    <i class="fas fa-piggy-bank" style="font-size: 24px;"></i>
+                <button class="sbp-app-btn" data-app="sber" style="padding: 12px; border: 1px solid var(--accent); border-radius: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;" aria-label="Оплатить через СберБанк">
+                    <i class="fas fa-piggy-bank" style="font-size: 24px;" aria-hidden="true"></i>
                     <span>СберБанк</span>
                 </button>
             </div>
         </div>
-        <div id="sbp-status" style="margin-top: 15px; font-size: 14px; text-align: center;"></div>
-        <button class="modal-btn" onclick="processSbpPayment()" style="margin-top: 20px;">Оплатить</button>
+        <div id="sbp-status" style="margin-top: 15px; font-size: 14px; text-align: center;" aria-live="polite"></div>
+        <button class="modal-btn" onclick="processSbpPayment()" aria-label="Подтвердить оплату">Оплатить</button>
     </div>
 </div>
 {% endif %}
@@ -823,7 +1006,6 @@ function saveToStorage() {
 function loadCheckout() {
     loadFromStorage();
     
-    // Читаем промокод из localStorage (переданный из cart.html)
     const savedPromoCode = localStorage.getItem('checkout_promo_code');
     const savedPromoDiscount = localStorage.getItem('checkout_promo_discount');
     const savedBonusApplied = localStorage.getItem('checkout_bonus_applied');
@@ -836,12 +1018,10 @@ function loadCheckout() {
             discount: promoDiscount
         };
         
-        // Очищаем localStorage после прочтения
         localStorage.removeItem('checkout_promo_code');
         localStorage.removeItem('checkout_promo_discount');
     }
     
-    // Читаем бонусы из localStorage
     if (savedBonusApplied === 'true') {
         useBonus = true;
     } else if (savedBonusApplied === 'false') {
@@ -849,7 +1029,6 @@ function loadCheckout() {
     }
     localStorage.removeItem('checkout_bonus_applied');
     
-    // Устанавливаем чекбокс бонусов
     const useBonusCheckbox = document.getElementById('use-bonus');
     if (useBonusCheckbox) {
         useBonusCheckbox.checked = useBonus;
@@ -867,9 +1046,7 @@ function loadCheckout() {
                     renderOrderSummary();
                     fillUserData();
                     
-                    // Если есть сохранённый промокод, применяем его после загрузки данных
                     if (currentPromoCode && promoDiscount > 0) {
-                        // Отображаем применённый промокод
                         const promoStatusDiv = document.getElementById('promo-status');
                         if (promoStatusDiv) {
                             promoStatusDiv.innerHTML = `
@@ -879,12 +1056,10 @@ function loadCheckout() {
                                 </div>
                             `;
                         }
-                        // Обновляем итоги с учётом промокода
                         updateTotals();
                         showNotification(`Промокод ${currentPromoCode} применён!`);
                     }
                     
-                    // Если бонусы были применены в корзине, обновляем итоги
                     if (useBonus) {
                         updateTotals();
                         showNotification(`Бонусы применены!`);
@@ -1030,11 +1205,9 @@ function updateTotals() {
     
     let finalPrice = subtotal;
     
-    // Применяем скидку по промокоду
     let promoDiscountAmount = promoDiscount || 0;
     finalPrice -= promoDiscountAmount;
     
-    // Применяем скидку по бонусам
     let bonusDiscount = 0;
     if (useBonus) {
         const maxBonusToUse = Math.floor(finalPrice * 0.5);
@@ -1264,8 +1437,6 @@ function getDeliveryAddress() {
     return null;
 }
 
-// ========== ФУНКЦИИ ДАТЫ И ВРЕМЕНИ ДОСТАВКИ ==========
-
 function formatDateNumber(daysToAdd = 0) {
     const date = new Date();
     date.setDate(date.getDate() + daysToAdd);
@@ -1478,8 +1649,6 @@ function getDeliveryDateTime() {
     return { date, time };
 }
 
-// ========== ФУНКЦИИ СБП ==========
-
 function showSbpModal() {
     const totalEl = document.getElementById('total');
     if (!totalEl) return;
@@ -1544,7 +1713,6 @@ function processSbpPayment() {
     }, 1000);
 }
 
-// Обновление доступных способов оплаты
 function updatePaymentMethods() {
     const deliveryType = getSelectedDelivery();
     const cashMethod = document.querySelector('.method-item[data-payment="cash"]');
@@ -1595,8 +1763,6 @@ function updatePaymentMethods() {
     }
 }
 
-// ========== ОСНОВНЫЕ ФУНКЦИИ ОФОРМЛЕНИЯ ==========
-
 function submitOrderToServer() {
     const deliveryType = getSelectedDelivery();
     if (!deliveryType) {
@@ -1623,7 +1789,6 @@ function submitOrderToServer() {
         phone: pendingOrderData.phone
     };
     
-    // Добавляем промокод, если он применён
     if (currentPromoCode) {
         orderData.promo_code = currentPromoCode;
     }
@@ -1857,7 +2022,9 @@ function processPayment() {
 
 function showNotification(message) {
     const notif = document.createElement('div');
-    notif.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;';
+    notif.setAttribute('role', 'status');
+    notif.setAttribute('aria-live', 'polite');
+    notif.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#5D6E80;color:#F7F2EB;padding:12px 20px;border-radius:30px;z-index:9999;animation:slideIn 0.3s ease;';
     notif.innerText = message;
     document.body.appendChild(notif);
     setTimeout(() => notif.remove(), 3000);
@@ -1884,8 +2051,29 @@ function getCookie(name) {
     }
     return cookieValue;
 }
-
-// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.method-item, .pickup-point, .sbp-app-btn').forEach(el => {
+        el.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const paymentModal = document.getElementById('payment-modal');
+            const sbpModal = document.getElementById('sbp-modal');
+            if (paymentModal && paymentModal.classList.contains('active')) {
+                closePaymentModal();
+            }
+            if (sbpModal && sbpModal.classList.contains('active')) {
+                closeSbpModal();
+            }
+        }
+    });
+});
 initDeliveryMethods();
 initPaymentMethods();
 initSbpButtons();

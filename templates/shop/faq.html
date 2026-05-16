@@ -1,58 +1,58 @@
 {% extends 'base.html' %}
 {% load static %}
+
 {% block breadcrumb_items %}
 <li class="breadcrumb-item active" aria-current="page">FAQ</li>
 {% endblock %}
+
 {% block content %}
 <style>
 .faq-page {
     background: var(--bg-cream);
-    padding: 40px 0;
+    padding: 2.5rem 0;
     min-height: 70vh;
 }
 
 .faq-container {
     max-width: 1000px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 1.25rem;
 }
 
 .faq-title {
-    font-size: 36px;
+    font-size: 2.25rem;
     font-weight: 600;
     color: var(--accent);
-    margin-bottom: 40px;
+    margin-bottom: 2.5rem;
     text-align: center;
     font-family: 'Playfair Display', serif;
 }
 
-/* Секции */
 .faq-section {
-    margin-bottom: 50px;
+    margin-bottom: 3.125rem;
 }
 
 .section-title {
-    font-size: 26px;
+    font-size: 1.625rem;
     font-weight: 600;
     color: var(--brown);
-    margin-bottom: 25px;
-    padding-bottom: 12px;
+    margin-bottom: 1.5625rem;
+    padding-bottom: 0.75rem;
     border-bottom: 2px solid var(--accent);
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 0.75rem;
 }
 
 .section-title i {
     color: var(--accent);
-    font-size: 24px;
+    font-size: 1.5rem;
 }
 
-/* Карточка вопроса */
 .faq-card {
     background: white;
-    border-radius: 16px;
-    margin-bottom: 16px;
+    border-radius: 1rem;
+    margin-bottom: 1rem;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     transition: all 0.3s;
@@ -63,59 +63,76 @@
 }
 
 .faq-question {
-    padding: 20px 25px;
+    padding: 1.25rem 1.5625rem;
     background: white;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 1rem;
     color: var(--brown);
     transition: all 0.3s;
+    border: none;
+    width: 100%;
+    text-align: left;
 }
 
 .faq-question:hover {
     background: #f8f9fa;
 }
 
+.faq-question:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
 .faq-question i {
     color: var(--accent);
     transition: transform 0.3s;
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
-.faq-question.active i {
+.faq-question[aria-expanded="true"] i {
     transform: rotate(180deg);
 }
 
 .faq-answer {
-    padding: 0 25px;
+    padding: 0 1.5625rem;
     max-height: 0;
     overflow: hidden;
     transition: all 0.3s ease;
     color: var(--gray);
     line-height: 1.6;
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
-.faq-answer.active {
-    padding: 0 25px 25px 25px;
+.faq-answer[aria-hidden="false"] {
+    padding: 0 1.5625rem 1.5625rem 1.5625rem;
     max-height: 500px;
 }
 
-/* Способы оплаты и доставки - карточки */
+.faq-answer ul {
+    margin-top: 0.625rem;
+    margin-left: 1.25rem;
+}
+
+.faq-answer li {
+    margin-bottom: 0.3125rem;
+}
+
 .methods-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
-    margin-top: 20px;
+    gap: 1.5625rem;
+    margin-top: 1.25rem;
 }
 
 .method-card {
     background: white;
-    border-radius: 16px;
-    padding: 25px;
+    border-radius: 1rem;
+    padding: 1.5625rem;
     text-align: center;
     box-shadow: 0 2px 12px rgba(0,0,0,0.05);
     transition: all 0.3s;
@@ -126,54 +143,58 @@
     box-shadow: 0 8px 25px rgba(0,0,0,0.1);
 }
 
+.method-card:focus-within {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
 .method-icon {
-    width: 60px;
-    height: 60px;
+    width: 3.75rem;
+    height: 3.75rem;
     background: var(--accent);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 15px;
+    margin: 0 auto 0.9375rem;
 }
 
 .method-icon i {
-    font-size: 28px;
+    font-size: 1.75rem;
     color: white;
 }
 
 .method-card h3 {
-    font-size: 18px;
+    font-size: 1.125rem;
     color: var(--brown);
-    margin-bottom: 10px;
+    margin-bottom: 0.625rem;
 }
 
 .method-card .price {
-    font-size: 22px;
+    font-size: 1.375rem;
     font-weight: 700;
     color: var(--accent);
-    margin: 10px 0;
+    margin: 0.625rem 0;
 }
 
 .method-card p {
     color: var(--gray);
-    font-size: 13px;
+    font-size: 0.8125rem;
     line-height: 1.5;
 }
 
-/* Инфо-блок */
 .info-box {
     background: #f8f9fa;
-    border-radius: 16px;
-    padding: 25px;
-    margin: 30px 0;
+    border-radius: 1rem;
+    padding: 1.5625rem;
+    margin: 1.875rem 0;
     border-left: 4px solid var(--accent);
 }
 
 .info-box h3 {
     color: var(--brown);
-    margin-bottom: 10px;
-    font-size: 18px;
+    margin-bottom: 0.625rem;
+    font-size: 1.125rem;
 }
 
 .info-box p {
@@ -183,63 +204,197 @@
 
 .info-box i {
     color: var(--accent);
-    margin-right: 10px;
+    margin-right: 0.625rem;
 }
 
-/* Контакты */
 .contacts-block {
     background: linear-gradient(135deg, var(--accent), #4a5a6a);
-    border-radius: 20px;
-    padding: 35px;
+    border-radius: 1.25rem;
+    padding: 2.1875rem;
     text-align: center;
     color: white;
-    margin-top: 20px;
+    margin-top: 1.25rem;
 }
 
 .contacts-block h3 {
-    font-size: 24px;
-    margin-bottom: 20px;
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
 }
 
 .contacts-block .contact-items {
     display: flex;
     justify-content: center;
-    gap: 40px;
+    gap: 2.5rem;
     flex-wrap: wrap;
 }
 
 .contacts-block .contact-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 0.625rem;
+}
+
+.contacts-block .contact-item a {
+    color: white;
+    text-decoration: none;
+}
+
+.contacts-block .contact-item a:hover {
+    text-decoration: underline;
+}
+
+.contacts-block .contact-item a:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
 }
 
 .contacts-block .contact-item i {
-    font-size: 24px;
+    font-size: 1.5rem;
 }
 
-/* Адаптивность */
+.vacancy-apply {
+    display: inline-block;
+    margin-top: 0.9375rem;
+    padding: 0.5rem 1rem;
+    background: var(--accent);
+    color: white;
+    text-decoration: none;
+    border-radius: 1.875rem;
+    font-size: 0.8125rem;
+    transition: all 0.3s;
+}
+
+.vacancy-apply:hover {
+    background: #4a5a6a;
+    transform: translateY(-2px);
+}
+
+.vacancy-apply:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
 @media (max-width: 768px) {
+    .faq-page {
+        padding: 1.5rem 0;
+    }
+    
     .faq-title {
-        font-size: 28px;
+        font-size: 1.75rem;
     }
+    
     .section-title {
-        font-size: 22px;
+        font-size: 1.375rem;
     }
+    
     .faq-question {
-        font-size: 14px;
-        padding: 15px 20px;
+        font-size: 0.875rem;
+        padding: 0.9375rem 1.25rem;
     }
-    .faq-answer.active {
-        padding: 0 20px 20px 20px;
+    
+    .faq-answer[aria-hidden="false"] {
+        padding: 0 1.25rem 1.25rem 1.25rem;
     }
+    
     .methods-grid {
         grid-template-columns: 1fr;
     }
+    
     .contacts-block .contact-items {
         flex-direction: column;
-        gap: 15px;
+        gap: 0.9375rem;
     }
+    
+    .contacts-block {
+        padding: 1.5rem;
+    }
+    
+    .contacts-block h3 {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .faq-container {
+        padding: 0 1rem;
+    }
+    
+    .faq-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+    }
+    
+    .section-title i {
+        font-size: 1.125rem;
+    }
+    
+    .faq-question {
+        font-size: 0.8125rem;
+        padding: 0.75rem 1rem;
+    }
+    
+    .faq-answer {
+        font-size: 0.8125rem;
+    }
+    
+    .faq-answer[aria-hidden="false"] {
+        padding: 0 1rem 1rem 1rem;
+    }
+    
+    .method-card {
+        padding: 1rem;
+    }
+    
+    .method-icon {
+        width: 3rem;
+        height: 3rem;
+    }
+    
+    .method-icon i {
+        font-size: 1.25rem;
+    }
+    
+    .method-card h3 {
+        font-size: 1rem;
+    }
+    
+    .method-card .price {
+        font-size: 1.125rem;
+    }
+    
+    .info-box {
+        padding: 1rem;
+    }
+    
+    .info-box h3 {
+        font-size: 1rem;
+    }
+    
+    .info-box p {
+        font-size: 0.8125rem;
+    }
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 </style>
 
@@ -247,31 +402,30 @@
     <div class="faq-container">
         <h1 class="faq-title">Помощь и поддержка</h1>
         
-        <!-- ========== РАЗДЕЛ 1: ЗАКАЗ И ОПЛАТА ========== -->
-        <div class="faq-section" id="payment">
-            <h2 class="section-title">
-                <i class="fas fa-shopping-cart"></i>
+        <section class="faq-section" id="payment" aria-labelledby="payment-title">
+            <h2 id="payment-title" class="section-title">
+                <i class="fas fa-shopping-cart" aria-hidden="true"></i>
                 <span>Заказ и оплата</span>
             </h2>
             
             <div class="faq-card">
-                <div class="faq-question" onclick="toggleFaq(this)">
+                <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="answer1">
                     Как сделать заказ?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div id="answer1" class="faq-answer" aria-hidden="true">
                     Чтобы сделать заказ, выберите понравившийся товар в каталоге, добавьте его в корзину, затем перейдите в корзину и нажмите «Оформить заказ». Заполните контактные данные, выберите способ доставки и оплаты, затем подтвердите заказ. После оформления вы получите подтверждение на email.
                 </div>
             </div>
             
             <div class="faq-card">
-                <div class="faq-question" onclick="toggleFaq(this)">
+                <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="answer2">
                     Какие способы оплаты доступны?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div id="answer2" class="faq-answer" aria-hidden="true">
                     <p>Мы принимаем следующие способы оплаты:</p>
-                    <ul style="margin-top: 10px; margin-left: 20px;">
+                    <ul>
                         <li><strong>Банковская карта онлайн</strong> — Visa, Mastercard, МИР</li>
                         <li><strong>СБП (Система быстрых платежей)</strong> — оплата через приложение банка</li>
                         <li><strong>Наличными при получении</strong> — только для курьерской доставки</li>
@@ -280,46 +434,45 @@
             </div>
             
             <div class="faq-card">
-                <div class="faq-question" onclick="toggleFaq(this)">
+                <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="answer3">
                     Безопасно ли оплачивать картой на сайте?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div id="answer3" class="faq-answer" aria-hidden="true">
                     Да, оплата на нашем сайте абсолютно безопасна. Все данные передаются в зашифрованном виде через защищённый протокол SSL. Мы не храним данные вашей карты — они обрабатываются платёжным шлюзом.
                 </div>
             </div>
             
             <div class="faq-card">
-                <div class="faq-question" onclick="toggleFaq(this)">
+                <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="answer4">
                     Что такое бонусы и как их использовать?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div id="answer4" class="faq-answer" aria-hidden="true">
                     Бонусы начисляются за каждый заказ (5% от суммы покупки). 1 бонус = 1 рубль. Вы можете списать до 50% от стоимости заказа. Бонусы действуют в течение года с момента начисления. Узнать количество бонусов можно в личном кабинете.
                 </div>
             </div>
             
             <div class="faq-card">
-                <div class="faq-question" onclick="toggleFaq(this)">
+                <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="answer5">
                     Нужна ли регистрация для оформления заказа?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div id="answer5" class="faq-answer" aria-hidden="true">
                     Регистрация не обязательна, но мы рекомендуем её пройти. Зарегистрированные пользователи получают бонусы за покупки, могут отслеживать историю заказов и быстрее оформлять новые заказы.
                 </div>
             </div>
-        </div>
+        </section>
         
-        <!-- ========== РАЗДЕЛ 2: ДОСТАВКА ========== -->
-        <div class="faq-section" id="delivery">
-            <h2 class="section-title">
-                <i class="fas fa-truck"></i>
+        <section class="faq-section" id="delivery" aria-labelledby="delivery-title">
+            <h2 id="delivery-title" class="section-title">
+                <i class="fas fa-truck" aria-hidden="true"></i>
                 <span>Доставка</span>
             </h2>
             
             <div class="methods-grid">
                 <div class="method-card">
-                    <div class="method-icon">
+                    <div class="method-icon" aria-hidden="true">
                         <i class="fas fa-store"></i>
                     </div>
                     <h3>Самовывоз</h3>
@@ -327,7 +480,7 @@
                     <p>г. Москва, ул. Тверская, 1 (ТЦ "Галерея")<br>Ежедневно с 10:00 до 21:00</p>
                 </div>
                 <div class="method-card">
-                    <div class="method-icon">
+                    <div class="method-icon" aria-hidden="true">
                         <i class="fas fa-motorcycle"></i>
                     </div>
                     <h3>Курьерская доставка</h3>
@@ -335,7 +488,7 @@
                     <p>Доставка по Москве в день заказа или на следующий день. Бесплатно при заказе от 5000 ₽</p>
                 </div>
                 <div class="method-card">
-                    <div class="method-icon">
+                    <div class="method-icon" aria-hidden="true">
                         <i class="fas fa-envelope"></i>
                     </div>
                     <h3>Почта России</h3>
@@ -344,85 +497,83 @@
                 </div>
             </div>
             
-            <div class="info-box">
-                <h3><i class="fas fa-clock"></i> Сроки доставки</h3>
+            <div class="info-box" role="note">
+                <h3><i class="fas fa-clock" aria-hidden="true"></i> Сроки доставки</h3>
                 <p>• Самовывоз — на следующий день после оформления заказа<br>
                 • Курьерская доставка — 1-2 дня<br>
                 • Почта России — 3-7 дней в зависимости от региона</p>
             </div>
             
             <div class="faq-card">
-                <div class="faq-question" onclick="toggleFaq(this)">
+                <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="answer6">
                     Как отследить заказ?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div id="answer6" class="faq-answer" aria-hidden="true">
                     После отправки заказа вы получите трек-номер для отслеживания на email. Также статус заказа можно посмотреть в личном кабинете в разделе «Мои заказы».
                 </div>
             </div>
             
             <div class="faq-card">
-                <div class="faq-question" onclick="toggleFaq(this)">
+                <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="answer7">
                     Можно ли изменить адрес доставки?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div id="answer7" class="faq-answer" aria-hidden="true">
                     Да, вы можете изменить адрес доставки в личном кабинете в разделе «Мои заказы», пока заказ находится в статусе «Новый» или «Подтверждён».
                 </div>
             </div>
-        </div>
+        </section>
         
-        <!-- ========== РАЗДЕЛ 3: ВОЗВРАТ И ОБМЕН ========== -->
-        <div class="faq-section" id="return">
-            <h2 class="section-title">
-                <i class="fas fa-undo-alt"></i>
+        <section class="faq-section" id="return" aria-labelledby="return-title">
+            <h2 id="return-title" class="section-title">
+                <i class="fas fa-undo-alt" aria-hidden="true"></i>
                 <span>Возврат и обмен</span>
             </h2>
             
             <div class="faq-card">
-                <div class="faq-question" onclick="toggleFaq(this)">
+                <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="answer8">
                     Можно ли вернуть товар?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div id="answer8" class="faq-answer" aria-hidden="true">
                     Да, вы можете вернуть товар надлежащего качества в течение 14 дней с момента получения. Товар должен быть в оригинальной упаковке, без следов ношения, с сохранением всех бирок и ярлыков.
                 </div>
             </div>
             
             <div class="faq-card">
-                <div class="faq-question" onclick="toggleFaq(this)">
+                <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="answer9">
                     Как оформить возврат?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div id="answer9" class="faq-answer" aria-hidden="true">
                     Для оформления возврата свяжитесь с нашей службой поддержки по email: argentic@gmail.com или по телефону +7 (999) 999-99-99. Наши менеджеры помогут вам оформить возврат и подскажут дальнейшие действия.
                 </div>
             </div>
             
             <div class="faq-card">
-                <div class="faq-question" onclick="toggleFaq(this)">
+                <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="answer10">
                     В течение какого времени возвращаются деньги?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div id="answer10" class="faq-answer" aria-hidden="true">
                     Деньги возвращаются на ту же карту, с которой производилась оплата, в течение 5-10 рабочих дней после получения и проверки возвращённого товара.
                 </div>
             </div>
-        </div>
+        </section>
         
-        <!-- ========== РАЗДЕЛ 4: УХОД ЗА ИЗДЕЛИЯМИ ========== -->
-        <div class="faq-section">
-            <h2 class="section-title">
-                <i class="fas fa-gem"></i>
+        <section class="faq-section" aria-labelledby="care-title">
+            <h2 id="care-title" class="section-title">
+                <i class="fas fa-gem" aria-hidden="true"></i>
                 <span>Уход за изделиями</span>
             </h2>
             
             <div class="faq-card">
-                <div class="faq-question" onclick="toggleFaq(this)">
+                <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="answer11">
                     Как ухаживать за серебряными украшениями?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div id="answer11" class="faq-answer" aria-hidden="true">
                     • Храните украшения в мягкой ткани или шкатулке отдельно друг от друга<br>
                     • Избегайте контакта с парфюмерией, косметикой и бытовой химией<br>
                     • Снимайте украшения перед сном, принятием душа или занятием спортом<br>
@@ -431,11 +582,11 @@
             </div>
             
             <div class="faq-card">
-                <div class="faq-question" onclick="toggleFaq(this)">
+                <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="answer12">
                     Что делать, если серебро потемнело?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div id="answer12" class="faq-answer" aria-hidden="true">
                     Потемнение — естественный процесс для серебра. Очистить украшение можно:<br>
                     • Специальной пастой для серебра<br>
                     • Содовым раствором (1 ст. ложка соды на стакан воды)<br>
@@ -444,74 +595,78 @@
             </div>
             
             <div class="faq-card">
-                <div class="faq-question" onclick="toggleFaq(this)">
+                <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="answer13">
                     Как чистить украшения с камнями?
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <div id="answer13" class="faq-answer" aria-hidden="true">
                     Украшения с камнями рекомендуется чистить только мягкой тканью, смоченной в мыльном растворе. Не используйте абразивные средства и не замачивайте изделия надолго, чтобы не повредить крепление камней.
                 </div>
             </div>
-        </div>
-        <!-- ========== РАЗДЕЛ 6: ВАКАНСИИ ========== -->
-        <div class="faq-section" id="vacancies">
-            <h2 class="section-title">
-                <i class="fas fa-briefcase"></i>
+        </section>
+        
+        <section class="faq-section" id="vacancies" aria-labelledby="vacancies-title">
+            <h2 id="vacancies-title" class="section-title">
+                <i class="fas fa-briefcase" aria-hidden="true"></i>
                 <span>Вакансии</span>
             </h2>
             
             <div class="methods-grid">
                 <div class="method-card">
-                    <div class="method-icon">
+                    <div class="method-icon" aria-hidden="true">
                         <i class="fas fa-user-tie"></i>
                     </div>
                     <h3>Менеджер по продажам</h3>
                     <div class="price">от 60 000 ₽</div>
                     <p>📍 Москва | Полный день</p>
                     <p style="margin-top: 10px;">Опыт работы в розничной торговле приветствуется. Уверенное знание ПК, коммуникабельность.</p>
+                    <a href="#vacancies" class="vacancy-apply" aria-label="Откликнуться на вакансию менеджера по продажам">Откликнуться →</a>
                 </div>
                 
                 <div class="method-card">
-                    <div class="method-icon">
+                    <div class="method-icon" aria-hidden="true">
                         <i class="fas fa-box"></i>
                     </div>
                     <h3>Комплектовщик заказов</h3>
                     <div class="price">от 45 000 ₽</div>
                     <p>📍 Москва | Сменный график</p>
                     <p style="margin-top: 10px;">Внимательность, аккуратность, опыт работы на складе приветствуется.</p>
+                    <a href="#vacancies" class="vacancy-apply" aria-label="Откликнуться на вакансию комплектовщика заказов">Откликнуться →</a>
                 </div>
                 
                 <div class="method-card">
-                    <div class="method-icon">
+                    <div class="method-icon" aria-hidden="true">
                         <i class="fas fa-truck"></i>
                     </div>
                     <h3>Курьер</h3>
                     <div class="price">от 50 000 ₽</div>
                     <p>📍 Москва | Гибкий график</p>
                     <p style="margin-top: 10px;">Наличие личного автомобиля, знание города, ответственность.</p>
+                    <a href="#vacancies" class="vacancy-apply" aria-label="Откликнуться на вакансию курьера">Откликнуться →</a>
                 </div>
                 
                 <div class="method-card">
-                    <div class="method-icon">
+                    <div class="method-icon" aria-hidden="true">
                         <i class="fas fa-camera"></i>
                     </div>
                     <h3>Контент-менеджер</h3>
                     <div class="price">от 55 000 ₽</div>
                     <p>📍 Удалённо | Полный день</p>
                     <p style="margin-top: 10px;">Навыки фотосъёмки, обработки изображений, написание описаний к товарам.</p>
+                    <a href="#vacancies" class="vacancy-apply" aria-label="Откликнуться на вакансию контент-менеджера">Откликнуться →</a>
                 </div>
             </div>
             
-            <div class="info-box" style="text-align: center;">
-                <h3><i class="fas fa-paper-plane"></i> Отправить резюме</h3>
+            <div class="info-box" role="note" style="text-align: center;">
+                <h3><i class="fas fa-paper-plane" aria-hidden="true"></i> Отправить резюме</h3>
                 <p>Присылайте своё резюме на почту: <strong>hr@argentic.ru</strong> с указанием желаемой должности в теме письма.</p>
                 <p style="margin-top: 10px;">Или звоните по телефону: <strong>+7 (999) 999-99-99</strong> (отдел кадров, пн-пт с 10:00 до 18:00)</p>
             </div>
-        </div>
-        <!-- ========== РАЗДЕЛ 5: КОНТАКТЫ ========== -->
-        <div class="faq-section">
-            <h2 class="section-title">
-                <i class="fas fa-headset"></i>
+        </section>
+        
+        <section class="faq-section" aria-labelledby="contacts-title">
+            <h2 id="contacts-title" class="section-title">
+                <i class="fas fa-headset" aria-hidden="true"></i>
                 <span>Контакты</span>
             </h2>
             
@@ -519,50 +674,61 @@
                 <h3>Свяжитесь с нами</h3>
                 <div class="contact-items">
                     <div class="contact-item">
-                        <i class="fas fa-phone"></i>
-                        <span>+7 (999) 999-99-99</span>
+                        <i class="fas fa-phone" aria-hidden="true"></i>
+                        <a href="tel:+79999999999" aria-label="Позвонить по телефону +7 (999) 999-99-99">+7 (999) 999-99-99</a>
                     </div>
                     <div class="contact-item">
-                        <i class="fas fa-envelope"></i>
-                        <span>argentic@gmail.com</span>
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
+                        <a href="mailto:argentic@gmail.com" aria-label="Отправить письмо на email argentic@gmail.com">argentic@gmail.com</a>
                     </div>
                     <div class="contact-item">
-                        <i class="fab fa-instagram"></i>
-                        <span>@argentic_jewelry</span>
+                        <i class="fab fa-instagram" aria-hidden="true"></i>
+                        <a href="#" aria-label="Наш Instagram @argentic_jewelry">@argentic_jewelry</a>
                     </div>
                     <div class="contact-item">
-                        <i class="fab fa-telegram"></i>
-                        <span>@argentic_support</span>
+                        <i class="fab fa-telegram" aria-hidden="true"></i>
+                        <a href="#" aria-label="Наш Telegram @argentic_support">@argentic_support</a>
                     </div>
                 </div>
-                <p style="margin-top: 25px; opacity: 0.8;">Режим работы: ежедневно с 10:00 до 21:00</p>
+                <p style="margin-top: 1.5625rem; opacity: 0.8;">Режим работы: ежедневно с 10:00 до 21:00</p>
             </div>
-        </div>
+        </section>
     </div>
 </div>
 
 <script>
-function toggleFaq(element) {
-    element.classList.toggle('active');
-    const answer = element.nextElementSibling;
-    answer.classList.toggle('active');
+function toggleFaq(button) {
+    const isExpanded = button.getAttribute('aria-expanded') === 'true';
+    const answer = document.getElementById(button.getAttribute('aria-controls'));
+    
+    button.setAttribute('aria-expanded', !isExpanded);
+    answer.setAttribute('aria-hidden', isExpanded);
 }
 
-// Автоматическое открытие вопроса из URL-якоря
 document.addEventListener('DOMContentLoaded', function() {
     if (window.location.hash) {
         const targetId = window.location.hash.substring(1);
         const targetElement = document.getElementById(targetId);
         if (targetElement) {
-            const question = targetElement.querySelector('.faq-question');
-            if (question) {
+            const button = targetElement.querySelector('.faq-question');
+            if (button && button.getAttribute('aria-expanded') === 'false') {
                 setTimeout(() => {
-                    question.click();
-                    question.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    toggleFaq(button);
+                    button.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 500);
             }
         }
     }
+    
+    const buttons = document.querySelectorAll('.faq-question');
+    buttons.forEach(button => {
+        button.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleFaq(this);
+            }
+        });
+    });
 });
 </script>
 {% endblock %}

@@ -1,40 +1,42 @@
 {% extends 'base.html' %}
 {% load i18n %}
+
 {% block breadcrumb_items %}
 <li class="breadcrumb-item active" aria-current="page">Вход</li>
 {% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-5">
             <div class="card shadow">
                 <div class="card-header" style="background-color: var(--accent); color: white;">
-                    <h4 class="mb-0">Вход</h4>
+                    <h1 class="mb-0 h4">Вход</h1>
                 </div>
                 <div class="card-body">
                     <form method="post" action="{% url 'account_login' %}">
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="id_login" class="form-label">Email</label>
-                            <input type="email" name="login" class="form-control" id="id_login" required>
+                            <input type="email" name="login" class="form-control" id="id_login" required aria-required="true">
                         </div>
                         <div class="mb-3">
                             <label for="id_password" class="form-label">Пароль</label>
-                            <input type="password" name="password" class="form-control" id="id_password" required>
+                            <input type="password" name="password" class="form-control" id="id_password" required aria-required="true">
                         </div>
                         {% if form.errors %}
-                        <div class="alert alert-danger">
+                        <div class="alert alert-danger" role="alert">
                             Неверный email или пароль
                         </div>
                         {% endif %}
-                        <button type="submit" class="btn btn-gold w-100">Войти</button>
+                        <button type="submit" class="btn btn-gold w-100" aria-label="Войти в аккаунт">Войти</button>
                     </form>
                     <hr>
                     <p class="text-center mb-2">
-                        <a href="{% url 'account_reset_password' %}">Забыли пароль?</a>
+                        <a href="{% url 'account_reset_password' %}" aria-label="Восстановить пароль">Забыли пароль?</a>
                     </p>
                     <p class="text-center mb-0">
-                        Нет аккаунта? <a href="{% url 'account_signup' %}">Зарегистрироваться</a>
+                        Нет аккаунта? <a href="{% url 'account_signup' %}" aria-label="Зарегистрироваться">Зарегистрироваться</a>
                     </p>
                 </div>
             </div>

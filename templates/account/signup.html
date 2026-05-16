@@ -1,15 +1,17 @@
 {% extends 'base.html' %}
 {% load i18n %}
+
 {% block breadcrumb_items %}
 <li class="breadcrumb-item active" aria-current="page">Регистрация</li>
 {% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card shadow">
                 <div class="card-header" style="background-color: var(--accent); color: white;">
-                    <h4 class="mb-0">Регистрация</h4>
+                    <h1 class="mb-0 h4">Регистрация</h1>
                 </div>
                 <div class="card-body">
                     <form method="post" action="{% url 'account_signup' %}">
@@ -22,7 +24,7 @@
                                    class="form-control {% if form.email.errors %}is-invalid{% endif %}" 
                                    id="id_email" 
                                    value="{{ form.email.value|default:'' }}" 
-                                   required>
+                                   required aria-required="true">
                             {% if form.email.errors %}
                             <div class="invalid-feedback">
                                 {{ form.email.errors.0 }}
@@ -64,7 +66,7 @@
                             <input type="password" name="password1" 
                                    class="form-control {% if form.password1.errors %}is-invalid{% endif %}" 
                                    id="id_password1" 
-                                   required>
+                                   required aria-required="true">
                             <small class="form-text text-muted">Пароль должен содержать не менее 8 символов</small>
                             {% if form.password1.errors %}
                             <div class="invalid-feedback">
@@ -79,7 +81,7 @@
                             <input type="password" name="password2" 
                                    class="form-control {% if form.password2.errors %}is-invalid{% endif %}" 
                                    id="id_password2" 
-                                   required>
+                                   required aria-required="true">
                             {% if form.password2.errors %}
                             <div class="invalid-feedback">
                                 {{ form.password2.errors.0 }}
@@ -88,18 +90,18 @@
                         </div>
                         
                         {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
+                        <div class="alert alert-danger" role="alert">
                             {% for error in form.non_field_errors %}
                                 {{ error }}<br>
                             {% endfor %}
                         </div>
                         {% endif %}
                         
-                        <button type="submit" class="btn btn-gold w-100">Зарегистрироваться</button>
+                        <button type="submit" class="btn btn-gold w-100" aria-label="Зарегистрироваться">Зарегистрироваться</button>
                     </form>
                     <hr>
                     <p class="text-center mb-0">
-                        Уже есть аккаунт? <a href="{% url 'account_login' %}">Войти</a>
+                        Уже есть аккаунт? <a href="{% url 'account_login' %}" aria-label="Перейти на страницу входа">Войти</a>
                     </p>
                 </div>
             </div>
