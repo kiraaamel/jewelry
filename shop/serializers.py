@@ -151,6 +151,10 @@ class ProductSerializer(serializers.ModelSerializer):
             'average_rating', 'reviews_count', 'discount_percent',
             'created_at', 'is_in_favorites', 'is_active'
         )
+        extra_kwargs = {
+            'stock_quantity': {'required': False},
+            'price': {'required': False},
+        }
 
     def get_is_in_favorites(self, obj: Product) -> bool:
         """
@@ -218,16 +222,19 @@ class OrderSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     pickup_code = serializers.CharField(read_only=True)
     code_generated_at = serializers.DateTimeField(read_only=True)
+    user_email = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = (
-            'id', 'order_number', 'user', 'created_at', 'status', 'status_display',
+            'id', 'order_number', 'user', 'user_email', 'created_at', 'status', 'status_display',
             'total_price', 'delivery_address', 'delivery_method', 'payment_method',
             'gift_wrap', 'gift_message',
             'comment', 'delivered_at', 'items', 'bonus_earned', 'pickup_code', 'code_generated_at'
         )
         read_only_fields = ('id', 'order_number', 'created_at', 'total_price')
+    def get_user_email(self, obj):
+        return obj.user.email if obj.user else 'Гость'
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
@@ -339,7 +346,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ('id', 'user', 'user_name', 'product', 'product_name', 'rating',
                   'comment', 'image', 'created_at', 'moderated')
-        read_only_fields = ('id', 'user', 'created_at', 'moderated')
+        read_only_fields = ('id', 'user', 'created_at')
 
     def get_product_name(self, obj: Review) -> str:
         """
@@ -368,20 +375,22 @@ class ReviewSerializer(serializers.ModelSerializer):
         Raises:
             ValidationError: Если пользователь не покупал товар
         """
-        request = self.context.get('request')
-        user = request.user
-        product = attrs.get('product')
+        if self.instance is None:
+            request = self.context.get('request')
+            user = request.user
+            product = attrs.get('product')
 
-        has_purchased = Order.objects.filter(
-            user=user,
-            items__product=product,
-            status=Order.Status.DELIVERED
-        ).exists()
+            # Проверяем статус RECEIVED (получен), а не DELIVERED
+            has_purchased = Order.objects.filter(
+                user=user,
+                items__product=product,
+                status=Order.Status.RECEIVED
+            ).exists()
 
-        if not has_purchased:
-            raise serializers.ValidationError(
-                "Вы можете оставить отзыв только на товары, которые вы купили и получили."
-            )
+            if not has_purchased:
+                raise serializers.ValidationError(
+                    "Вы можете оставить отзыв только на товары, которые вы купили и получили."
+                )
         return attrs
 
     def create(self, validated_data: Dict[str, Any]) -> Review:

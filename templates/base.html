@@ -122,6 +122,60 @@
             color: var(--white);
         }
         
+        .admin-btn, .django-admin-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 10px;
+            margin-left: 15px;
+        }
+
+        .admin-btn {
+            background: linear-gradient(135deg, #5D6E80, #4a5a6a);
+            color: white;
+            box-shadow: 0 2px 8px rgba(93,110,128,0.3);
+        }
+        
+        .admin-btn i {
+            font-size: 14px;
+            transition: transform 0.2s ease;
+        }
+        
+        .admin-btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #4a5a6a, #3d4a57);
+            box-shadow: 0 4px 12px rgba(93,110,128,0.4);
+            color: white;
+        }
+        
+        .admin-btn:hover i {
+            transform: rotate(-5deg) scale(1.05);
+        }
+        
+        .admin-btn:active {
+            transform: translateY(0);
+        }
+ 
+        .django-admin-btn {
+            background: #F7F2EB;
+            color: #3b5a7a;
+            border: 1px solid #3b5a7a;
+            box-shadow: 0 2px 8px rgba(12,59,46,0.3);
+        }
+        
+        .django-admin-btn i {
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
         .top-bar-first {
             background-color: var(--accent);
             color: var(--bg-cream);
@@ -512,6 +566,14 @@
                 flex: 0 0 100%;
                 margin-bottom: 1.25rem;
             }  
+            .admin-btn, .django-admin-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            
+            .admin-btn i, .django-admin-btn i {
+                font-size: 12px;
+            }
         }
         
         @media (max-width: 426px) {
@@ -678,7 +740,14 @@
             </div>
         </div>
         {% endblock %}
-        
+        {% if user.is_authenticated and user.is_staff %}
+            <a href="{% url 'admin_dashboard' %}" class="admin-btn">
+                <i class="fas fa-shield-alt"></i> Админ-панель
+            </a>
+            <a href="/admin/" class="django-admin-btn">
+                <i class="fas fa-cog"></i> Django Admin
+            </a>
+        {% endif %}
         {% if messages %}
         <div class="container mt-3" aria-live="polite">
             {% for message in messages %}

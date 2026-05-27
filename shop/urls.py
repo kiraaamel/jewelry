@@ -12,7 +12,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter, APIRootView
 from . import views
 from allauth.account import views as allauth_views
-from .views import PromoCodeViewSet, CollectionViewSet, can_review_product, create_product_review
+from .views import PromoCodeViewSet, UserViewSet, CollectionViewSet, can_review_product, create_product_review, admin_dashboard, AdminOrderViewSet
 
 # Создаём роутер для API
 router: DefaultRouter = DefaultRouter()
@@ -24,6 +24,8 @@ router.register(r'orders', views.OrderViewSet, basename='order')
 router.register(r'reviews', views.ReviewViewSet, basename='review')
 router.register(r'favorites', views.WishlistViewSet, basename='favorite')
 router.register(r'collections', CollectionViewSet, basename='collection')
+router.register(r'users', UserViewSet, basename='user')
+router.register(r'admin/orders', AdminOrderViewSet, basename='admin-orders')
 
 # Список URL-маршрутов
 urlpatterns: List[Union[path, include]] = [
@@ -62,6 +64,7 @@ urlpatterns: List[Union[path, include]] = [
     path('api/auth/login/', views.CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/me/', views.UserProfileView.as_view(), name='user_profile'),
 
+    path('admin-dashboard/', admin_dashboard, name='admin_dashboard'),
     # Тестовый маршрут для Sentry (закомментирован)
     # path('sentry-debug/', views.trigger_error, name='sentry-debug'),
 ]

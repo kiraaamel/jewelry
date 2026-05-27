@@ -41,6 +41,8 @@ from .serializers import (
     PromoCodeSerializer, ApplyPromoCodeSerializer
 )
 from .filters import ProductFilter
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import render
 
 @login_required
 @require_http_methods(["GET"])
@@ -225,6 +227,26 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         """
         return self.request.user
 
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet для пользователей (только для админов)"""
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]
+    
+    def get_queryset(self):
+        return User.objects.all().order_by('-date_joined')
+    
+    @action(detail=True, methods=['post'])
+    def add_bonus(self, request, pk=None):
+        """Начисление бонусов пользователю"""
+        user = self.get_object()
+        bonus = request.data.get('bonus_points', 0)
+        
+        if bonus > 0:
+            user.bonus_points += bonus
+            user.save()
+            return Response({'status': 'ok', 'bonus_points': user.bonus_points})
+        
+        return Response({'error': 'Invalid bonus'}, status=status.HTTP_400_BAD_REQUEST)
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -235,9 +257,9 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
-class ProductViewSet(viewsets.ReadOnlyModelViewSet):
+class ProductViewSet(viewsets.ModelViewSet):  # ← Изменено с ReadOnlyModelViewSet на ModelViewSet для PATCH запросов
     """
-    ViewSet для товаров (только чтение).
+    ViewSet для товаров.
     """
     serializer_class = ProductSerializer
     permission_classes = [permissions.AllowAny]
@@ -249,9 +271,6 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self) -> Product:
         """
         Возвращает QuerySet товаров с учётом фильтрации по поиску и ids.
-
-        Returns:
-            QuerySet: Отфильтрованный QuerySet товаров
         """
         try:
             queryset = Product.objects.filter(is_active=True).select_related('category', 'collection')
@@ -273,15 +292,26 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             print(f"Error in get_queryset: {e}")
             return Product.objects.none()
 
+    def update(self, request, *args, **kwargs):
+        """Обновление товара (PATCH) - для админ-панели"""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        
+        allowed_fields = ['price', 'stock_quantity', 'name', 'description']
+        data = {k: v for k, v in request.data.items() if k in allowed_fields}
+        
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        return Response(serializer.data)
+    
+    def perform_update(self, serializer):
+        serializer.save()
+
     def list(self, request: Request, *args, **kwargs) -> Response:
         """
         Возвращает список товаров с пагинацией.
-
-        Args:
-            request (Request): HTTP запрос
-
-        Returns:
-            Response: Ответ с пагинированным списком товаров
         """
         try:
             queryset = self.filter_queryset(self.get_queryset())
@@ -310,9 +340,6 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     def get_serializer_context(self) -> Dict[str, Any]:
         """
         Добавляет request в контекст сериализатора.
-
-        Returns:
-            dict: Контекст сериализатора
         """
         context = super().get_serializer_context()
         context['request'] = self.request
@@ -322,13 +349,6 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     def reviews(self, request: Request, pk: Optional[int] = None) -> Response:
         """
         Возвращает отзывы для конкретного товара.
-
-        Args:
-            request (Request): HTTP запрос
-            pk (int, optional): ID товара
-
-        Returns:
-            Response: Список отзывов
         """
         try:
             product: Product = self.get_object()
@@ -340,6 +360,32 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=500)
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def apply_discount(self, request: Request, pk: Optional[int] = None) -> Response:
+        """
+        Применение скидки к товару (только для админов).
+        """
+        try:
+            product: Product = self.get_object()
+            discount = request.data.get('discount_percent', 0)
+            
+            if not isinstance(discount, (int, float)) or discount <= 0 or discount > 100:
+                return Response({'error': 'Скидка должна быть числом от 1 до 100'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not product.old_price:
+                product.old_price = product.price
+
+            product.price = product.price * (100 - discount) / 100
+            product.save()
+            
+            return Response({
+                'status': 'ok',
+                'message': f'Скидка {discount}% применена к товару "{product.name}"',
+                'new_price': float(product.price),
+                'old_price': float(product.old_price)
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CartViewSet(viewsets.GenericViewSet):
     """
@@ -655,6 +701,30 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
             'received_at': order.delivered_at
         })
 
+class AdminOrderViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet для просмотра заказов в админ-панели.
+    Доступен только для сотрудников (is_staff=True).
+    """
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAdminUser]
+    
+    def get_queryset(self):
+        """Возвращает ВСЕ заказы для админ-панели"""
+        return Order.objects.all().prefetch_related('items', 'user').order_by('-created_at')
+    
+    @action(detail=True, methods=['post'])
+    def update_status(self, request, pk=None):
+        """Обновление статуса заказа (только для админов)"""
+        order = self.get_object()
+        new_status = request.data.get('status')
+        
+        if new_status in dict(Order.Status.choices):
+            order.status = new_status
+            order.save()
+            return Response({'status': 'ok'})
+        
+        return Response({'error': 'Invalid status'}, status=status.HTTP_400_BAD_REQUEST)
 
 class ReviewViewSet(viewsets.ModelViewSet):
     """
@@ -685,6 +755,32 @@ class ReviewViewSet(viewsets.ModelViewSet):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+    
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def moderate(self, request, pk=None):
+        """Модерация отзыва (только для админов)"""
+        try:
+            review_id = pk
+            moderated = request.data.get('moderated', False)
+
+            if isinstance(moderated, str):
+                moderated = moderated.lower() == 'true'
+            
+            updated_count = Review.objects.filter(id=review_id).update(moderated=moderated)
+            
+            if updated_count == 0:
+                return Response({'error': 'Отзыв не найден'}, status=status.HTTP_404_NOT_FOUND)
+            
+            return Response({
+                'status': 'ok', 
+                'moderated': moderated,
+                'message': 'Отзыв одобрен' if moderated else 'Отзыв снят с публикации'
+            })
+        except Exception as e:
+            print(f"Error in moderate: {e}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class WishlistViewSet(viewsets.ModelViewSet):
@@ -910,6 +1006,62 @@ class PromoCodeViewSet(viewsets.GenericViewSet):
         """
         request.session.pop('applied_promo', None)
         return Response({'message': 'Промокод удалён'})
+    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def create_promo(self, request: Request) -> Response:
+        """
+        Создание нового промокода (только для админов).
+        """
+        try:
+            code = request.data.get('code', '').upper()
+            discount_value = request.data.get('discount_value')
+            valid_to = request.data.get('valid_to')
+            discount_type = request.data.get('discount_type', 'percent')
+            min_order_amount = request.data.get('min_order_amount', 0)
+            max_discount_amount = request.data.get('max_discount_amount', None)
+            only_new_users = request.data.get('only_new_users', False)
+            user_limit = request.data.get('user_limit', 1)
+            
+            if not code:
+                return Response({'error': 'Код промокода обязателен'}, status=400)
+            
+            if not discount_value or float(discount_value) <= 0:
+                return Response({'error': 'Скидка должна быть больше 0'}, status=400)
+            
+            if float(discount_value) > 100 and discount_type == 'percent':
+                return Response({'error': 'Процент скидки не может быть больше 100'}, status=400)
+
+            if PromoCode.objects.filter(code=code).exists():
+                return Response({'error': 'Промокод с таким кодом уже существует'}, status=400)
+
+            promo_code = PromoCode.objects.create(
+                code=code,
+                discount_type=discount_type,
+                discount_value=float(discount_value),
+                valid_from=timezone.now(),
+                valid_to=valid_to if valid_to else timezone.now() + timezone.timedelta(days=30),
+                min_order_amount=float(min_order_amount) if min_order_amount else 0,
+                max_discount_amount=float(max_discount_amount) if max_discount_amount else None,
+                only_new_users=only_new_users,
+                user_limit=int(user_limit) if user_limit else 1,
+                is_active=True
+            )
+            
+            return Response({
+                'status': 'ok',
+                'message': f'Промокод "{code}" успешно создан',
+                'promo_code': {
+                    'id': promo_code.id,
+                    'code': promo_code.code,
+                    'discount_value': promo_code.discount_value,
+                    'valid_to': promo_code.valid_to
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            print(f"Error creating promo code: {e}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=500)
 
 
 class CollectionViewSet(viewsets.ReadOnlyModelViewSet):
@@ -919,6 +1071,14 @@ class CollectionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Collection.objects.filter(is_active=True).order_by('order', 'name')
     serializer_class = CollectionSerializer
     permission_classes = [permissions.AllowAny]
+
+@staff_member_required
+def admin_dashboard(request):
+    """
+    Админ-панель для управления магазином.
+    Доступна только сотрудникам (is_staff=True).
+    """
+    return render(request, 'shop/admin_dashboard.html')
 
 #def trigger_error(request):
 #    """Тестовая функция для проверки Sentry"""
