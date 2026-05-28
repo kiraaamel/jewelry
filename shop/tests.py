@@ -16,7 +16,7 @@ from django.utils import timezone
 
 from shop.models import (
     Category, Product, Collection, Cart, CartItem,
-    Order, OrderItem, Review, Wishlist, PromoCode, PromoCodeUsage
+    Order, OrderItem, Review, Wishlist, PromoCode, PromoCodeUsage, ProductVariant
 )
 
 User = get_user_model()
@@ -92,22 +92,27 @@ class ProductTests(TestCase):
         self.client = APIClient()
         self.category = Category.objects.create(name='Кольца', slug='rings')
         self.collection = Collection.objects.create(name='Весенняя коллекция', slug='spring', is_active=True)
+        
         self.product = Product.objects.create(
             name='Серебряное кольцо',
             slug='silver-ring',
             description='Красивое серебряное кольцо',
             price=Decimal('15000.00'),
-            stock_quantity=10,
             category=self.category,
             collection=self.collection,
             is_active=True
+        )
+        self.variant = ProductVariant.objects.create(
+            product=self.product,
+            size='17',
+            stock_quantity=10,
+            reserved_quantity=0
         )
         
     def test_06_get_products_list(self):
         """Тест получения списка товаров"""
         response = self.client.get('/api/products/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Проверяем, что в ответе есть результаты (может быть пагинация)
         if 'results' in response.data:
             self.assertTrue(len(response.data['results']) > 0)
         else:
@@ -119,21 +124,29 @@ class ProductTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['name'], 'Серебряное кольцо')
         self.assertEqual(str(response.data['price']), '15000.00')
+        self.assertIn('variants', response.data)
+        self.assertEqual(len(response.data['variants']), 1)
+        self.assertEqual(response.data['variants'][0]['size'], '17')
     
     def test_08_filter_products_by_price(self):
         """Тест фильтрации товаров по цене"""
-        Product.objects.create(
+        product2 = Product.objects.create(
             name='Дорогое кольцо',
             slug='expensive-ring',
             description='Дорогое кольцо',
             price=Decimal('50000.00'),
-            stock_quantity=5,
             category=self.category,
             is_active=True
         )
+        ProductVariant.objects.create(
+            product=product2,
+            size='18',
+            stock_quantity=5,
+            reserved_quantity=0
+        )
+        
         response = self.client.get('/api/products/?price_min=10000&price_max=30000')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Получаем список товаров (учитывая пагинацию)
         products = response.data.get('results', response.data)
         for product in products:
             price = Decimal(str(product['price']))
@@ -142,21 +155,26 @@ class ProductTests(TestCase):
     
     def test_09_filter_products_with_discount(self):
         """Тест фильтрации товаров со скидкой"""
-        Product.objects.create(
+        product2 = Product.objects.create(
             name='Товар со скидкой',
             slug='discount-product',
             description='Товар со скидкой',
             price=Decimal('10000.00'),
             old_price=Decimal('15000.00'),
-            stock_quantity=5,
             category=self.category,
             is_active=True
         )
+        ProductVariant.objects.create(
+            product=product2,
+            size='16',
+            stock_quantity=5,
+            reserved_quantity=0
+        )
+        
         response = self.client.get('/api/products/?has_discount=true')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         products = response.data.get('results', response.data)
         for product in products:
-            # Проверяем, что old_price существует (скидка)
             self.assertIsNotNone(product.get('old_price'))
     
     def test_10_get_categories(self):
@@ -186,9 +204,14 @@ class CartTests(TestCase):
             slug='silver-bracelet',
             description='Красивый браслет',
             price=Decimal('12000.00'),
-            stock_quantity=10,
             category=self.category,
             is_active=True
+        )
+        self.variant = ProductVariant.objects.create(
+            product=self.product,
+            size='18',
+            stock_quantity=10,
+            reserved_quantity=0
         )
         
     def test_12_get_cart_empty(self):
@@ -198,36 +221,31 @@ class CartTests(TestCase):
         self.assertEqual(response.data['total_items'], 0)
     
     def test_13_add_item_to_cart(self):
-        """Тест добавления товара в корзину"""
-        data = {'product_id': self.product.id, 'quantity': 2}
+        """Тест добавления товара в корзину (по variant_id)"""
+        data = {'variant_id': self.variant.id, 'quantity': 2}
         response = self.client.post('/api/cart/add_item/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['total_items'], 2)
     
     def test_14_update_cart_item_quantity(self):
         """Тест изменения количества товара в корзине"""
-        # Сначала добавляем товар
-        self.client.post('/api/cart/add_item/', {'product_id': self.product.id, 'quantity': 1}, format='json')
+        self.client.post('/api/cart/add_item/', {'variant_id': self.variant.id, 'quantity': 1}, format='json')
         
-        # Получаем cart_item_id
         cart = Cart.objects.get(user=self.user)
         cart_item = cart.items.first()
         
-        # Изменяем количество
         data = {'cart_item_id': cart_item.id, 'quantity': 5}
         response = self.client.post('/api/cart/update_item/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
     
     def test_15_remove_item_from_cart(self):
         """Тест удаления товара из корзины"""
-        # Добавляем товар
-        self.client.post('/api/cart/add_item/', {'product_id': self.product.id, 'quantity': 1}, format='json')
-        
-        # Получаем cart_item_id
+    
+        self.client.post('/api/cart/add_item/', {'variant_id': self.variant.id, 'quantity': 1}, format='json')
+ 
         cart = Cart.objects.get(user=self.user)
         cart_item = cart.items.first()
-        
-        # Удаляем товар
+
         data = {'cart_item_id': cart_item.id}
         response = self.client.post('/api/cart/remove_item/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -248,16 +266,21 @@ class OrderTests(TestCase):
             slug='silver-earrings',
             description='Красивые серьги',
             price=Decimal('18000.00'),
-            stock_quantity=10,
             category=self.category,
             is_active=True
         )
-        
-        # Создаём корзину с товаром
+        self.variant = ProductVariant.objects.create(
+            product=self.product,
+            size='One Size',
+            stock_quantity=10,
+            reserved_quantity=0
+        )
+
         self.cart, created = Cart.objects.get_or_create(user=self.user)
         self.cart_item = CartItem.objects.create(
             cart=self.cart,
             product=self.product,
+            variant=self.variant,
             quantity=1
         )
     
@@ -276,7 +299,6 @@ class OrderTests(TestCase):
     
     def test_17_get_user_orders(self):
         """Тест получения списка заказов пользователя"""
-        # Создаём заказ
         data = {
             'delivery_address': 'Москва, ул. Тверская, д. 1',
             'delivery_method': 'courier',
@@ -285,7 +307,6 @@ class OrderTests(TestCase):
         }
         self.client.post('/api/orders/create_order/', data, format='json')
         
-        # Получаем список заказов
         response = self.client.get('/api/orders/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(len(response.data) >= 1)
@@ -305,9 +326,15 @@ class FavoriteTests(TestCase):
             slug='silver-pendant',
             description='Красивая подвеска',
             price=Decimal('8000.00'),
-            stock_quantity=15,
             category=self.category,
             is_active=True
+        )
+
+        ProductVariant.objects.create(
+            product=self.product,
+            size='One Size',
+            stock_quantity=15,
+            reserved_quantity=0
         )
     
     def test_18_add_to_favorites(self):
@@ -343,16 +370,22 @@ class UnauthorizedAccessTests(TestCase):
             slug='test-product',
             description='Тестовое описание',
             price=Decimal('5000.00'),
-            stock_quantity=10,
             category=self.category,
             is_active=True
         )
+
+        ProductVariant.objects.create(
+            product=self.product,
+            size='One Size',
+            stock_quantity=10,
+            reserved_quantity=0
+        )
     
-    def test_21_unauthorized_cart_access_denied(self):
-        """Тест: неавторизованный пользователь не может получить корзину"""
+    def test_21_unauthorized_cart_access_allowed(self):
+        """Тест: неавторизованный пользователь может работать с корзиной (гостевая корзина)"""
         response = self.client.get('/api/cart/')
-        # DRF возвращает 403 (Forbidden) для неавторизованных, а не 401
-        self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('total_items', response.data)
     
     def test_22_unauthorized_orders_access_denied(self):
         """Тест: неавторизованный пользователь не может получить заказы"""

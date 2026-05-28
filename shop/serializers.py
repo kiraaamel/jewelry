@@ -16,11 +16,18 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import (
     Category, Product, Cart, CartItem, Collection,
-    Order, OrderItem, Review, Wishlist, PromoCode, PromoCodeUsage
+    Order, OrderItem, Review, Wishlist, PromoCode, PromoCodeUsage, ProductVariant
 )
 
 User = get_user_model()
 
+class ProductVariantSerializer(serializers.ModelSerializer):
+    """Сериализатор для варианта товара (размера)."""
+    available_quantity = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = ProductVariant
+        fields = ('id', 'size', 'stock_quantity', 'reserved_quantity', 'available_quantity', 'sku')
 
 class RegisterSerializer(serializers.ModelSerializer):
     """
@@ -123,8 +130,12 @@ class ProductSerializer(serializers.ModelSerializer):
     Сериализатор для товара.
     """
     discount_percent = serializers.IntegerField(read_only=True)
-    available_quantity = serializers.IntegerField(read_only=True)
+    available_quantity = serializers.IntegerField(read_only=True) 
     is_in_favorites = serializers.SerializerMethodField()
+    variants = ProductVariantSerializer(many=True, read_only=True) 
+    has_variants = serializers.BooleanField(read_only=True) 
+    min_price = serializers.DecimalField(read_only=True, max_digits=10, decimal_places=2) 
+    max_price = serializers.DecimalField(read_only=True, max_digits=10, decimal_places=2) 
 
     silver_type_display = serializers.CharField(source='get_silver_type_display', read_only=True)
     fineness_display = serializers.CharField(source='get_fineness_display', read_only=True)
@@ -140,36 +151,43 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = (
             'id', 'name', 'slug', 'description', 'price', 'old_price',
-            'stock_quantity', 'reserved_quantity', 'available_quantity',
+           
+            'available_quantity', 
             'category', 'category_name', 'country',
             'silver_type', 'silver_type_display',
             'fineness', 'fineness_display',
-            'weight', 'size',
+            'weight', 
             'stones', 'stone_type', 'stone_type_display', 'stone_weight',
             'collection', 'collection_name', 'collection_slug',
             'image', 'image_2', 'image_3', 'image_4', 'image_5',
             'average_rating', 'reviews_count', 'discount_percent',
-            'created_at', 'is_in_favorites', 'is_active'
+            'created_at', 'is_in_favorites', 'is_active',
+            'variants', 'has_variants', 'min_price', 'max_price'
         )
         extra_kwargs = {
-            'stock_quantity': {'required': False},
             'price': {'required': False},
         }
 
     def get_is_in_favorites(self, obj: Product) -> bool:
-        """
-        Проверяет, находится ли товар в избранном у текущего пользователя.
-
-        Args:
-            obj (Product): Объект товара
-
-        Returns:
-            bool: True если товар в избранном, иначе False
-        """
+        """Проверяет, находится ли товар в избранном у текущего пользователя."""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return obj.is_in_wishlist(request.user)
         return False
+    
+    def get_has_variants(self, obj: Product) -> bool:
+        """Проверяет, есть ли варианты у товара."""
+        return obj.variants.exists()
+    
+    def get_min_price(self, obj: Product) -> Decimal:
+        """Возвращает минимальную цену среди вариантов (если есть варианты, иначе цену товара)."""
+        if obj.variants.exists():
+            return obj.price
+        return obj.price
+    
+    def get_max_price(self, obj: Product) -> Decimal:
+        """Возвращает максимальную цену среди вариантов."""
+        return obj.price
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -181,11 +199,17 @@ class CartItemSerializer(serializers.ModelSerializer):
     old_price = serializers.DecimalField(source='product.old_price', read_only=True, max_digits=10, decimal_places=2)
     product_image = serializers.ImageField(source='product.image', read_only=True)
     total_price = serializers.DecimalField(read_only=True, max_digits=10, decimal_places=2)
-
+    variant_size = serializers.CharField(source='variant.size', read_only=True)
+    variant_id = serializers.IntegerField(source='variant.id', read_only=True)
+    available_quantity = serializers.IntegerField(source='variant.available_quantity', read_only=True)
     class Meta:
         model = CartItem
-        fields = ('id', 'product', 'product_name', 'product_price', 'old_price', 'product_image',
-                  'quantity', 'size', 'added_at', 'total_price')
+        fields = (
+            'id', 'product', 'variant', 
+            'product_name', 'product_price', 'old_price', 'product_image',
+            'quantity', 'added_at', 'total_price',
+            'variant_size', 'variant_id', 'available_quantity' 
+        )
 
 
 class CartSerializer(serializers.ModelSerializer):
@@ -199,6 +223,9 @@ class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = ('id', 'user', 'items', 'total_price', 'total_items', 'updated_at')
+    def get_items(self, obj):
+        items = obj.items.all().order_by('-added_at')
+        return CartItemSerializer(items, many=True).data
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -207,7 +234,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     """
     total_price = serializers.DecimalField(read_only=True, max_digits=10, decimal_places=2)
     product_image = serializers.ImageField(source='product.image', read_only=True)
-    size = serializers.CharField(source='product.size', read_only=True)
+    size = serializers.CharField(source='variant.size', read_only=True, default='')
 
     class Meta:
         model = OrderItem
@@ -295,7 +322,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
         final_price = total_price - promo_discount
 
-        # Создаём заказ с датой и временем доставки
         order = Order.objects.create(
             user=user,
             total_price=final_price,
@@ -310,14 +336,16 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             OrderItem.objects.create(
                 order=order,
                 product=cart_item.product,
+                variant=cart_item.variant, 
                 product_name=cart_item.product.name,
+                size=cart_item.variant.size if cart_item.variant else '', 
                 price=cart_item.product.price,
                 quantity=cart_item.quantity
             )
-
-            product = cart_item.product
-            product.stock_quantity -= cart_item.quantity
-            product.save()
+            
+            variant = cart_item.variant
+            variant.stock_quantity -= cart_item.quantity
+            variant.save()
 
         if promo_obj:
             PromoCodeUsage.objects.create(
@@ -380,7 +408,6 @@ class ReviewSerializer(serializers.ModelSerializer):
             user = request.user
             product = attrs.get('product')
 
-            # Проверяем статус RECEIVED (получен), а не DELIVERED
             has_purchased = Order.objects.filter(
                 user=user,
                 items__product=product,

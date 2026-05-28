@@ -20,7 +20,7 @@ from django.urls import path
 
 from .models import (
     User, Category, Product, Collection, Cart, CartItem, Order, OrderItem,
-    Review, Wishlist, PromoCode, PromoCodeUsage
+    Review, Wishlist, PromoCode, PromoCodeUsage, ProductVariant
 )
 
 
@@ -58,44 +58,53 @@ class ReviewAdmin(admin.ModelAdmin):
 
 
 class OrderItemInline(admin.TabularInline):
-    """
-    Встроенная форма для позиций заказа.
-    """
     model = OrderItem
     extra: int = 1
-    fields: list = ['product', 'quantity', 'price', 'item_total_display']
+    fields: list = ['product', 'variant', 'quantity', 'price', 'item_total_display']
     readonly_fields: list = ['item_total_display']
     ordering = ['-id']
-
-    def item_total_display(self, obj: OrderItem) -> str:
-        """
-        Рассчитывает стоимость позиции.
-        """
-        if obj.pk and obj.product and obj.quantity:
-            total = obj.product.price * obj.quantity
-            return f"{total} ₽"
-        elif obj.pk and obj.price and obj.quantity:
+    
+    def item_total_display(self, obj: OrderItem) -> str:  # ← ДОБАВИТЬ ЭТОТ МЕТОД
+        """Рассчитывает стоимость позиции."""
+        if obj.pk and obj.price and obj.quantity:
             total = obj.price * obj.quantity
             return f"{total} ₽"
         return "0 ₽"
     item_total_display.short_description = "Стоимость"
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Фильтруем варианты по выбранному товару."""
+        if db_field.name == "variant":
+            if request.resolver_match.kwargs.get('object_id'):
+                order_id = request.resolver_match.kwargs['object_id']
+                order = Order.objects.filter(id=order_id).first()
+                if order and order.items.exists():
+                    product_ids = order.items.values_list('product_id', flat=True)
+                    kwargs["queryset"] = ProductVariant.objects.filter(product_id__in=product_ids)
+                else:
+                    kwargs["queryset"] = ProductVariant.objects.none()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 class OrderItemAdmin(admin.ModelAdmin):
-    """
-    Настройки отображения позиций заказа в админке.
-    """
-    list_display: list = ['id', 'order', 'product', 'product_name', 'quantity', 'price', 'total_price_display']
+    list_display: list = ['id', 'order', 'product', 'variant', 'product_name', 'size', 'quantity', 'price', 'item_total_display']
     list_filter: list = ['order__created_at']
-    search_fields: list = ['product__name', 'product_name', 'order__order_number']
-    readonly_fields: list = ['total_price_display']
+    search_fields: list = ['product__name', 'product_name', 'order__order_number', 'variant__size']
+    readonly_fields: list = ['item_total_display'] 
     ordering: list = ['-id']
     
-    def total_price_display(self, obj: OrderItem) -> str:
-        if obj.price and obj.quantity:
-            total = obj.price * obj.quantity
-            return f"{total} ₽"
-        return "0 ₽"
-    total_price_display.short_description = "Стоимость"
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('product', 'variant', 'order')
+    
+    def size(self, obj: OrderItem) -> str:
+        """Отображает размер из варианта."""
+        return obj.variant.size if obj.variant else obj.size
+    size.short_description = 'Размер'
+    
+    def item_total_display(self, obj: OrderItem) -> str: 
+        """Рассчитывает стоимость позиции."""
+        total = obj.price * obj.quantity
+        return f"{total} ₽"
+    item_total_display.short_description = "Стоимость"
 
 class OrderAdmin(admin.ModelAdmin):
     """
@@ -221,9 +230,7 @@ class OrderAdmin(admin.ModelAdmin):
         from reportlab.pdfbase.pdfmetrics import registerFont
         import os
         
-        # Регистрируем шрифт для русских букв (используем стандартный)
         try:
-            # Пробуем зарегистрировать Helvetica (она есть везде)
             registerFont(TTFont('Helvetica', '/System/Library/Fonts/Helvetica.ttc'))
             font_name = 'Helvetica'
         except:
@@ -235,7 +242,6 @@ class OrderAdmin(admin.ModelAdmin):
         doc = SimpleDocTemplate(response, pagesize=A4, topMargin=20*mm, bottomMargin=20*mm)
         styles = getSampleStyleSheet()
         
-        # Создаём стили
         title_style = ParagraphStyle(
             'TitleStyle',
             parent=styles['Normal'],
@@ -261,11 +267,9 @@ class OrderAdmin(admin.ModelAdmin):
         
         elements = []
         
-        # Заголовок
         elements.append(Paragraph("Отчет по заказам", title_style))
         elements.append(Spacer(1, 10))
         
-        # Общая статистика
         total_sum = queryset.aggregate(total=Sum('total_price'))['total'] or 0
         stats_data = [
             [f"Всего заказов: {queryset.count()}", f"Общая сумма: {total_sum:.2f} RUB"]
@@ -282,10 +286,8 @@ class OrderAdmin(admin.ModelAdmin):
         elements.append(Spacer(1, 20))
         
         for order in queryset:
-            # Заголовок заказа
             elements.append(Paragraph(f"Заказ No {order.order_number}", header_style))
             
-            # Информация о заказе
             info_data = [
                 ["Дата создания:", order.created_at.strftime("%d.%m.%Y %H:%M") if order.created_at else "-"],
                 ["Статус:", order.get_status_display()],
@@ -311,7 +313,6 @@ class OrderAdmin(admin.ModelAdmin):
             
             elements.append(Spacer(1, 8))
             
-            # Товары в заказе
             items_data = [["Товар", "Кол-во", "Цена", "Сумма"]]
             for item in order.items.all():
                 items_data.append([
@@ -400,15 +401,25 @@ class OrderAdmin(admin.ModelAdmin):
 
 
 class CartItemInline(admin.TabularInline):
-    """
-    Встроенная форма для элементов корзины.
-    """
     model = CartItem
     extra: int = 0
-    fields: list = ['product', 'quantity', 'size', 'added_at', 'total_price']
+    fields: list = ['product', 'variant', 'quantity', 'added_at', 'total_price']
     readonly_fields: list = ['added_at', 'total_price']
     ordering = ['-added_at']
-
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Фильтруем варианты по выбранному товару."""
+        if db_field.name == "variant":
+            if request.resolver_match.kwargs.get('object_id'):
+                from .models import Cart
+                cart_id = request.resolver_match.kwargs['object_id']
+                cart = Cart.objects.filter(id=cart_id).first()
+                if cart and cart.items.exists():
+                    product_ids = cart.items.values_list('product_id', flat=True)
+                    kwargs["queryset"] = ProductVariant.objects.filter(product_id__in=product_ids)
+                else:
+                    kwargs["queryset"] = ProductVariant.objects.none()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 class CartAdmin(admin.ModelAdmin):
     """
@@ -422,20 +433,41 @@ class CartAdmin(admin.ModelAdmin):
     date_hierarchy: str = 'created_at' 
 
 class CartItemAdmin(admin.ModelAdmin):
-    """
-    Настройки отображения элементов корзины в админке.
-    """
-    list_display: list = ['id', 'cart', 'product', 'quantity', 'size', 'added_at', 'total_price']
-    list_filter: list = ['added_at', 'size']
-    search_fields: list = ['product__name', 'cart__user__email', 'cart__session_key']
+    list_display: list = ['id', 'cart', 'product', 'variant', 'quantity', 'added_at', 'total_price']
+    list_filter: list = ['added_at'] 
+    search_fields: list = ['product__name', 'cart__user__email', 'cart__session_key', 'variant__size']
     readonly_fields: list = ['added_at', 'total_price']
     ordering: list = ['-added_at']
     date_hierarchy: str = 'added_at'
+    
+    def get_queryset(self, request):
+        """Оптимизируем запросы."""
+        return super().get_queryset(request).select_related('product', 'variant')
+        
+class ProductVariantInline(admin.TabularInline):
+    """
+    Варианты товара (размеры и остатки).
+    """
+    model = ProductVariant
+    extra = 1
+    fields = ['size', 'stock_quantity', 'reserved_quantity', 'available_quantity_display', 'sku']
+    readonly_fields = ['available_quantity_display']
+    
+    def available_quantity_display(self, obj):
+        """Отображает доступное количество."""
+        available = obj.available_quantity
+        if available <= 0:
+            return format_html('<span style="color: red;">Нет в наличии</span>')
+        elif available < 10:
+            return format_html('<span style="color: orange;">Осталось {}</span>', available)
+        return format_html('<span style="color: green;">{} шт</span>', available)
+    available_quantity_display.short_description = 'Доступно'
 
 class ProductAdmin(admin.ModelAdmin):
     """
     Настройки отображения товаров в админке.
     """
+    inlines = [ProductVariantInline]
     list_display: list = [
         'id', 'name', 'category', 'price_display', 'collection',
         'silver_info', 'weight', 'stock_status', 'has_discount_display',
@@ -443,9 +475,9 @@ class ProductAdmin(admin.ModelAdmin):
     ]
     list_filter: list = ['category', 'silver_type', 'fineness', 'stones', 'created_at', 'collection']
     list_display_links: list = ['name']
-    search_fields: list = ['name', 'description', 'collection']
+    search_fields: list = ['name', 'description', 'collection__name']
     prepopulated_fields: dict = {'slug': ('name',)}
-    readonly_fields: list = ['created_at', 'updated_at', 'available_quantity_display',
+    readonly_fields: list = ['created_at', 'updated_at',
                              'full_silver_info', 'images_preview']
     raw_id_fields: list = ['created_by', 'category']
     date_hierarchy: str = 'created_at'
@@ -458,17 +490,13 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('price', 'old_price'),
             'classes': ('wide',)
         }),
-        ('Остатки на складе', {
-            'fields': ('stock_quantity', 'reserved_quantity', 'available_quantity_display'),
-            'classes': ('wide',)
-        }),
         ('Фотографии товара', {
             'fields': ('image', 'image_2', 'image_3', 'image_4', 'image_5', 'images_preview'),
             'description': 'Загрузите фотографии товара. Первое фото (Главное) обязательно для отображения',
             'classes': ('wide',)
         }),
         ('Характеристики серебра', {
-            'fields': ('silver_type', 'fineness', 'weight', 'size', 'full_silver_info'),
+            'fields': ('silver_type', 'fineness', 'weight', 'full_silver_info'),
             'description': 'Информация о типе и пробе серебряного изделия'
         }),
         ('Драгоценные камни', {
@@ -525,19 +553,22 @@ class ProductAdmin(admin.ModelAdmin):
 
     @admin.display(description='Полное описание')
     def full_silver_info(self, obj: Product) -> str:
-        """
-        Отображает полную информацию о серебре товара.
-        """
+        """Отображает полную информацию о серебре товара."""
+        variants_info = ""
+        if obj.variants.exists():
+            sizes = ", ".join([v.size for v in obj.variants.all()])
+            variants_info = f"<br><strong>Размеры:</strong> {sizes}"
+        
         return format_html(
             '<div style="background: #f8f9fa; padding: 10px; border-radius: 5px;">'
             '<strong>Тип:</strong> {}<br>'
             '<strong>Проба:</strong> {}<br>'
-            '<strong>Вес:</strong> {} г<br>'
-            '<strong>Размер:</strong> {}</div>',
+            '<strong>Вес:</strong> {} г{}'
+            '</div>',
             obj.get_silver_type_display(),
             obj.get_fineness_display(),
-            obj.weight,
-            obj.size or 'Не указан'
+            obj.weight or 'Не указан',
+            variants_info
         )
 
     @admin.display(description='Превью фото')
@@ -602,20 +633,7 @@ class ProductAdmin(admin.ModelAdmin):
         else:
             return format_html('<span style="color: green;">{} ({} доп.)</span>', count, count - 1)
 
-    @admin.display(description='Доступно')
-    def available_quantity_display(self, obj: Product) -> str:
-        """
-        Отображает доступное количество товара.
-        """
-        available = obj.available_quantity
-        if available <= 0:
-            return format_html('<span style="color: red; font-weight: bold;">Нет в наличии</span>')
-        elif available < 10:
-            return format_html('<span style="color: orange; font-weight: bold;">Осталось {} шт</span>', available)
-        elif available < 50:
-            return format_html('<span style="color: green;">В наличии {} шт</span>', available)
-        else:
-            return format_html('<span style="color: blue;">В наличии {} шт</span>', available)
+    
 
     @admin.display(boolean=True, description='Скидка')
     def has_discount_display(self, obj: Product) -> bool:
@@ -629,10 +647,10 @@ class ProductAdmin(admin.ModelAdmin):
         """
         Возвращает статус наличия товара.
         """
-        available = obj.available_quantity
-        if available <= 0:
+        total_available = obj.available_quantity 
+        if total_available <= 0:
             return 'Нет в наличии'
-        elif available < 10:
+        elif total_available < 10:
             return 'Мало'
         return 'В наличии'
 
@@ -673,9 +691,7 @@ class ProductAdmin(admin.ModelAdmin):
 
     @admin.action(description='Копировать выбранные товары')
     def duplicate_product(self, request: HttpRequest, queryset: QuerySet[Product]) -> None:
-        """
-        Создаёт копии выбранных товаров.
-        """
+        """Создаёт копии выбранных товаров вместе с вариантами."""
         from django.utils.text import slugify
         import copy
         
@@ -685,9 +701,8 @@ class ProductAdmin(admin.ModelAdmin):
             product_copy.id = None
             product_copy.name = f"{product.name} (копия)"
             product_copy.slug = slugify(f"{product.slug}-copy-{timezone.now().timestamp()}")
-            product_copy.stock_quantity = 0
             product_copy.save()
-            
+
             if product.image:
                 product_copy.image = product.image
             if product.image_2:
@@ -698,11 +713,17 @@ class ProductAdmin(admin.ModelAdmin):
                 product_copy.image_4 = product.image_4
             if product.image_5:
                 product_copy.image_5 = product.image_5
+            
+            for variant in product.variants.all():
+                variant_copy = copy.copy(variant)
+                variant_copy.id = None
+                variant_copy.product = product_copy
+                variant_copy.save()
+            
             product_copy.save()
             count += 1
         
-        self.message_user(request, f'Создано {count} копий товаров')
-
+        self.message_user(request, f'Создано {count} копий товаров с вариантами')
 
 class WishlistAdmin(admin.ModelAdmin):
     """
@@ -868,8 +889,21 @@ class CollectionAdmin(admin.ModelAdmin):
         return '-'
     image_preview.short_description = 'Превью'
 
+class ProductVariantAdmin(admin.ModelAdmin):
+    list_display = ['id', 'product', 'size', 'stock_quantity', 'reserved_quantity', 'available_quantity', 'sku']
+    list_filter = ['product__category', 'size']
+    search_fields = ['product__name', 'size', 'sku']
+    list_editable = ['stock_quantity', 'reserved_quantity', 'sku']
+    autocomplete_fields = ['product']
+    
+    def available_quantity(self, obj):
+        return obj.available_quantity
+    available_quantity.short_description = 'Доступно'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('product')
 
-# Регистрация всех моделей в админке
+admin.site.register(ProductVariant, ProductVariantAdmin)
 admin.site.register(Collection, CollectionAdmin)
 admin.site.register(PromoCode, PromoCodeAdmin)
 admin.site.register(PromoCodeUsage, PromoCodeUsageAdmin)

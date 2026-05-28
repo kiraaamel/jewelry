@@ -736,6 +736,21 @@ const postPoints = [
     { name: "Почта России №3", address: "Москва, ул. Профсоюзная, д. 56" }
 ];
 
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 function loadOrders() {
     fetch('/api/orders/')
         .then(response => response.json())
@@ -830,12 +845,13 @@ function renderOrders() {
         if (order.items && order.items.length > 0) {
             order.items.forEach(item => {
                 const imageUrl = item.product_image || '/static/shop/images/placeholder.png';
+                const size = item.variant_size || item.size || '-'; 
                 itemsHtml += `
                     <div class="order-item">
                         <img src="${imageUrl}" class="order-item-image" alt="${escapeHtml(item.product_name)}" onerror="this.src='/static/shop/images/placeholder.png'">
                         <div class="order-item-info">
                             <div class="order-item-title">${escapeHtml(item.product_name)}</div>
-                            <div class="order-item-size">Размер: ${item.size || '-'} • ${item.quantity} шт</div>
+                            <div class="order-item-size">Размер: ${escapeHtml(size)} • ${item.quantity} шт</div>
                             <div class="order-item-price">${(item.price * item.quantity).toFixed(0)} ₽</div>
                         </div>
                     </div>
@@ -1068,20 +1084,38 @@ function repeatOrder(orderId) {
     
     let promises = [];
     order.items.forEach(item => {
-        promises.push(
-            fetch('/api/cart/add_item/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                    product_id: item.product,
-                    quantity: item.quantity,
-                    size: item.size || ''
+        const variantId = item.variant || item.variant_id;
+        
+        if (variantId) {
+            promises.push(
+                fetch('/api/cart/add_item/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        variant_id: variantId,
+                        quantity: item.quantity
+                    })
                 })
-            })
-        );
+            );
+        } else {
+            promises.push(
+                fetch('/api/cart/add_item/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        product_id: item.product,
+                        quantity: item.quantity,
+                        size: item.size || ''
+                    })
+                })
+            );
+        }
     });
     
     Promise.all(promises)
@@ -1100,11 +1134,13 @@ function repeatOrder(orderId) {
 let currentPickupOrderId = null;
 
 function showPickupCode(orderId) {
+    console.log('showPickupCode called with orderId:', orderId); 
     currentPickupOrderId = orderId;
     const modal = document.getElementById('pickup-code-modal');
     const content = document.getElementById('pickup-code-content');
     
-    content.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-secondary" role="status" aria-label="Загрузка"><span class="visually-hidden">Загрузка кода...</span></div><p class="mt-2">Загрузка кода...</p></div>';
+    content.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Загрузка...</span></div><p class="mt-2">Загрузка...</p></div>';
+    modal.hidden = false;
     modal.classList.add('active');
     
     fetch(`/api/orders/${orderId}/get_pickup_code/`, {
@@ -1121,12 +1157,12 @@ function showPickupCode(orderId) {
             
             content.innerHTML = `
                 <div class="pickup-code-display">
-                    <div class="pickup-code-number" aria-label="Код получения: ${data.pickup_code}">${data.pickup_code}</div>
+                    <div class="pickup-code-number">${data.pickup_code}</div>
                     <div class="pickup-code-expiry">
-                        <i class="fas fa-clock" aria-hidden="true"></i> ${expiresText}
+                        <i class="fas fa-clock"></i> ${expiresText}
                     </div>
                     <div style="margin-top: 15px;">
-                        <button class="modal-btn" onclick="copyPickupCode()" style="background: var(--purple); margin-top: 0;" aria-label="Скопировать код получения">Скопировать код</button>
+                        <button class="modal-btn" onclick="copyPickupCode()" style="background: var(--purple); margin-top: 0;">Скопировать код</button>
                     </div>
                 </div>
             `;
@@ -1146,28 +1182,34 @@ function copyPickupCode() {
         const code = codeElement.innerText;
         navigator.clipboard.writeText(code).then(() => {
             showNotification('Код скопирован в буфер обмена!');
-        }).catch(() => {
-            showNotification('Не удалось скопировать код');
         });
     }
 }
 
 function closePickupCodeModal() {
-    document.getElementById('pickup-code-modal').classList.remove('active');
+    const modal = document.getElementById('pickup-code-modal');
+    modal.classList.remove('active');
+    modal.hidden = true;
     currentPickupOrderId = null;
 }
 
 function openReceivedModal(orderId) {
+    console.log('openReceivedModal called with orderId:', orderId);
     currentOrderId = orderId;
-    document.getElementById('received-modal').classList.add('active');
+    const modal = document.getElementById('received-modal');
+    modal.hidden = false;
+    modal.classList.add('active');
 }
 
 function closeReceivedModal() {
-    document.getElementById('received-modal').classList.remove('active');
+    const modal = document.getElementById('received-modal');
+    modal.classList.remove('active');
+    modal.hidden = true;
     currentOrderId = null;
 }
 
 function confirmReceived() {
+    console.log('confirmReceived called for orderId:', currentOrderId);
     fetch(`/api/orders/${currentOrderId}/mark_as_received/`, {
         method: 'POST',
         headers: {
@@ -1229,22 +1271,6 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
-
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         const modals = ['edit-address-modal', 'cancel-modal', 'pickup-code-modal', 'received-modal'];

@@ -527,6 +527,7 @@ async function loadOrders(search = '') {
                 'confirmed': 'Подтверждён',
                 'shipped': 'Отправлен',
                 'delivered': 'Доставлен',
+                'received': 'Получен',
                 'cancelled': 'Отменён'
             }[order.status] || order.status;
             
@@ -544,6 +545,7 @@ async function loadOrders(search = '') {
                         <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Подтверждён</option>
                         <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Отправлен</option>
                         <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Доставлен</option>
+                        <option value="received" ${order.status === 'received' ? 'selected' : ''}>Получен</option>
                         <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Отменён</option>
                     </select>
                   </td>
@@ -572,7 +574,6 @@ async function updateOrderStatus(orderId, status) {
     } catch(e) { console.error(e); }
 }
 
-// Загрузка товаров
 async function loadProducts(search = '') {
     try {
         let url = '/api/products/?page_size=100';
@@ -592,12 +593,12 @@ async function loadProducts(search = '') {
                 <td>${product.id}</td>
                 <td>${product.name}</td>
                 <td>${product.price} ₽</td>
-                <td>${product.stock_quantity || 0}</td>
+                <td>${product.available_quantity || 0}</td>  <!-- ✅ ИСПРАВЛЕНО -->
                 <td>
                     <button class="action-btn" onclick="editProductField(${product.id}, 'price', ${product.price})">Цена</button>
-                    <button class="action-btn" onclick="editProductField(${product.id}, 'stock', ${product.stock_quantity || 0})">Кол-во</button>
+                    <button class="action-btn" onclick="editProductField(${product.id}, 'stock', 0)">Кол-во</button>
                     <button class="action-btn danger" onclick="deleteProduct(${product.id})">🗑️</button>
-                 </td>
+                </td>
             </tr>
         `).join('');
     } catch(e) { console.error(e); }
@@ -609,41 +610,39 @@ async function editProductField(productId, field, currentValue) {
     if (field === 'price') {
         promptText = 'Введите новую цену:';
         fieldName = 'price';
-    } else {
-        promptText = 'Введите новое количество на складе:';
-        fieldName = 'stock_quantity';
-    }
-    
-    newValue = prompt(promptText, currentValue);
-    
-    if (newValue !== null && !isNaN(newValue) && parseFloat(newValue) >= 0) {
-        const updateData = {};
-        updateData[fieldName] = field === 'price' ? parseFloat(newValue) : parseInt(newValue);
         
-        try {
-            const response = await fetch(`/api/products/${productId}/`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify(updateData)
-            });
+        newValue = prompt(promptText, currentValue);
+        
+        if (newValue !== null && !isNaN(newValue) && parseFloat(newValue) >= 0) {
+            const updateData = { price: parseFloat(newValue) };
             
-            if (response.ok) {
-                showNotification(field === 'price' ? 'Цена обновлена' : 'Количество обновлено');
-                loadProducts();
-                if (field === 'price') loadStats();
-            } else {
-                const error = await response.json();
-                showNotification('Ошибка: ' + JSON.stringify(error));
+            try {
+                const response = await fetch(`/api/products/${productId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                if (response.ok) {
+                    showNotification('Цена обновлена');
+                    loadProducts();
+                    loadStats();
+                } else {
+                    const error = await response.json();
+                    showNotification('Ошибка: ' + JSON.stringify(error));
+                }
+            } catch(e) { 
+                console.error(e);
+                showNotification('Ошибка при обновлении');
             }
-        } catch(e) { 
-            console.error(e);
-            showNotification('Ошибка при обновлении');
+        } else if (newValue !== null) {
+            showNotification('Введите корректное значение');
         }
-    } else if (newValue !== null) {
-        showNotification('Введите корректное значение');
+    } else if (field === 'stock') {
+        showNotification('Управление количеством доступно в админ-панели Django');
     }
 }
 
@@ -714,7 +713,7 @@ async function toggleModeration(reviewId, moderated) {
         if (response.ok) {
             const data = await response.json();
             showNotification(data.message || (isModerated ? 'Отзыв одобрен' : 'Отзыв снят с публикации'));
-            loadReviews(); // Перезагружаем список отзывов
+            loadReviews(); 
         } else {
             const errorText = await response.text();
             console.error('Error response:', errorText);

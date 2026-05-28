@@ -107,7 +107,7 @@
 }
 
 .sidebar-menu a.active {
-    background: var(--accent);
+    background: var(--gray);
     color: white;
 }
 
@@ -498,7 +498,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.625rem;
-    background: var(--accent);
+    background: var(--gray);
     color: white;
     border: none;
     padding: 0.75rem 1.5rem;
@@ -736,7 +736,7 @@
     }
     
     .review-text {
-        font-size: 0.8125rem;
+        font-size: 1.2rem;
     }
     
     .address-card {
@@ -772,7 +772,7 @@
     }
     
     .profile-name {
-        font-size: 0.875rem;
+        font-size: 1rem;
     }
     
     .sidebar-menu {
@@ -780,8 +780,7 @@
     }
     
     .sidebar-menu a {
-        padding: 0.375rem 0.5rem;
-        font-size: 0.6875rem;
+        font-size: 0.9rem;
     }
     
     .content-title {
@@ -970,8 +969,8 @@ function renderProfile(user) {
         birthdayInput.value = user.birthday;
         birthdayInput.disabled = true;
         birthdayInput.style.background = '#f8f9fa';
-        birthdayHint.innerHTML = '📅 Дата рождения указана и не может быть изменена.';
-        birthdayHint.style.color = '#28a745';
+        birthdayHint.innerHTML = '* Дата рождения указана и не может быть изменена.';
+        birthdayHint.style.color = 'var(--gray)';
     } else {
         birthdayInput.disabled = false;
         birthdayHint.innerHTML = 'Укажите дату рождения для получения бонусов. Пользователь должен быть старше 12 лет.';

@@ -405,7 +405,7 @@
     padding: 0.625rem 1rem;
     border: none;
     border-radius: 0.5rem;
-    background: var(--accent);
+    background: var(--gray);
     color: #fff;
     cursor: pointer;
 }
@@ -878,7 +878,7 @@
                         <div class="promo-input-group">
                             <label for="promo-code" class="sr-only">Промокод</label>
                             <input type="text" id="promo-code" placeholder="Введите промокод">
-                            <button onclick="applyPromoCode()" aria-label="Применить промокод">Применить</button>
+                            <button onclick="applyPromoCode()" aria-label="Применить промокод">ОК</button>
                         </div>
                         <div id="promo-status" aria-live="polite"></div>
                     </div>
@@ -970,9 +970,6 @@
 
 {% block scripts %}
 <script>
-if (!isAuthenticated()) {
-    window.location.href = '/accounts/login/?next=/checkout/';
-}
 let cartData = null;
 let userData = null;
 let deliveryPrice = 0;
@@ -984,11 +981,24 @@ let selectedPostPoint = null;
 let pendingOrderData = null;
 let selectedSbpApp = null;
 let deliverySelected = false;
-
-// Переменные для промокода
 let appliedPromo = null;
 let promoDiscount = 0;
 let currentPromoCode = null;
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 
 function loadFromStorage() {
     const savedBonus = localStorage.getItem('checkout_bonus_applied');
@@ -1093,15 +1103,16 @@ function renderOrderSummary() {
         const price = parseFloat(item.product_price) || 0;
         const qty = parseInt(item.quantity) || 1;
         const total = price * qty;
+        const size = item.variant_size || '-'; 
         
         subtotal += total;
         
         itemsHtml += `
             <div class="summary-item">
-                <img src="${item.product_image || '/static/shop/images/placeholder.png'}" class="summary-item-image">
+                <img src="${item.product_image || '/static/shop/images/placeholder.png'}" class="summary-item-image" alt="${escapeHtml(item.product_name)}">
                 <div class="summary-item-info">
                     <div class="summary-item-title">${escapeHtml(item.product_name)}</div>
-                    <div class="summary-item-size">Размер: ${item.size || '-'} • ${qty} шт</div>
+                    <div class="summary-item-size">Размер: ${escapeHtml(size)} • ${qty} шт</div> 
                     <div class="summary-item-price">${total.toFixed(0)} ₽</div>
                 </div>
             </div>
@@ -1656,7 +1667,10 @@ function showSbpModal() {
     const sbpAmountEl = document.getElementById('sbp-amount');
     if (sbpAmountEl) sbpAmountEl.innerHTML = total;
     
-    document.getElementById('sbp-modal').classList.add('active');
+    const modal = document.getElementById('sbp-modal');
+    modal.hidden = false;
+    modal.style.display = 'flex';
+    modal.classList.add('active');
     document.getElementById('sbp-status').innerHTML = '';
     selectedSbpApp = null;
     
@@ -1667,7 +1681,11 @@ function showSbpModal() {
 }
 
 function closeSbpModal() {
-    document.getElementById('sbp-modal').classList.remove('active');
+    const modal = document.getElementById('sbp-modal');
+
+    modal.classList.remove('active');
+    modal.hidden = true;
+    modal.style.display = 'none';
 }
 
 function initSbpButtons() {
@@ -1704,7 +1722,7 @@ function processSbpPayment() {
     }
     
     setTimeout(function() {
-        statusDiv.innerHTML = '<span style="color: green;">✅ Оплата успешна! Заказ оплачен через СБП</span>';
+        statusDiv.innerHTML = '<span style="color: green;">Оплата успешна! Заказ оплачен через СБП</span>';
         
         setTimeout(function() {
             closeSbpModal();
@@ -1817,7 +1835,7 @@ function submitOrderToServer() {
     .then(data => {
         if (data.id) {
             localStorage.removeItem('checkout_bonus_applied');
-            showNotification(`✅ Заказ успешно оформлен! Номер заказа: ${data.order_number}`);
+            showNotification(`Заказ успешно оформлен! Номер заказа: ${data.order_number}`);
             updateCartCount();
             setTimeout(function() {
                 window.location.href = '/orders/';
@@ -1921,7 +1939,6 @@ function showPaymentModal() {
     };
     
     if (paymentMethod === 'sbp') {
-        closePaymentModal();
         showSbpModal();
         return;
     }
@@ -1931,6 +1948,8 @@ function showPaymentModal() {
     
     const modal = document.getElementById('payment-modal');
     if (modal) {
+        modal.hidden = false;
+        modal.style.display = 'flex';
         modal.classList.add('active');
         initPaymentFormatters();
         const cardNumberInput = document.getElementById('card-number');
@@ -1946,7 +1965,11 @@ function showPaymentModal() {
 
 function closePaymentModal() {
     const modal = document.getElementById('payment-modal');
-    if (modal) modal.classList.remove('active');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.hidden = true;
+        modal.style.display = 'none';
+    }
     
     const cardNumberInput = document.getElementById('card-number');
     const cardExpiryInput = document.getElementById('card-expiry');
@@ -2037,20 +2060,6 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.method-item, .pickup-point, .sbp-app-btn').forEach(el => {
         el.addEventListener('keypress', function(e) {

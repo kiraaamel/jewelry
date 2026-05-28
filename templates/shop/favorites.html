@@ -106,7 +106,7 @@
     position: absolute;
     top: 0.625rem;
     left: 0.625rem;
-    background: #ff4444;
+    background: var(--brown);
     color: white;
     padding: 0.25rem 0.625rem;
     border-radius: 1.25rem;
@@ -452,12 +452,12 @@
     }
     
     .favorite-name {
-        font-size: 0.8125rem;
+        font-size: 1.3rem;
     }
     
     .btn-add-to-cart {
         padding: 0.5rem;
-        font-size: 0.75rem;
+        font-size: 1rem;
     }
     
     .modal-content {
@@ -585,8 +585,17 @@ function renderFavorites() {
         const rating = product.average_rating || 0;
         const fullStars = Math.round(rating);
         const stars = '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
-        const sizes = product.size ? product.size.split(',').map(s => s.trim()).filter(s => s) : [];
-        const sizesJson = JSON.stringify(sizes).replace(/"/g, '&quot;');
+
+        const variants = product.variants || [];
+        const sizes = variants.map(v => v.size);
+        const variantsJson = JSON.stringify(variants.map(v => ({
+            id: v.id,
+            size: v.size,
+            available_quantity: v.available_quantity
+        }))).replace(/"/g, '&quot;');
+        
+        const totalAvailable = product.available_quantity || 0;
+        const isOutOfStock = totalAvailable <= 0;
         
         html += `
             <div class="favorite-card" data-favorite-id="${fav.id}" data-product-id="${product.id}" role="listitem">
@@ -609,8 +618,11 @@ function renderFavorites() {
                     <div class="favorite-price">
                         <span aria-label="Цена ${product.price} рублей">${product.price} ₽</span> ${oldPrice}
                     </div>
-                    <button class="btn-add-to-cart" onclick="openSizeModal(${product.id}, '${escapeHtml(product.name)}', ${sizesJson})" aria-label="Добавить ${escapeHtml(product.name)} в корзину">
-                        <i class="fas fa-shopping-cart" aria-hidden="true"></i> В корзину
+                    <button class="btn-add-to-cart" 
+                            onclick="openSizeModal(${product.id}, '${escapeHtml(product.name)}', '${variantsJson}')"
+                            ${isOutOfStock ? 'disabled' : ''}
+                            aria-label="Добавить ${escapeHtml(product.name)} в корзину">
+                        <i class="fas fa-shopping-cart" aria-hidden="true"></i> ${isOutOfStock ? 'Нет в наличии' : 'В корзину'}
                     </button>
                 </div>
             </div>
@@ -637,28 +649,50 @@ function removeFromFavorites(favoriteId, productId) {
     });
 }
 
-function openSizeModal(productId, productName, sizes) {
+let selectedVariants = [];     
+let selectedVariant = null;    
+
+function openSizeModal(productId, productName, variantsJson) {
     selectedProductId = productId;
-    selectedProductSizes = sizes;
-    selectedSize = null;
+    selectedVariants = JSON.parse(variantsJson);
+    selectedVariant = null;
     
     const container = document.getElementById('size-options');
     if (!container) return;
     
-    if (sizes.length === 0) {
-        container.innerHTML = '<div class="text-secondary">Размер не указан</div>';
+    if (selectedVariants.length === 0) {
+        container.innerHTML = '<div class="text-secondary">Товар временно недоступен</div>';
+        document.getElementById('confirm-add-to-cart').disabled = true;
     } else {
         let html = '';
-        sizes.forEach(size => {
-            html += `<button class="size-btn" data-size="${size}" aria-label="Выбрать размер ${size}">${size}</button>`;
+        selectedVariants.forEach(variant => {
+            const isOutOfStock = variant.available_quantity <= 0;
+            html += `<button class="size-btn" data-variant-id="${variant.id}" 
+                           data-size="${variant.size}" 
+                           data-available="${variant.available_quantity}"
+                           ${isOutOfStock ? 'disabled' : ''}
+                           aria-label="Выбрать размер ${variant.size}${isOutOfStock ? ' (нет в наличии)' : ''}">
+                        ${variant.size} ${isOutOfStock ? '(нет)' : ''}
+                    </button>`;
         });
         container.innerHTML = html;
         
-        document.querySelectorAll('.size-btn').forEach(btn => {
+        document.querySelectorAll('.size-btn:not([disabled])').forEach(btn => {
             btn.onclick = function() {
                 document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
-                selectedSize = this.dataset.size;
+                selectedVariant = {
+                    id: parseInt(this.dataset.variantId),
+                    size: this.dataset.size,
+                    available_quantity: parseInt(this.dataset.available)
+                };
+
+                const stockInfo = document.getElementById('stock-info');
+                if (stockInfo) {
+                    stockInfo.innerHTML = `<span style="color: green;">В наличии: ${selectedVariant.available_quantity} шт.</span>`;
+                }
+                
+                document.getElementById('confirm-add-to-cart').disabled = false;
             };
             btn.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -667,9 +701,27 @@ function openSizeModal(productId, productName, sizes) {
                 }
             });
         });
+        
+        document.getElementById('confirm-add-to-cart').disabled = true;
     }
     
     document.getElementById('modal-quantity').value = 1;
+    document.getElementById('modal-quantity').max = Math.max(...selectedVariants.map(v => v.available_quantity), 1);
+
+    let stockInfo = document.getElementById('stock-info');
+    if (!stockInfo) {
+        stockInfo = document.createElement('div');
+        stockInfo.id = 'stock-info';
+        stockInfo.style.margin = '10px 0';
+        stockInfo.style.fontSize = '12px';
+        const sizeOptions = document.getElementById('size-options');
+        if (sizeOptions) {
+            sizeOptions.insertAdjacentElement('afterend', stockInfo);
+        }
+    } else {
+        stockInfo.innerHTML = '';
+    }
+    
     const modal = document.getElementById('size-modal');
     modal.classList.add('active');
     modal.hidden = false;
@@ -680,15 +732,23 @@ function closeSizeModal() {
     modal.classList.remove('active');
     modal.hidden = true;
     selectedProductId = null;
-    selectedSize = null;
-    selectedProductSizes = [];
+    selectedVariant = null;
+    selectedVariants = [];
+
+    const stockInfo = document.getElementById('stock-info');
+    if (stockInfo) stockInfo.innerHTML = '';
 }
 
 function addToCart() {
     const quantity = parseInt(document.getElementById('modal-quantity').value) || 1;
     
-    if (selectedProductSizes.length > 0 && !selectedSize) {
+    if (selectedVariants.length > 0 && !selectedVariant) {
         showNotification('Пожалуйста, выберите размер');
+        return;
+    }
+
+    if (selectedVariant && quantity > selectedVariant.available_quantity) {
+        showNotification(`Доступно только ${selectedVariant.available_quantity} шт.`);
         return;
     }
     
@@ -699,9 +759,8 @@ function addToCart() {
             'X-CSRFToken': getCookie('csrftoken')
         },
         body: JSON.stringify({
-            product_id: selectedProductId,
-            quantity: quantity,
-            size: selectedSize || ''
+            variant_id: selectedVariant.id, 
+            quantity: quantity
         })
     })
     .then(response => response.json())

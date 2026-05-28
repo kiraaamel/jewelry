@@ -17,7 +17,6 @@ def order_status_changed(sender, instance, created, **kwargs):
     При изменении статуса заказа отправляем уведомление.
     """
     if not created and instance.pk:
-        # Получаем предыдущий статус
         try:
             old_instance = Order.objects.get(pk=instance.pk)
             if old_instance.status != instance.status:

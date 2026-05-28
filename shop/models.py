@@ -19,6 +19,7 @@ from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
+from allauth.account.signals import user_logged_in as allauth_user_logged_in
 
 
 def product_image_upload_path(instance: 'Product', filename: str) -> str:
@@ -269,8 +270,6 @@ class Product(models.Model):
         null=True,
         verbose_name='Старая цена'
     )
-    stock_quantity = models.PositiveIntegerField(default=0, verbose_name='Количество на складе')
-    reserved_quantity = models.PositiveIntegerField(default=0, verbose_name='Зарезервированное количество')
 
     # Связь с категорией
     category = models.ForeignKey(
@@ -344,12 +343,6 @@ class Product(models.Model):
         null=True,
         verbose_name='Вес изделия (г)'
     )
-    size = models.CharField(
-        max_length=50,
-        blank=True,
-        verbose_name='Размер',
-        help_text='Например: 16.5, 17, 18, S, M, L'
-    )
 
     # Камни
     stones = models.BooleanField(default=False, verbose_name='Наличие драгоценных камней')
@@ -419,12 +412,12 @@ class Product(models.Model):
     @property
     def available_quantity(self) -> int:
         """
-        Возвращает доступное количество товара на складе.
-
-        Returns:
-            int: Доступное количество (stock_quantity - reserved_quantity)
+        Общее доступное количество товара по всем вариантам.
         """
-        return self.stock_quantity - self.reserved_quantity
+        return sum(
+            max(0, variant.available_quantity)
+            for variant in self.variants.all()
+        )
 
     @property
     def average_rating(self) -> float:
@@ -569,35 +562,90 @@ class Product(models.Model):
         if self.weight and self.weight <= 0:
             raise ValidationError({'weight': 'Вес должен быть положительным числом'})
 
-        # Проверка количества на складе
-        if self.stock_quantity < 0:
-            raise ValidationError({'stock_quantity': 'Количество на складе не может быть отрицательным'})
-
     def save(self, *args, **kwargs) -> None:
         """
         Сохраняет товар, создавая slug и name_lower перед сохранением.
         """
         if not self.slug:
-            self.slug = slugify(self.name)
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+
+            while Product.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f'{base_slug}-{counter}'
+                counter += 1
+
+            self.slug = slug
         self.name_lower = self.name.lower()
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs) -> None:
         """
-        Удаляет товар и связанные с ним изображения из файловой системы.
+        Удаляет товар и его изображения.
         """
-        if self.image and self.image.name and os.path.isfile(self.image.path):
-            os.remove(self.image.path)
-        if self.image_2 and self.image_2.name and os.path.isfile(self.image_2.path):
-            os.remove(self.image_2.path)
-        if self.image_3 and self.image_3.name and os.path.isfile(self.image_3.path):
-            os.remove(self.image_3.path)
-        if self.image_4 and self.image_4.name and os.path.isfile(self.image_4.path):
-            os.remove(self.image_4.path)
-        if self.image_5 and self.image_5.name and os.path.isfile(self.image_5.path):
-            os.remove(self.image_5.path)
+
+        images = [
+            self.image,
+            self.image_2,
+            self.image_3,
+            self.image_4,
+            self.image_5,
+        ]
+
+        for image in images:
+            if image:
+                image.delete(save=False)
+
         super().delete(*args, **kwargs)
 
+class ProductVariant(models.Model):
+    """
+    Вариант товара (например размер).
+    """
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='variants',
+        verbose_name='Товар'
+    )
+
+    size = models.CharField(
+        max_length=20,
+        verbose_name='Размер'
+    )
+
+    stock_quantity = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Количество на складе'
+    )
+
+    reserved_quantity = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Зарезервировано'
+    )
+
+    sku = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Артикул'
+    )
+
+    class Meta:
+        verbose_name = 'Вариант товара'
+        verbose_name_plural = 'Варианты товаров'
+        unique_together = ('product', 'size')
+
+    @property
+    def available_quantity(self) -> int:
+        """
+        Доступное количество товара.
+        """
+        return max(0, self.stock_quantity - self.reserved_quantity)
+
+    def __str__(self) -> str:
+        return f"{self.product.name} / {self.size}"
 
 class Cart(models.Model):
     """
@@ -653,62 +701,80 @@ class Cart(models.Model):
 
 class CartItem(models.Model):
     """
-    Элемент корзины (связь товара и корзины с количеством).
+    Элемент корзины.
     """
+
     cart = models.ForeignKey(
         Cart,
         on_delete=models.CASCADE,
         related_name='items',
         verbose_name='Корзина'
     )
+
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
         verbose_name='Товар'
     )
-    quantity = models.PositiveIntegerField(default=1, verbose_name='Количество')
-    size = models.CharField(max_length=20, blank=True, null=True)
-    added_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата добавления')
+
+    variant = models.ForeignKey(
+        ProductVariant,
+        on_delete=models.CASCADE,
+        null=True, 
+        blank=True,
+        verbose_name='Вариант товара'
+    )
+
+    quantity = models.PositiveIntegerField(
+        default=1,
+        verbose_name='Количество'
+    )
+
+    added_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата добавления'
+    )
 
     class Meta:
         verbose_name = 'Элемент корзины'
         verbose_name_plural = 'Элементы корзины'
-        unique_together = ('cart', 'product')
+        unique_together = ('cart', 'variant')
+        ordering = ['-added_at'] 
 
     def clean(self) -> None:
         """
-        Проверка наличия товара на складе перед сохранением.
-
-        Raises:
-            ValidationError: Если количество превышает доступное
+        Проверка корректности данных.
         """
-        from django.core.exceptions import ValidationError
-        if self.quantity > self.product.available_quantity:
+        if self.variant.product != self.product:
             raise ValidationError(
-                f'Доступно только {self.product.available_quantity} единиц товара "{self.product.name}"'
+                'Выбранный вариант не принадлежит товару.'
+            )
+
+        if self.quantity > self.variant.available_quantity:
+            raise ValidationError(
+                f'Доступно только '
+                f'{self.variant.available_quantity} шт.'
             )
 
     def save(self, *args, **kwargs) -> None:
-        """Сохраняет элемент корзины с предварительной валидацией."""
-        self.clean()
+        """
+        Сохранение с полной валидацией.
+        """
+        self.full_clean()
         super().save(*args, **kwargs)
-
-    def __str__(self) -> str:
-        """Возвращает строковое представление элемента корзины."""
-        return f"{self.product.name} x{self.quantity}"
 
     @property
     def total_price(self) -> Decimal:
         """
-        Стоимость этой позиции (цена товара * количество).
-
-        Returns:
-            Decimal: Стоимость позиции
+        Общая стоимость позиции.
         """
-        if self.product and self.product.price is not None and self.quantity is not None:
-            return self.product.price * self.quantity
-        return Decimal('0')
+        return self.product.price * self.quantity
 
+    def __str__(self) -> str:
+        return (
+            f"{self.product.name} "
+            f"({self.variant.size}) x{self.quantity}"
+        )
 
 class PromoCode(models.Model):
     """
@@ -904,7 +970,7 @@ class Order(models.Model):
         """
         Автоматически вычисляет общую стоимость заказа перед сохранением.
         """
-        if not self.total_price and self.pk:
+        if self.pk and self.total_price == 0:
             self.total_price = sum(item.total_price for item in self.items.all())
         super().save(*args, **kwargs)
     
@@ -952,33 +1018,55 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     """
-    Позиция заказа (товар в заказе).
+    Позиция заказа.
     """
+
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
         related_name='items',
         verbose_name='Заказ'
     )
+
     product = models.ForeignKey(
         Product,
         on_delete=models.SET_NULL,
         null=True,
         verbose_name='Товар'
     )
+
+    variant = models.ForeignKey(
+        ProductVariant,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Вариант товара'
+    )
+
     product_name = models.CharField(
         max_length=255,
-        verbose_name='Название товара (на момент заказа)'
+        verbose_name='Название товара'
     )
+
+    size = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name='Размер'
+    )
+
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=0,
-        verbose_name='Цена на момент заказа'
+        verbose_name='Цена'
     )
-    quantity = models.PositiveIntegerField(verbose_name='Количество')
+
+    quantity = models.PositiveIntegerField(
+        verbose_name='Количество'
+    )
+
     added_at = models.DateTimeField(
-        default=timezone.now,  # ← добавьте default
+        default=timezone.now,
         verbose_name='Дата добавления'
     )
 
@@ -986,22 +1074,15 @@ class OrderItem(models.Model):
         verbose_name = 'Позиция заказа'
         verbose_name_plural = 'Позиции заказа'
 
-    def __str__(self) -> str:
-        """Возвращает строковое представление позиции заказа."""
-        return f"{self.product_name} x{self.quantity}"
-
     @property
     def total_price(self) -> Decimal:
         """
-        Стоимость этой позиции (цена * количество).
-
-        Returns:
-            Decimal: Стоимость позиции
+        Стоимость позиции.
         """
-        if self.price is not None and self.quantity is not None:
-            return self.price * self.quantity
-        return Decimal('0')
+        return self.price * self.quantity
 
+    def __str__(self) -> str:
+        return f"{self.product_name} ({self.size}) x{self.quantity}"
 
 class Review(models.Model):
     """
@@ -1095,50 +1176,54 @@ class Wishlist(models.Model):
     def __str__(self) -> str:
         """Возвращает строковое представление избранного."""
         return f"{self.user.email} -> {self.product.name}"
-# В конце файла models.py, после всех классов
-
-from django.contrib.auth.signals import user_logged_in
-from allauth.account.signals import user_logged_in as allauth_user_logged_in
-from django.dispatch import receiver
 
 @receiver(user_logged_in)
 @receiver(allauth_user_logged_in)
 def merge_cart_after_login(sender, user, request, **kwargs):
     """
-    Переносит корзину гостя в корзину пользователя после входа (и для Django, и для allauth).
+    Перенос корзины гостя после входа.
     """
+
     if not request.session.session_key:
         return
-    
+
     session_key = request.session.session_key
-    print(f"Merging cart for user {user.email}, session_key: {session_key}")
-    
+
     try:
-        guest_cart = Cart.objects.get(session_key=session_key, user__isnull=True)
+        guest_cart = Cart.objects.get(
+            session_key=session_key,
+            user__isnull=True
+        )
     except Cart.DoesNotExist:
-        print("No guest cart found")
         return
-    
-    print(f"Guest cart found with {guest_cart.items.count()} items")
-    
+
     user_cart, created = Cart.objects.get_or_create(user=user)
-    
-    # Переносим товары из корзины гостя в корзину пользователя
+
     for guest_item in guest_cart.items.all():
+
         user_item, item_created = CartItem.objects.get_or_create(
             cart=user_cart,
-            product=guest_item.product,
-            size=guest_item.size,
-            defaults={'quantity': guest_item.quantity}
+            variant=guest_item.variant,
+            defaults={
+                'product': guest_item.product,
+                'quantity': guest_item.quantity
+            }
         )
+
         if not item_created:
-            user_item.quantity += guest_item.quantity
+
+            new_quantity = (
+                user_item.quantity +
+                guest_item.quantity
+            )
+
+            user_item.quantity = min(
+                new_quantity,
+                user_item.variant.available_quantity
+            )
+
             user_item.save()
-        print(f"Moved item: {guest_item.product.name} x{guest_item.quantity}")
-    
-    # Удаляем корзину гостя
+
     guest_cart.delete()
-    print("Guest cart deleted")
-    
-    # Обновляем сессию
+
     request.session['cart_merged'] = True

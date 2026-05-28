@@ -32,7 +32,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from .models import (
     Category, Product, Cart, CartItem, Order, Review, Wishlist, User, Collection,
-    PromoCode, PromoCodeUsage, OrderItem
+    PromoCode, PromoCodeUsage, OrderItem, ProductVariant
 )
 from .serializers import (
     CategorySerializer, ProductSerializer, CartSerializer, OrderSerializer,
@@ -54,14 +54,12 @@ def can_review_product(request, product_id):
     2. Заказ со статусом 'received' (Получен)
     3. Пользователь ещё не оставлял отзыв на этот товар
     """
-    # Проверяем, есть ли заказ с этим товаром и статусом 'received'
     has_purchased = OrderItem.objects.filter(
         order__user=request.user,
-        order__status=Order.Status.RECEIVED,  # ← изменено с DELIVERED на RECEIVED
+        order__status=Order.Status.RECEIVED,
         product_id=product_id
     ).exists()
     
-    # Проверяем, не оставлял ли пользователь уже отзыв
     has_reviewed = Review.objects.filter(
         user=request.user,
         product_id=product_id
@@ -105,18 +103,16 @@ def create_product_review(request):
         rating = int(rating)
         if rating < 1 or rating > 5:
             return JsonResponse({'error': 'Оценка должна быть от 1 до 5'}, status=400)
-        
-        # Проверяем, покупал ли пользователь этот товар и получил ли его (статус RECEIVED)
+
         has_purchased = OrderItem.objects.filter(
             order__user=request.user,
-            order__status=Order.Status.RECEIVED,  # ← изменено с DELIVERED на RECEIVED
+            order__status=Order.Status.RECEIVED,  
             product_id=product_id
         ).exists()
         
         if not has_purchased:
             return JsonResponse({'error': 'Вы можете оставить отзыв только после получения заказа'}, status=400)
-        
-        # Проверяем, не оставлял ли пользователь уже отзыв
+
         has_reviewed = Review.objects.filter(
             user=request.user,
             product_id=product_id
@@ -124,8 +120,7 @@ def create_product_review(request):
         
         if has_reviewed:
             return JsonResponse({'error': 'Вы уже оставили отзыв на этот товар'}, status=400)
-        
-        # Создаём отзыв
+
         review = Review.objects.create(
             user=request.user,
             product_id=product_id,
@@ -170,16 +165,14 @@ class CustomSignupView(SignupView):
 def product_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """
     Детальная страница товара.
-
-    Args:
-        request (HttpRequest): HTTP запрос
-        pk (int): ID товара
-
-    Returns:
-        HttpResponse: Рендер страницы товара
     """
     product = get_object_or_404(Product, id=pk, is_active=True)
-    context = {'product': product}
+    variants = product.variants.all()  
+    context = {
+        'product': product,
+        'variants': variants,  
+        'has_variants': variants.exists()
+    }
     return render(request, 'shop/product_detail.html', context)
 
 
@@ -257,7 +250,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
-class ProductViewSet(viewsets.ModelViewSet):  # ← Изменено с ReadOnlyModelViewSet на ModelViewSet для PATCH запросов
+class ProductViewSet(viewsets.ModelViewSet): 
     """
     ViewSet для товаров.
     """
@@ -275,13 +268,11 @@ class ProductViewSet(viewsets.ModelViewSet):  # ← Изменено с ReadOnly
         try:
             queryset = Product.objects.filter(is_active=True).select_related('category', 'collection')
 
-            # Обработка ids параметра для отзывов
             ids: Optional[str] = self.request.query_params.get('ids', None)
             if ids:
                 ids_list: List[str] = ids.split(',')
                 queryset = queryset.filter(id__in=ids_list)
 
-            # Поиск
             search: Optional[str] = self.request.query_params.get('search', None)
             if search:
                 search_lower: str = search.lower()
@@ -297,7 +288,7 @@ class ProductViewSet(viewsets.ModelViewSet):  # ← Изменено с ReadOnly
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         
-        allowed_fields = ['price', 'stock_quantity', 'name', 'description']
+        allowed_fields = ['price', 'name', 'description', 'old_price', 'is_active']
         data = {k: v for k, v in request.data.items() if k in allowed_fields}
         
         serializer = self.get_serializer(instance, data=data, partial=partial)
@@ -316,7 +307,6 @@ class ProductViewSet(viewsets.ModelViewSet):  # ← Изменено с ReadOnly
         try:
             queryset = self.filter_queryset(self.get_queryset())
 
-            # Пагинация
             page_size: int = int(request.query_params.get('page_size', 9))
             page: int = int(request.query_params.get('page', 1))
             start: int = (page - 1) * page_size
@@ -359,6 +349,17 @@ class ProductViewSet(viewsets.ModelViewSet):  # ← Изменено с ReadOnly
             return Response(serializer.data)
         except Exception as e:
             return Response({'error': str(e)}, status=500)
+
+    @action(detail=True, methods=['get'])
+    def variants(self, request: Request, pk: Optional[int] = None) -> Response:
+        """
+        Возвращает все варианты (размеры) товара.
+        """
+        product: Product = self.get_object()
+        variants = product.variants.all()
+        from .serializers import ProductVariantSerializer
+        serializer = ProductVariantSerializer(variants, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
     def apply_discount(self, request: Request, pk: Optional[int] = None) -> Response:
@@ -413,11 +414,11 @@ class CartViewSet(viewsets.GenericViewSet):
             return cart
         else:
             session_key = self.get_session_key(self.request)
-            # Ищем корзину по session_key
+  
             try:
                 cart = Cart.objects.get(session_key=session_key, user__isnull=True)
             except Cart.DoesNotExist:
-                # Если не нашли - создаём новую
+
                 cart = Cart.objects.create(session_key=session_key)
             return cart
 
@@ -425,6 +426,7 @@ class CartViewSet(viewsets.GenericViewSet):
         """Просмотр корзины"""
         try:
             cart = self.get_object()
+            cart.items.all().order_by('-added_at')
             serializer = self.get_serializer(cart)
             return Response(serializer.data)
         except Exception as e:
@@ -440,43 +442,47 @@ class CartViewSet(viewsets.GenericViewSet):
             print("Data:", request.data)
             
             cart = self.get_object()
-            product_id = request.data.get('product_id')
+            variant_id = request.data.get('variant_id')
             quantity = int(request.data.get('quantity', 1))
-            size = request.data.get('size', '')
+            
+            if not variant_id:
+                return Response({'error': 'variant_id обязателен'}, status=400)
+            
+            variant = get_object_or_404(ProductVariant, id=variant_id)
+            product = variant.product
 
-            if not product_id:
-                return Response({'error': 'product_id обязателен'}, status=400)
-
-            product = get_object_or_404(Product, id=product_id)
-
-            # Проверка наличия на складе
-            if quantity > product.available_quantity:
+            if not product.is_active:
+                return Response({'error': 'Товар неактивен'}, status=400)
+            
+            if quantity > variant.available_quantity:
                 return Response(
-                    {'error': f'Доступно только {product.available_quantity} шт. товара "{product.name}"'},
+                    {'error': f'Доступно только {variant.available_quantity} шт. товара "{product.name}" (размер {variant.size})'},
                     status=400
                 )
 
-            cart_item, created = CartItem.objects.get_or_create(
-                cart=cart,
-                product=product,
-                size=size,
-                defaults={'quantity': quantity}
-            )
-
-            if not created:
-                # Проверка общего количества после добавления
+            cart_item = CartItem.objects.filter(cart=cart, variant=variant).first()
+            
+            if cart_item:
+   
                 new_quantity = cart_item.quantity + quantity
-                if new_quantity > product.available_quantity:
+                if new_quantity > variant.available_quantity:
                     return Response(
-                        {'error': f'В корзине уже {cart_item.quantity} шт. Доступно всего {product.available_quantity} шт. Нельзя добавить больше'},
+                        {'error': f'В корзине уже {cart_item.quantity} шт. Доступно всего {variant.available_quantity} шт. Нельзя добавить больше'},
                         status=400
                     )
                 cart_item.quantity = new_quantity
                 cart_item.save()
-
+            else:
+                cart_item = CartItem.objects.create(
+                    cart=cart,
+                    product=product,
+                    variant=variant,
+                    quantity=quantity
+                )
+            
             serializer = self.get_serializer(cart)
             return Response(serializer.data)
-
+            
         except Exception as e:
             print(f"Error in add_item: {e}")
             import traceback
@@ -496,9 +502,9 @@ class CartViewSet(viewsets.GenericViewSet):
             if quantity <= 0:
                 cart_item.delete()
             else:
-                if quantity > cart_item.product.available_quantity:
+                if quantity > cart_item.variant.available_quantity:
                     return Response(
-                        {'error': f'Доступно только {cart_item.product.available_quantity} шт.'},
+                        {'error': f'Доступно только {cart_item.variant.available_quantity} шт.'},
                         status=400
                     )
                 cart_item.quantity = quantity
@@ -628,32 +634,23 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=['post'])
     def cancel(self, request: Request, pk: Optional[int] = None) -> Response:
-        """
-        Отмена заказа (только для новых и подтверждённых).
-
-        Args:
-            request (Request): HTTP запрос
-            pk (int, optional): ID заказа
-
-        Returns:
-            Response: Статус операции
-        """
+        """Отмена заказа (только для новых и подтверждённых)."""
         order: Order = self.get_object()
-
+        
         if order.status not in [Order.Status.NEW, Order.Status.CONFIRMED]:
             return Response(
                 {'error': 'Нельзя отменить заказ в текущем статусе'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
+        
         order.status = Order.Status.CANCELLED
         order.save()
-
+        
         for item in order.items.all():
-            if item.product:
-                item.product.stock_quantity += item.quantity
-                item.product.save()
-
+            if item.variant:
+                item.variant.stock_quantity += item.quantity
+                item.variant.save()
+        
         return Response({'status': 'ok'})
     @action(detail=True, methods=['get'])
     def get_pickup_code(self, request: Request, pk: Optional[int] = None) -> Response:
@@ -663,14 +660,12 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
         """
         order: Order = self.get_object()
         
-        # Проверяем статус заказа
         if order.status not in [Order.Status.DELIVERED, Order.Status.RECEIVED]:
             return Response(
                 {'error': 'Код получения доступен только для доставленных заказов'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Генерируем или обновляем код (если прошло > 10 минут)
         order.regenerate_pickup_code()
         
         return Response({
@@ -686,7 +681,6 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
         """
         order: Order = self.get_object()
         
-        # Проверяем статус заказа
         if order.status != Order.Status.DELIVERED:
             return Response(
                 {'error': 'Заказ можно подтвердить как полученный только после доставки'},
@@ -904,6 +898,9 @@ def checkout_page(request: HttpRequest) -> HttpResponse:
     Returns:
         HttpResponse: Рендер страницы оформления заказа
     """
+    context = {
+        'user': request.user 
+    }
     return render(request, 'shop/checkout.html')
 
 

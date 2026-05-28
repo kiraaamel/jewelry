@@ -7,7 +7,7 @@
         <div class="banner-overlay" aria-hidden="true"></div>
         <div class="banner-content">
             <div class="banner-text-box">
-                <h1 class="banner-title">Добро пожаловать<br>в Argentic Jewelry</h1>
+                <h1 class="banner-title">Добро пожаловать<br>в Argentic Jewelry!</h1>
                 <p class="banner-subtitle">Изысканные украшения из серебра<br>для самых особенных моментов</p>
                 <a href="{% url 'catalog' %}" class="btn-banner" aria-label="Перейти в каталог товаров">
                     Смотреть каталог
@@ -34,7 +34,7 @@
 <section class="collections-section py-5" aria-labelledby="collections-title">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 id="collections-title" class="fw-bold" style="color: var(--accent); font-family: 'Playfair Display', serif; font-size: 2rem;">Наши коллекции</h2>
+            <h2 id="collections-title" class="fw-bold" style="color: var(--accent); font-size: 2rem;">Наши коллекции</h2>
             <p style="color: var(--gray);">Вдохновляющие образы для особых моментов</p>
         </div>
         <div class="row" id="collections-list" role="list" aria-label="Список коллекций">
@@ -84,10 +84,14 @@
         <div id="size-options" class="size-buttons" role="group" aria-label="Доступные размеры"></div>
         <div id="stock-info" style="margin: 10px 0; font-size: 0.75rem;" aria-live="polite"></div>
         <div>
-            <label for="modal-quantity">Количество:</label>
-            <input type="number" id="modal-quantity" value="1" min="1" step="1" 
-                   style="width:80px; padding:8px; margin-left:10px; border:1px solid #ddd; border-radius:8px;" 
-                   aria-label="Количество товара">
+            <label style="display: block; margin-bottom: 8px; color: var(--brown);">Количество:</label>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <button type="button" id="size-qty-minus" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer; font-size: 18px;">-</button>
+                <input type="number" id="modal-quantity" value="1" min="1" step="1" 
+                    style="width: 80px; padding: 8px; text-align: center; border: 1px solid #ddd; border-radius: 8px;" 
+                    aria-label="Количество товара">
+                <button type="button" id="size-qty-plus" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer; font-size: 18px;">+</button>
+            </div>
         </div>
         <button id="confirm-add-to-cart" class="btn-modal-confirm" aria-label="Подтвердить добавление в корзину">
             Добавить в корзину
@@ -137,7 +141,6 @@
 .section-title-left {
     font-weight: bold;
     color: var(--accent);
-    font-family: 'Playfair Display', serif;
     font-size: 2rem;
     margin-bottom: 0.5rem;
     text-align: left;
@@ -192,21 +195,25 @@
     color: white;
     font-weight: bold;
     margin-bottom: 1rem;
-    font-family: 'Playfair Display', serif;
     font-size: clamp(1.75rem, 5vw, 2.625rem);
     line-height: 1.2;
+    letter-spacing: 0.5px;
+    text-align: center;
 }
 
 .banner-subtitle {
     color: white;
     margin-bottom: 1.5rem;
-    font-size: clamp(1rem, 3vw, 1.25rem);
+    font-size: 1.5em;
     font-weight: 500;
     opacity: 0.95;
+    text-align: center;
+    font-style: italic;
+    line-height: normal;
 }
 
 .btn-banner {
-    background: white;
+    background: var(--bg-cream);
     color: var(--accent);
     font-weight: 600;
     padding: 0.625rem 2rem;
@@ -216,6 +223,8 @@
     border: none;
     text-decoration: none;
     display: inline-block;
+    width: 100%;
+    text-align: center;
 }
 
 .btn-banner:hover {
@@ -279,6 +288,32 @@
     text-align: center;
 }
 
+.product-category {
+    font-size: 0.75rem;
+    color: var(--gray);
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.product-sizes {
+    font-size: 0.7rem;
+    color: var(--gray);
+    text-align: center;
+    margin: 5px 0;
+}
+
+.discount-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--brown);
+    color: var(--bg-cream);
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    z-index: 10;
+}
 .product-card:hover .product-name {
     color: var(--accent);
 }
@@ -339,7 +374,9 @@
     height: 100%;
     padding: 1.25rem;
 }
-
+.collectons-tytle {
+    text-align: left;
+}
 .review-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(93, 110, 128, 0.1);
@@ -713,7 +750,7 @@
     }
     
     .banner-subtitle {
-        font-size: 0.875rem;
+        font-size: 1.5rem;
         margin-bottom: 1rem;
         color: var(--bg-cream);
         opacity: 0.95;
@@ -732,8 +769,11 @@
     }
     
     .section-subtitle-left {
-        font-size: 0.75rem;
+        font-size: 1rem;
         text-align: center;
+    }
+    .product-category {
+        font-size: 1em;
     }
     
     .product-image,
@@ -746,21 +786,21 @@
     }
     
     .product-name {
-        font-size: 0.8125rem;
+        font-size: 1.3rem;
         margin-bottom: 0.375rem;
     }
     
     .product-price-new {
-        font-size: 0.9375rem;
+        font-size: 1.2rem;
     }
     
     .product-price-old {
-        font-size: 0.75rem;
+        font-size: 1rem;
     }
     
     .btn-product-cart {
         padding: 0.5rem;
-        font-size: 0.75rem;
+        font-size: 1rem;
     }
 
     .collections-section .row [class*="col-md-3"] {
@@ -768,11 +808,7 @@
         flex: 0 0 50%;
         max-width: 50%;
     }
-    
-    .collection-name {
-        font-size: 0.875rem;
-    }
-    
+
     .collection-overlay {
         padding: 0.75rem;
     }
@@ -796,11 +832,11 @@
     }
     
     .review-product-name {
-        font-size: 0.6875rem;
+        font-size: 0.75rem;
     }
     
     .review-date {
-        font-size: 0.625rem;
+        font-size: 0.7rem;
     }
     
     .review-stars i {
@@ -808,7 +844,7 @@
     }
     
     .review-text {
-        font-size: 0.75rem;
+        font-size: 1.2rem;
     }
 
     .modal-content {
@@ -852,12 +888,6 @@
 
 {% block scripts %}
 <script>
-let sizeModalProductId = null;
-let sizeModalSizes = [];
-let sizeModalSelectedSize = null;
-let sizeModalAvailableQty = 0;
-let sizeModalCurrentInCart = 0;
-
 let qtyModalProductId = null;
 let qtyModalAvailableQty = 0;
 let qtyModalCurrentInCart = 0;
@@ -915,12 +945,107 @@ async function getCurrentCartQuantity(productId) {
     }
 }
 
-async function getCurrentCartQuantityForSize(productId, size) {
+
+let sizeModalProductId = null;
+let sizeModalVariants = [];
+let sizeModalSelectedVariant = null;
+
+async function openSizeModal(productId, variantsJson) {
+    sizeModalProductId = productId;
+    const variants = JSON.parse(variantsJson);
+    sizeModalVariants = variants;
+    sizeModalSelectedVariant = null;
+    
+    const container = document.getElementById('size-options');
+    if (!container) return;
+    
+    if (sizeModalVariants.length === 0) {
+        container.innerHTML = '<div class="text-secondary">Товар временно недоступен</div>';
+        document.getElementById('confirm-add-to-cart').disabled = true;
+    } else {
+        let html = '';
+        for (const variant of variants) {
+            const cartQty = await getCurrentCartQuantityForVariant(productId, variant.id);
+            const isOutOfStock = variant.available_quantity <= 0;
+            const availableToAdd = Math.max(0, variant.available_quantity - cartQty);
+            const stockText = isOutOfStock ? ' (нет в наличии)' : 
+                (cartQty > 0 ? ` (в корзине: ${cartQty}, можно добавить: ${availableToAdd})` : ` (${variant.available_quantity} шт.)`);
+            
+            html += `<button class="size-btn" data-variant-id="${variant.id}" 
+                           data-size="${variant.size}" 
+                           data-available-qty="${variant.available_quantity}"
+                           data-cart-qty="${cartQty}"
+                           data-available-to-add="${availableToAdd}"
+                           ${isOutOfStock ? 'disabled' : ''}>
+                        ${variant.size}${stockText}
+                    </button>`;
+        }
+        container.innerHTML = html;
+        
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.onclick = function() {
+                document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                sizeModalSelectedVariant = {
+                    id: parseInt(this.dataset.variantId),
+                    size: this.dataset.size,
+                    available_quantity: parseInt(this.dataset.availableQty),
+                    cartQty: parseInt(this.dataset.cartQty) || 0,
+                    availableToAdd: parseInt(this.dataset.availableToAdd) || 0
+                };
+                
+                const stockInfo = document.getElementById('stock-info');
+                if (stockInfo) {
+                    stockInfo.innerHTML = `
+                        <span style="color: green;">В наличии: ${sizeModalSelectedVariant.available_quantity} шт.</span>
+                        ${sizeModalSelectedVariant.cartQty > 0 ? 
+                            `<br><span style="color: orange;">Уже в корзине: ${sizeModalSelectedVariant.cartQty} шт. (можно добавить ещё ${sizeModalSelectedVariant.availableToAdd})</span>` : ''}
+                    `;
+                }
+                
+                const quantityInput = document.getElementById('modal-quantity');
+                if (quantityInput) {
+                    quantityInput.max = sizeModalSelectedVariant.availableToAdd;
+                    quantityInput.value = 1;
+
+                    const plusBtn = document.getElementById('size-qty-plus');
+                    if (plusBtn) {
+
+                    }
+                    
+                    quantityInput.oninput = function() {
+                        let val = parseInt(this.value);
+                        const maxVal = parseInt(this.max) || 999;
+                        if (isNaN(val) || val < 1) {
+                            this.value = 1;
+                            showNotification('Количество не может быть меньше 1');
+                        } else if (val > maxVal) {
+                            this.value = maxVal;
+                            showNotification(`Можно добавить не более ${maxVal} шт.`);
+                        }
+                    };
+                }
+                
+                document.getElementById('confirm-add-to-cart').disabled = false;
+            };
+        });
+        
+        document.getElementById('confirm-add-to-cart').disabled = true;
+    }
+    
+    document.getElementById('modal-quantity').value = 1;
+    
+    const modal = document.getElementById('size-modal');
+    modal.classList.add('active');
+    modal.hidden = false;
+}
+
+async function getCurrentCartQuantityForVariant(productId, variantId) {
     try {
         const response = await fetch('/api/cart/');
         if (!response.ok) return 0;
         const cart = await response.json();
-        const cartItem = cart.items?.find(item => item.product === productId && item.size === size);
+        const cartItem = cart.items?.find(item => item.product === productId && item.variant === variantId);
         return cartItem ? cartItem.quantity : 0;
     } catch (error) {
         console.error('Error getting cart quantity:', error);
@@ -928,79 +1053,158 @@ async function getCurrentCartQuantityForSize(productId, size) {
     }
 }
 
-function openSizeModal(productId, sizesJson, availableQty) {
-    sizeModalProductId = productId;
-    sizeModalSizes = JSON.parse(sizesJson);
-    sizeModalSelectedSize = null;
-    sizeModalAvailableQty = availableQty;
-    sizeModalCurrentInCart = 0;
+function createQuantityModal() {
+    let modal = document.getElementById('quantity-modal');
+    if (modal) return;
     
-    const container = document.getElementById('size-options');
-    if (container) {
-        let html = '';
-        sizeModalSizes.forEach(size => {
-            html += `<button class="size-btn" data-size="${size}" aria-label="Выбрать размер ${size}">${size}</button>`;
-        });
-        container.innerHTML = html;
-        
-        document.querySelectorAll('.size-btn').forEach(btn => {
-            btn.onclick = async function() {
-                document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
-                this.classList.add('selected');
-                sizeModalSelectedSize = this.dataset.size;
-                
-                const cartQty = await getCurrentCartQuantityForSize(productId, sizeModalSelectedSize);
-                sizeModalCurrentInCart = cartQty;
-                
-                const stockInfo = document.getElementById('stock-info');
-                if (stockInfo) {
-                    let infoHtml = `<span style="color: green;">В наличии ${sizeModalAvailableQty} шт.</span>`;
-                    if (cartQty > 0) {
-                        const remainingToAdd = Math.max(0, sizeModalAvailableQty - cartQty);
-                        infoHtml += `<br><span style="color: orange;">Уже в корзине: ${cartQty} шт. (можно добавить ещё ${remainingToAdd} шт.)</span>`;
-                    }
-                    stockInfo.innerHTML = infoHtml;
-                }
-                
-                const quantityInput = document.getElementById('modal-quantity');
-                if (quantityInput) {
-                    quantityInput.max = Math.max(0, sizeModalAvailableQty - sizeModalCurrentInCart);
-                    if (quantityInput.max < 1) quantityInput.max = 0;
-                    quantityInput.value = Math.min(quantityInput.value, quantityInput.max);
-                }
-            };
-        });
-    }
+    modal = document.createElement('div');
+    modal.id = 'quantity-modal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeQuantityModal()">&times;</span>
+            <h3 style="margin-bottom:20px; color:var(--accent);">Выберите количество</h3>
+            <div id="qty-stock-info" style="margin: 10px 0; font-size: 12px;"></div>
+            <div>
+                <label>Количество:</label>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px;">
+                    <button id="qty-minus" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer;">-</button>
+                    <input type="number" id="modal-qty-value" value="1" min="1" style="width: 80px; padding: 8px; text-align: center; border: 1px solid #ddd; border-radius: 8px;">
+                    <button id="qty-plus" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer;">+</button>
+                </div>
+            </div>
+            <button id="confirm-add-to-cart-qty" style="margin-top:20px; padding:12px 24px; background:var(--accent); color:white; border:none; border-radius:30px; cursor:pointer;">Добавить в корзину</button>
+            <button onclick="closeQuantityModal()" style="margin-top:10px; padding:8px 20px; background:transparent; border:none; cursor:pointer;">Отмена</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
     
-    const stockInfo = document.getElementById('stock-info');
-    if (stockInfo) {
-        if (sizeModalAvailableQty <= 0) {
-            stockInfo.innerHTML = '<span style="color: red;">Нет в наличии</span>';
-            document.getElementById('confirm-add-to-cart').disabled = true;
-        } else {
-            stockInfo.innerHTML = `<span style="color: green;">В наличии ${sizeModalAvailableQty} шт.</span>`;
-            document.getElementById('confirm-add-to-cart').disabled = false;
-        }
-    }
-    
-    const quantityInput = document.getElementById('modal-quantity');
-    if (quantityInput) {
-        quantityInput.max = sizeModalAvailableQty;
-        quantityInput.value = 1;
-        quantityInput.oninput = function() {
-            let val = parseInt(this.value);
-            const maxQty = Math.max(0, sizeModalAvailableQty - sizeModalCurrentInCart);
-            if (val > maxQty) {
-                this.value = maxQty;
-                showNotification(`Можно добавить только ${maxQty} шт.`);
+    if (!document.getElementById('quantity-modal-styles')) {
+        const style = document.createElement('style');
+        style.id = 'quantity-modal-styles';
+        style.textContent = `
+            #quantity-modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 1000;
+                align-items: center;
+                justify-content: center;
             }
-            if (isNaN(val) || val < 1) this.value = 1;
-        };
+            #quantity-modal.active {
+                display: flex;
+            }
+            #quantity-modal .modal-content {
+                background: white;
+                border-radius: 24px;
+                padding: 30px;
+                max-width: 350px;
+                width: 90%;
+                text-align: center;
+                position: relative;
+            }
+            #quantity-modal .modal-close {
+                position: absolute;
+                top: 15px;
+                right: 20px;
+                font-size: 24px;
+                cursor: pointer;
+                color: var(--gray);
+            }
+        `;
+        document.head.appendChild(style);
     }
     
-    const modal = document.getElementById('size-modal');
-    modal.classList.add('active');
-    modal.hidden = false;
+    const qtyInput = document.getElementById('modal-qty-value');
+    const minusBtn = document.getElementById('qty-minus');
+    const plusBtn = document.getElementById('qty-plus');
+    
+    if (qtyInput) {
+        qtyInput.addEventListener('input', function() {
+            let val = parseInt(this.value);
+            const maxVal = parseInt(this.max) || 999;
+            if (isNaN(val) || val < 1) {
+                this.value = 1;
+                showNotification('Количество не может быть меньше 1');
+            } else if (val > maxVal) {
+                this.value = maxVal;
+                showNotification(`Доступно только ${maxVal} шт. для добавления`);
+            }
+        });
+    }
+    
+    if (minusBtn) {
+        minusBtn.addEventListener('click', () => {
+            let val = parseInt(qtyInput.value) || 1;
+            if (val > 1) {
+                qtyInput.value = val - 1;
+                qtyInput.dispatchEvent(new Event('input'));
+            }
+        });
+    }
+    
+    if (plusBtn) {
+        plusBtn.addEventListener('click', () => {
+            let val = parseInt(qtyInput.value) || 1;
+            const maxVal = parseInt(qtyInput.max) || 999;
+            if (val < maxVal) {
+                qtyInput.value = val + 1;
+                qtyInput.dispatchEvent(new Event('input'));
+            } else {
+                showNotification(`Можно добавить не более ${maxVal} шт.`);
+            }
+        });
+    }
+    
+    const confirmBtn = document.getElementById('confirm-add-to-cart-qty');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', function() {
+            const quantity = parseInt(qtyInput.value);
+            const totalAfterAdd = qtyModalCurrentInCart + quantity;
+            
+            if (totalAfterAdd > qtyModalAvailableQty) {
+                const remaining = Math.max(0, qtyModalAvailableQty - qtyModalCurrentInCart);
+                showNotification(`В корзине уже ${qtyModalCurrentInCart} шт. Доступно для добавления: ${remaining} шт.`);
+                return;
+            }
+            
+            if (quantity > qtyModalAvailableQty) {
+                showNotification(`Доступно только ${qtyModalAvailableQty} шт.`);
+                return;
+            }
+            
+            fetch('/api/cart/add_item/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    product_id: qtyModalProductId,
+                    quantity: quantity,
+                    size: ''
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showNotification(data.error);
+                } else {
+                    closeQuantityModal();
+                    updateCartCount();
+                    showNotification(`Товар добавлен в корзину! (теперь в корзине ${totalAfterAdd} шт.)`);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Ошибка при добавлении в корзину');
+            });
+        });
+    }
 }
 
 function closeSizeModal() {
@@ -1008,32 +1212,48 @@ function closeSizeModal() {
     modal.classList.remove('active');
     modal.hidden = true;
     sizeModalProductId = null;
-    sizeModalSelectedSize = null;
-    sizeModalSizes = [];
-    sizeModalCurrentInCart = 0;
+    sizeModalSelectedVariant = null;
+    sizeModalVariants = [];
 }
 
 async function openQuantityModal(productId, availableQty) {
+    createQuantityModal();  
+    
     qtyModalProductId = productId;
     qtyModalAvailableQty = availableQty;
     qtyModalCurrentInCart = await getCurrentCartQuantity(productId);
+    
+    const availableToAdd = Math.max(0, availableQty - qtyModalCurrentInCart);
     
     const modal = document.getElementById('quantity-modal');
     const qtyInput = document.getElementById('modal-qty-value');
     const stockInfo = document.getElementById('qty-stock-info');
     
-    const remainingToAdd = Math.max(0, availableQty - qtyModalCurrentInCart);
-    
     qtyInput.value = 1;
-    qtyInput.max = remainingToAdd;
+    qtyInput.max = availableToAdd;
     
-    if (remainingToAdd <= 0) {
+    qtyInput.oninput = function() {
+        let val = parseInt(this.value);
+        if (isNaN(val) || val < 1) {
+            this.value = 1;
+        }
+        if (val > availableToAdd) {
+            this.value = availableToAdd;
+            showNotification(`Можно добавить не более ${availableToAdd} шт.`);
+        }
+    };
+    
+    if (availableToAdd <= 0) {
         stockInfo.innerHTML = `<span style="color:red;">В корзине уже максимальное количество (${availableQty} шт.)</span>`;
+        qtyInput.disabled = true;
+        document.getElementById('confirm-add-to-cart-qty').disabled = true;
     } else {
         stockInfo.innerHTML = `
             <span style="color:green;">В наличии: ${availableQty} шт.</span>
-            ${qtyModalCurrentInCart > 0 ? `<br><span style="color:orange;">Уже в корзине: ${qtyModalCurrentInCart} шт.</span>` : ''}
+            ${qtyModalCurrentInCart > 0 ? `<br><span style="color:orange;">Уже в корзине: ${qtyModalCurrentInCart} шт. (можно добавить ещё ${availableToAdd})</span>` : ''}
         `;
+        qtyInput.disabled = false;
+        document.getElementById('confirm-add-to-cart-qty').disabled = false;
     }
     
     modal.classList.add('active');
@@ -1052,23 +1272,19 @@ function closeQuantityModal() {
 document.getElementById('confirm-add-to-cart').addEventListener('click', async function() {
     const quantity = parseInt(document.getElementById('modal-quantity').value);
     
-    if (sizeModalSizes.length > 0 && !sizeModalSelectedSize) {
+    if (!sizeModalSelectedVariant) {
         showNotification('Пожалуйста, выберите размер');
         return;
     }
     
-    const currentCartQty = await getCurrentCartQuantityForSize(sizeModalProductId, sizeModalSelectedSize);
-    const maxAvailable = sizeModalAvailableQty;
-    
-    if (currentCartQty >= maxAvailable) {
-        showNotification(`В корзине уже максимальное количество (${currentCartQty} шт.)`);
+    if (isNaN(quantity) || quantity < 1) {
+        showNotification('Введите корректное количество');
         return;
     }
     
-    const remainingToAdd = Math.max(0, maxAvailable - currentCartQty);
-    
-    if (quantity > remainingToAdd) {
-        showNotification(`Можно добавить не более ${remainingToAdd} шт.`);
+    const availableToAdd = sizeModalSelectedVariant.availableToAdd;
+    if (quantity > availableToAdd) {
+        showNotification(`Нельзя добавить ${quantity} шт. Доступно для добавления: ${availableToAdd} шт.`);
         return;
     }
     
@@ -1079,9 +1295,8 @@ document.getElementById('confirm-add-to-cart').addEventListener('click', async f
             'X-CSRFToken': getCookie('csrftoken')
         },
         body: JSON.stringify({ 
-            product_id: sizeModalProductId, 
-            quantity: quantity,
-            size: sizeModalSelectedSize || '' 
+            variant_id: sizeModalSelectedVariant.id,
+            quantity: quantity
         })
     })
     .then(response => response.json())
@@ -1115,17 +1330,17 @@ document.getElementById('confirm-add-to-cart-qty').addEventListener('click', asy
         return;
     }
     
+    const body = qtyModalVariantId 
+        ? { variant_id: qtyModalVariantId, quantity: quantity }
+        : { product_id: qtyModalProductId, quantity: quantity, size: '' };
+    
     fetch('/api/cart/add_item/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCookie('csrftoken')
         },
-        body: JSON.stringify({
-            product_id: qtyModalProductId,
-            quantity: quantity,
-            size: ''
-        })
+        body: JSON.stringify(body)
     })
     .then(response => response.json())
     .then(data => {
@@ -1141,6 +1356,64 @@ document.getElementById('confirm-add-to-cart-qty').addEventListener('click', asy
         console.error('Error:', error);
         showNotification('Ошибка при добавлении в корзину');
     });
+});
+function initSizeModalButtons() {
+    const sizeQtyMinus = document.getElementById('size-qty-minus');
+    const sizeQtyPlus = document.getElementById('size-qty-plus');
+    const sizeQtyInput = document.getElementById('modal-quantity');
+    
+    if (sizeQtyMinus && sizeQtyInput) {
+        const newMinusBtn = sizeQtyMinus.cloneNode(true);
+        sizeQtyMinus.parentNode.replaceChild(newMinusBtn, sizeQtyMinus);
+        
+        newMinusBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            let val = parseInt(sizeQtyInput.value) || 1;
+            if (val > 1) {
+                sizeQtyInput.value = val - 1;
+                sizeQtyInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+    }
+    
+    if (sizeQtyPlus && sizeQtyInput) {
+        const newPlusBtn = sizeQtyPlus.cloneNode(true);
+        sizeQtyPlus.parentNode.replaceChild(newPlusBtn, sizeQtyPlus);
+        
+        newPlusBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            let val = parseInt(sizeQtyInput.value) || 1;
+            const maxVal = parseInt(sizeQtyInput.max);
+            console.log('Current val:', val, 'Max val:', maxVal); 
+            if (!isNaN(maxVal) && val < maxVal) {
+                sizeQtyInput.value = val + 1;
+                sizeQtyInput.dispatchEvent(new Event('input', { bubbles: true }));
+            } else if (!isNaN(maxVal) && val >= maxVal) {
+                showNotification(`Можно добавить не более ${maxVal} шт.`);
+            } else if (isNaN(maxVal)) {
+                if (val < 999) {
+                    sizeQtyInput.value = val + 1;
+                    sizeQtyInput.dispatchEvent(new Event('input', { bubbles: true }));
+                } else {
+                    showNotification(`Можно добавить не более 999 шт.`);
+                }
+            }
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initSizeModalButtons();
+    loadCollections();
+    loadProducts('bestseller-products', '/api/products/?page_size=4', 4);
+    loadReviews();
+    
+    const isAuth = document.body.classList.contains('user-authenticated');
+    if (isAuth) {
+        loadProducts('recommended-products', '/api/products/?page_size=4', 4);
+    }
 });
 
 document.getElementById('qty-minus')?.addEventListener('click', () => {
@@ -1159,15 +1432,45 @@ document.getElementById('qty-plus')?.addEventListener('click', () => {
         showNotification(`Можно добавить только ${remainingToAdd} шт.`);
     }
 });
-
+function addToCartWithVariant(variantId, availableQty) {
+    if (availableQty <= 0) {
+        showNotification('Товар временно отсутствует');
+        return;
+    }
+    
+    fetch('/api/cart/add_item/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            variant_id: variantId,
+            quantity: 1
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showNotification(data.error);
+        } else {
+            updateCartCount();
+            showNotification('Товар добавлен в корзину!');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при добавлении в корзину');
+    });
+}
 function renderProductCard(product) {
     if (!product) return '';
-    
+ 
     const priceHtml = product.old_price 
         ? `<span class="product-price-new">${product.price} ₽</span>
            <span class="product-price-old">${product.old_price} ₽</span>`
         : `<span class="product-price-new">${product.price} ₽</span>`;
-    
+
     let imageUrl = product.main_image || product.image || '';
     if (imageUrl && typeof imageUrl === 'object') {
         imageUrl = imageUrl.url || '';
@@ -1179,28 +1482,64 @@ function renderProductCard(product) {
              <i class="fas fa-gem" aria-hidden="true"></i>
            </div>`;
     
-    const sizes = product.size ? product.size.split(',').map(s => s.trim()).filter(s => s) : [];
-    const sizesJson = JSON.stringify(sizes).replace(/"/g, '&quot;');
-    const hasSizes = sizes.length > 0;
-    const availableQty = product.available_quantity || 0;
-    const isOutOfStock = availableQty <= 0;
+    const categoryName = product.category_name || product.category?.name || 'Украшение';
+
+    const rating = product.average_rating || 0;
+    const fullStars = Math.round(rating);
+    const stars = '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
+    const reviewsCount = product.reviews_count || 0;
+
+    const variants = product.variants || [];
+    const sizes = variants.map(v => v.size);
+    const sizesText = sizes.length > 0 ? sizes.join(', ') : 'Без размера';
+    
+    const variantsJson = JSON.stringify(variants.map(v => ({
+        id: v.id,
+        size: v.size,
+        available_quantity: v.available_quantity
+    }))).replace(/"/g, '&quot;');
+    
+    const totalAvailable = product.available_quantity || 0;
+    const isOutOfStock = totalAvailable <= 0;
     
     const cartButtonText = isOutOfStock ? 'Нет в наличии' : 'В корзину';
     const cartButtonClass = isOutOfStock ? 'btn-product-cart disabled' : 'btn-product-cart';
     
     let cartButton;
-    if (hasSizes) {
-        cartButton = `<button class="${cartButtonClass}" onclick="event.stopPropagation(); openSizeModal(${product.id}, '${sizesJson}', ${availableQty})" ${isOutOfStock ? 'disabled' : ''} aria-label="${cartButtonText} ${product.name}">${cartButtonText}</button>`;
-    } else {
-        cartButton = `<button class="${cartButtonClass}" onclick="event.stopPropagation(); openQuantityModal(${product.id}, ${availableQty})" ${isOutOfStock ? 'disabled' : ''} aria-label="${cartButtonText} ${product.name}">${cartButtonText}</button>`;
+
+    if (variants.length === 0) {
+        cartButton = `<button class="btn-product-cart disabled" disabled aria-label="Товар временно недоступен">Нет в наличии</button>`;
+    } 
+    else if (variants.length === 1 && (sizes[0] === 'ONE SIZE' || sizes[0] === 'Без размера')) {
+        const variant = variants[0];
+        cartButton = `<button class="${cartButtonClass}" onclick="event.stopPropagation(); openQuantityModalForVariant(${variant.id}, ${variant.available_quantity}, ${product.id})" ${isOutOfStock ? 'disabled' : ''} aria-label="${cartButtonText} ${product.name}">${cartButtonText}</button>`;
     }
+    else if (variants.length === 1) {
+        const variant = variants[0];
+        cartButton = `<button class="${cartButtonClass}" onclick="event.stopPropagation(); addToCartWithVariant(${variant.id}, ${variant.available_quantity})" ${isOutOfStock ? 'disabled' : ''} aria-label="${cartButtonText} ${product.name}">${cartButtonText}</button>`;
+    }
+    else {
+        cartButton = `<button class="${cartButtonClass}" onclick="event.stopPropagation(); openSizeModal(${product.id}, '${variantsJson}')" ${isOutOfStock ? 'disabled' : ''} aria-label="${cartButtonText} ${product.name}">${cartButtonText}</button>`;
+    }
+    const discountBadge = product.discount_percent > 0 ? `<span class="discount-badge">-${product.discount_percent}%</span>` : '';
     
     return `
         <div class="col-md-3 col-sm-6 mb-4" role="listitem">
             <div class="product-card position-relative shadow-sm" onclick="window.location.href='/product/${product.id}/'" role="link" tabindex="0" onkeypress="if(event.key==='Enter') window.location.href='/product/${product.id}/'">
-                ${imageHtml}
+                <div class="product-image-wrapper">
+                    ${imageHtml}
+                    ${discountBadge}
+                </div>
                 <div class="card-body p-3">
+                    <div class="product-category" style="font-size: 0.75rem; color: var(--gray); text-align: center; margin-bottom: 5px;">${escapeHtml(categoryName)}</div>
                     <div class="product-name">${product.name.length > 40 ? product.name.substring(0, 40) + '...' : product.name}</div>
+                    <div class="rating" style="text-align: center; margin: 5px 0;">
+                        <span class="rating-stars" style="color: #ffc107; font-size: 0.75rem;">${stars}</span>
+                        <span class="text-secondary ms-1" style="font-size: 0.7rem;">(${reviewsCount})</span>
+                    </div>
+                    <div class="product-sizes" style="font-size: 0.7rem; color: var(--gray); text-align: center; margin: 5px 0;">
+                        ${sizesText}
+                    </div>
                     <div class="product-price-wrapper">${priceHtml}</div>
                     ${cartButton}
                 </div>
@@ -1208,6 +1547,90 @@ function renderProductCard(product) {
         </div>
     `;
 }
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+let qtyModalVariantId = null;
+
+async function openQuantityModalForVariant(variantId, availableQty, productId) {
+    createQuantityModal();
+    
+    qtyModalVariantId = variantId;
+    qtyModalProductId = productId;
+    qtyModalAvailableQty = availableQty;
+    qtyModalCurrentInCart = await getCurrentCartQuantityForVariant(productId, variantId);
+    
+    const availableToAdd = Math.max(0, availableQty - qtyModalCurrentInCart);
+    
+    const modal = document.getElementById('quantity-modal');
+    const qtyInput = document.getElementById('modal-qty-value');
+    const stockInfo = document.getElementById('qty-stock-info');
+    
+    qtyInput.value = 1;
+    qtyInput.max = availableToAdd;
+
+    const minusBtn = document.getElementById('qty-minus');
+    const plusBtn = document.getElementById('qty-plus');
+    
+    if (minusBtn) {
+        const newMinusBtn = minusBtn.cloneNode(true);
+        minusBtn.parentNode.replaceChild(newMinusBtn, minusBtn);
+        newMinusBtn.addEventListener('click', () => {
+            let val = parseInt(qtyInput.value) || 1;
+            if (val > 1) {
+                qtyInput.value = val - 1;
+                qtyInput.dispatchEvent(new Event('input'));
+            }
+        });
+    }
+    
+    if (plusBtn) {
+        const newPlusBtn = plusBtn.cloneNode(true);
+        plusBtn.parentNode.replaceChild(newPlusBtn, plusBtn);
+        newPlusBtn.addEventListener('click', () => {
+            let val = parseInt(qtyInput.value) || 1;
+            if (val < availableToAdd) {
+                qtyInput.value = val + 1;
+                qtyInput.dispatchEvent(new Event('input'));
+            } else {
+                showNotification(`Можно добавить не более ${availableToAdd} шт.`);
+            }
+        });
+    }
+    
+    qtyInput.oninput = function() {
+        let val = parseInt(this.value);
+        if (isNaN(val) || val < 1) {
+            this.value = 1;
+            showNotification('Количество не может быть меньше 1');
+        } else if (val > availableToAdd) {
+            this.value = availableToAdd;
+            showNotification(`Доступно только ${availableToAdd} шт. для добавления`);
+        }
+    };
+    
+    if (availableToAdd <= 0) {
+        stockInfo.innerHTML = `<span style="color:red;">В корзине уже максимальное количество (${availableQty} шт.)</span>`;
+        qtyInput.disabled = true;
+        document.getElementById('confirm-add-to-cart-qty').disabled = true;
+    } else {
+        stockInfo.innerHTML = `
+            <span style="color:green;">В наличии: ${availableQty} шт.</span>
+            ${qtyModalCurrentInCart > 0 ? `<br><span style="color:orange;">Уже в корзине: ${qtyModalCurrentInCart} шт. (можно добавить ещё ${availableToAdd})</span>` : ''}
+        `;
+        qtyInput.disabled = false;
+        document.getElementById('confirm-add-to-cart-qty').disabled = false;
+    }
+    
+    modal.classList.add('active');
+    modal.hidden = false;
+}
+
 
 function renderReview(review, productName) {
     const rating = review.rating || 0;

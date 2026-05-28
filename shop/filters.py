@@ -21,7 +21,6 @@ from .models import Product
 class ProductFilter(filters.FilterSet):
     """
     Фильтр для модели Product.
-
     Позволяет фильтровать товары по:
     - диапазону цены (price_min, price_max)
     - наличию камней (stones)
@@ -31,7 +30,6 @@ class ProductFilter(filters.FilterSet):
     - наличию скидки (has_discount)
     - коллекции (collection, collection_slug)
     """
-
     # Фильтрация по цене (минимальная и максимальная)
     price_min: filters.NumberFilter = filters.NumberFilter(
         field_name='price',
@@ -41,36 +39,30 @@ class ProductFilter(filters.FilterSet):
         field_name='price',
         lookup_expr='lte'
     )
-
     # Фильтрация по наличию камней
     stones: filters.BooleanFilter = filters.BooleanFilter(field_name='stones')
-
     # Фильтрация по типу серебра
     silver_type: filters.ChoiceFilter = filters.ChoiceFilter(
         field_name='silver_type',
         choices=Product.SILVER_TYPE_CHOICES,
         lookup_expr='exact'
     )
-
     # Фильтрация по пробе серебра
     fineness: filters.ChoiceFilter = filters.ChoiceFilter(
         field_name='fineness',
         choices=Product.FINENESS_CHOICES,
         lookup_expr='exact'
     )
-
     # Фильтрация по типу камня
     stone_type: filters.ChoiceFilter = filters.ChoiceFilter(
         field_name='stone_type',
         choices=Product.STONE_TYPE_CHOICES,
         lookup_expr='exact'
     )
-
     # Фильтрация по наличию скидки
     has_discount: filters.BooleanFilter = filters.BooleanFilter(
         method='filter_has_discount'
     )
-
     # Фильтрация по коллекции (по ID или slug)
     collection: filters.NumberFilter = filters.NumberFilter(
         field_name='collection__id'
@@ -78,16 +70,13 @@ class ProductFilter(filters.FilterSet):
     collection_slug: filters.CharFilter = filters.CharFilter(
         field_name='collection__slug'
     )
-
     def filter_has_discount(self, queryset: QuerySet[Product], name: str, value: bool) -> QuerySet[Product]:
         """
         Фильтрует товары по наличию скидки.
-
         Args:
             queryset (QuerySet[Product]): Исходный QuerySet товаров
             name (str): Имя поля (has_discount)
             value (bool): True - товары со скидкой, False - все товары
-
         Returns:
             QuerySet[Product]: Отфильтрованный QuerySet
         """
@@ -97,7 +86,6 @@ class ProductFilter(filters.FilterSet):
                 old_price__gt=models.F('price')
             )
         return queryset
-
     class Meta:
         model = Product
         fields: list = [

@@ -202,8 +202,7 @@ SIMPLE_JWT = {
 SESSION_SAVE_EVERY_REQUEST = True
 # Настройки Silk для профилирования
 SILKY_PYTHON_PROFILER = False  # Включить профайлер Python
-SILKY_PYTHON_PROFILER_BINARY = True  # Сохранять результаты в бинарном формате
-SILKY_MAX_RECORDED_REQUESTS = 100  # Максимум записей для хранения
+SILKY_PYTHON_PROFILER_BINARY = False  # Сохранять результаты в бинарном формате
 SILKY_AUTHENTICATION = True  # Требовать авторизацию для просмотра
 SILKY_AUTHORISATION = True   # Требовать права доступа
 

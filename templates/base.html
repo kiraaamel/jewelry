@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Argentic Jewelry | Серебряные украшения</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     {% load static %}
     <link rel="stylesheet" href="{% static 'shop/css/style.css' %}">
@@ -33,9 +34,89 @@
         
         body {
             background-color: var(--bg-cream);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             color: var(--accent);
             line-height: 1.5;
+            font-weight: 400;
+        }
+        /* Заголовки - Playfair Display */
+        h1, h2, h3, h4, h5, h6,
+        .h1, .h2, .h3, .h4, .h5, .h6,
+        .section-title,
+        .product-name,
+        .cart-title,
+        .favorite-name,
+        .review-author,
+        .modal-title,
+        .banner-title,
+        .collections-section h2,
+        .checkout-title,
+        .orders-title,
+        .profile-title,
+        .favorites-title,
+        .content-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        /* Акценты, цитаты, описания - Cormorant Garamond */
+        .review-text,
+        .product-description,
+        .banner-subtitle,
+        .about-text,
+        .faq-text {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-weight: 400;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        /* Цены и цифры - Montserrat с жирным начертанием */
+        .price,
+        .current-price,
+        .product-price-new,
+        .total-price,
+        .summary-row.total,
+        .cart-price .new-price,
+        .favorite-price,
+        .order-total {
+            font-family: 'Montserrat', monospace;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        /* Логотип */
+        .logo,
+        .footer-logo {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        /* Кнопки и навигация */
+        .btn,
+        button,
+        .catalog-btn,
+        .search-bar-new button,
+        .nav-link,
+        .user-actions-new a {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+        }
+
+        /* Мелкий текст, категории, даты */
+        .product-category,
+        .review-date,
+        .cart-size,
+        .product-sizes,
+        .delivery-item,
+        .breadcrumb-item,
+        .bonus-note,
+        .rating-count {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 400;
+            font-size: 0.85rem;
         }
         
         .skip-link {
@@ -134,14 +215,13 @@
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
-            margin-bottom: 10px;
-            margin-left: 15px;
+            margin-bottom: 20px;
+            margin-left: 1em;
         }
 
         .admin-btn {
-            background: linear-gradient(135deg, #5D6E80, #4a5a6a);
-            color: white;
-            box-shadow: 0 2px 8px rgba(93,110,128,0.3);
+            background: var(--brown);
+            color: var(--bg-cream);
         }
         
         .admin-btn i {
@@ -151,9 +231,6 @@
         
         .admin-btn:hover {
             transform: translateY(-2px);
-            background: linear-gradient(135deg, #4a5a6a, #3d4a57);
-            box-shadow: 0 4px 12px rgba(93,110,128,0.4);
-            color: white;
         }
         
         .admin-btn:hover i {
@@ -165,10 +242,9 @@
         }
  
         .django-admin-btn {
-            background: #F7F2EB;
-            color: #3b5a7a;
-            border: 1px solid #3b5a7a;
-            box-shadow: 0 2px 8px rgba(12,59,46,0.3);
+            background: var(--bg-cream);
+            color: var(--brown);
+            border: 1px solid var(--brown);
         }
         
         .django-admin-btn i {
@@ -313,7 +389,6 @@
             font-size: 1.5625rem;
             font-weight: 700;
             color: var(--bg-cream);
-            font-family: 'Playfair Display', serif;
             letter-spacing: 2px;
             margin-bottom: 0.75rem;
         }

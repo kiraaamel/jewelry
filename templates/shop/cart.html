@@ -46,7 +46,9 @@
     .cart-page {
         padding: 1rem 0;
     }
-
+    .cart-grid {
+        grid-template-columns: 1fr;
+    }
     .cart-summary {
         order: 2;
         margin-top: 1rem;
@@ -98,7 +100,7 @@
     }
     
     .cart-price .old-price {
-        font-size: 0.6875rem;
+        font-size: 1rem;
     }
     
     .cart-title {
@@ -128,7 +130,7 @@
     .cart-actions {
         margin-top: 0.5rem;
         justify-content: flex-start;
-        font-size: 0.75rem;
+        font-size: 0.9rem;
     }
 
     .cart-item > div:not(.cart-price) > div:first-child {
@@ -141,12 +143,12 @@
     }
     
     .summary-row {
-        font-size: 0.875rem;
+        font-size: 1rem;
     }
     
     .checkout-btn {
         padding: 0.625rem;
-        font-size: 0.875rem;
+        font-size: 1rem;
     }
     
     .bonus-box {
@@ -155,9 +157,10 @@
     
     .promo-input-group input,
     .promo-input-group button {
-        font-size: 0.75rem;
+        font-size: 0.9rem;
         padding: 0.5rem;
     }
+
 }
 
 @media (min-width: 577px) and (max-width: 768px) {
@@ -365,7 +368,7 @@
 
 .top-actions span {
     cursor: pointer;
-    color: var(--accent);
+    color: var(--brown);
 }
 
 .top-actions span:focus-visible {
@@ -402,7 +405,7 @@
     padding: 0.3125rem 0.5rem;
     border: none;
     border-radius: 0.5rem;
-    background: var(--accent);
+    background: var(--gray);
     color: #fff;
     cursor: pointer;
 }
@@ -470,7 +473,7 @@
 }
 
 .bonus-note {
-    font-size: 0.625rem;
+    font-size: 0.8rem;
     color: var(--gray);
     margin-top: 0.5rem;
     text-align: center;
@@ -648,18 +651,19 @@ async function updateQuantity(cartItemId, productId, newQty, maxStock){
         }
         
         const currentQty = cartItem.quantity;
+        const availableQty = cartItem.available_quantity || maxStock;
         
         if (newQty > currentQty) {
-            if (newQty > maxStock) {
-                showNotification(`Нельзя добавить больше ${maxStock} шт. товара`);
+            if (newQty > availableQty) {
+                showNotification(`Доступно только ${availableQty} шт. товара`);
                 return;
             }
             
-            const maxCanAdd = maxStock - currentQty;
+            const maxCanAdd = availableQty - currentQty;
             const addingQty = newQty - currentQty;
             
             if (addingQty > maxCanAdd) {
-                showNotification(`Можно добавить только ${maxCanAdd} шт. (в корзине уже ${currentQty} из ${maxStock})`);
+                showNotification(`Можно добавить только ${maxCanAdd} шт. (в корзине уже ${currentQty} из ${availableQty})`);
                 return;
             }
         }
@@ -719,7 +723,8 @@ function renderCart(cart, favoriteIds){
         const price=parseFloat(item.product_price) || 0;
         const oldPrice=parseFloat(item.old_price) || price;
         const qty=parseInt(item.quantity) || 1;
-        const maxStock=item.product_stock || 999;
+        const maxStock=item.available_quantity || 0; 
+        const size = item.variant_size || '-';  
 
         const total=price*qty;
         const old=oldPrice*qty;
@@ -735,12 +740,12 @@ function renderCart(cart, favoriteIds){
         const isMinQuantity = qty <= 1;
 
         html+=`
-        <div class="cart-item" data-id="${item.id}" data-product-id="${item.product}" data-max-stock="${maxStock}" data-current-qty="${qty}">
+        <div class="cart-item" data-id="${item.id}" data-product-id="${item.product}" data-max-stock="${maxStock}" data-current-qty="${qty}" data-variant-id="${item.variant_id || ''}">
             <input type="checkbox" onchange="toggleSelect(${item.id})" onclick="event.stopPropagation()" aria-label="Выбрать товар ${escapeHtml(item.product_name)}">
             <img src="${imageUrl}" class="product-image" onclick="goToProduct(${item.product}, event)" alt="${escapeHtml(item.product_name)}" onerror="this.src='/static/shop/images/placeholder.png'">
             <div>
                 <div class="cart-title" onclick="goToProduct(${item.product}, event)" role="link" tabindex="0" onkeypress="if(event.key==='Enter') goToProduct(${item.product}, event)">${escapeHtml(item.product_name)}</div>
-                <div class="cart-size">Размер: ${item.size || '-'}</div>
+                <div class="cart-size">Размер: ${escapeHtml(size)}</div> 
                 ${hasDiscount ? `<div style="font-size:12px;color:#ff4444;margin-top:4px;">-${discountPercent}%</div>` : ''}
                 <div class="quantity-control">
                     <button onclick="updateQuantity(${item.id}, ${item.product}, ${qty-1}, ${maxStock})" ${isMinQuantity ? 'disabled' : ''} aria-label="Уменьшить количество">-</button>
@@ -797,7 +802,7 @@ function renderCart(cart, favoriteIds){
         promoHtml = `
             <div class="promo-input-group">
                 <input type="text" id="promo-code" placeholder="Введите промокод" aria-label="Поле ввода промокода">
-                <button onclick="applyPromoCode()" aria-label="Применить промокод">Применить</button>
+                <button onclick="applyPromoCode()" aria-label="Применить промокод">ОК</button>
             </div>
         `;
     }
