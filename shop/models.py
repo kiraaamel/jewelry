@@ -27,11 +27,11 @@ def product_image_upload_path(instance: 'Product', filename: str) -> str:
     Путь для загрузки изображений товаров.
 
     Args:
-        instance (Product): Экземпляр товара
-        filename (str): Имя файла
+        instance: Экземпляр товара
+        filename: Имя файла
 
     Returns:
-        str: Путь для сохранения файла
+        Путь для сохранения файла
     """
     return f'products/{instance.slug}/{filename}'
 
@@ -46,12 +46,12 @@ class UserManager(BaseUserManager):
         Создаёт обычного пользователя.
 
         Args:
-            email (str): Email пользователя
-            password (str, optional): Пароль
+            email: Email пользователя
+            password: Пароль
             **extra_fields: Дополнительные поля
 
         Returns:
-            User: Созданный пользователь
+            Созданный пользователь
 
         Raises:
             ValueError: Если email не указан
@@ -69,12 +69,12 @@ class UserManager(BaseUserManager):
         Создаёт суперпользователя.
 
         Args:
-            email (str): Email суперпользователя
-            password (str, optional): Пароль
+            email: Email суперпользователя
+            password: Пароль
             **extra_fields: Дополнительные поля
 
         Returns:
-            User: Созданный суперпользователь
+            Созданный суперпользователь
 
         Raises:
             ValueError: Если is_staff или is_superuser не True
@@ -98,7 +98,7 @@ def generate_order_number() -> str:
     Формат: ORD-YYYYMMDD-XXXX (где XXXX - случайные символы)
 
     Returns:
-        str: Уникальный номер заказа
+        Уникальный номер заказа
     """
     date_part = timezone.now().strftime('%Y%m%d')
     random_part = str(uuid.uuid4())[:4].upper()
@@ -133,10 +133,10 @@ class User(AbstractUser):
         Проверяет, находится ли товар в избранном у пользователя.
 
         Args:
-            product_id (int): ID товара
+            product_id: ID товара
 
         Returns:
-            bool: True если товар в избранном, иначе False
+            True если товар в избранном, иначе False
         """
         return self.wishlist.filter(product_id=product_id).exists()
 
@@ -425,7 +425,7 @@ class Product(models.Model):
         Возвращает средний рейтинг товара на основе отзывов.
 
         Returns:
-            float: Средний рейтинг (0-5), округлённый до 1 знака
+            Средний рейтинг (0-5), округлённый до 1 знака
         """
         reviews = self.reviews.filter(moderated=True)
         if not reviews:
@@ -439,7 +439,7 @@ class Product(models.Model):
         Возвращает количество промодерированных отзывов на товар.
 
         Returns:
-            int: Количество отзывов
+            Количество отзывов
         """
         return self.reviews.filter(moderated=True).count()
 
@@ -449,7 +449,7 @@ class Product(models.Model):
         Возвращает процент скидки на товар.
 
         Returns:
-            int: Процент скидки (0-100)
+            Процент скидки (0-100)
         """
         if self.old_price and self.old_price > self.price:
             return int((1 - self.price / self.old_price) * 100)
@@ -461,7 +461,7 @@ class Product(models.Model):
         Проверяет, есть ли скидка на товар.
 
         Returns:
-            bool: True если есть скидка, иначе False
+            True если есть скидка, иначе False
         """
         return self.old_price is not None and self.old_price > self.price
 
@@ -471,7 +471,7 @@ class Product(models.Model):
         Возвращает список всех загруженных изображений товара.
 
         Returns:
-            List[Tuple[str, Union[str, ImageField]]]: Список кортежей (ключ, изображение)
+            Список кортежей (ключ, изображение)
         """
         images = []
         if self.image:
@@ -492,7 +492,7 @@ class Product(models.Model):
         Возвращает количество загруженных изображений товара.
 
         Returns:
-            int: Количество изображений
+            Количество изображений
         """
         count = 0
         if self.image:
@@ -513,7 +513,7 @@ class Product(models.Model):
         Возвращает URL главного фото товара.
 
         Returns:
-            Optional[str]: URL главного фото или None
+            URL главного фото или None
         """
         if self.image:
             return self.image.url if hasattr(self.image, 'url') else self.image
@@ -526,10 +526,10 @@ class Product(models.Model):
         Проверяет, находится ли товар в избранном у пользователя.
 
         Args:
-            user (User, optional): Пользователь
+            user: Пользователь
 
         Returns:
-            bool: True если товар в избранном, иначе False
+            True если товар в избранном, иначе False
         """
         if not user or not user.is_authenticated:
             return False
@@ -684,7 +684,7 @@ class Cart(models.Model):
         Общая стоимость всех товаров в корзине.
 
         Returns:
-            Decimal: Общая стоимость
+            Общая стоимость
         """
         return sum(item.total_price for item in self.items.all())
 
@@ -694,7 +694,7 @@ class Cart(models.Model):
         Общее количество товаров в корзине.
 
         Returns:
-            int: Количество товаров
+            Количество товаров
         """
         return sum(item.quantity for item in self.items.all())
 
@@ -840,7 +840,7 @@ class PromoCode(models.Model):
         Проверяет, активен ли промокод в данный момент.
 
         Returns:
-            bool: True если промокод активен, иначе False
+            True если промокод активен, иначе False
         """
         now = timezone.now()
         return (
@@ -855,7 +855,7 @@ class PromoCode(models.Model):
         Возвращает строковое представление скидки.
 
         Returns:
-            str: Строка скидки (например "10%" или "500 ₽")
+            Строка скидки (например "10%" или "500 ₽")
         """
         if self.discount_type == 'percent':
             return f"{self.discount_value}%"
@@ -979,7 +979,7 @@ class Order(models.Model):
         Генерирует случайный 6-значный код для получения заказа.
         
         Returns:
-            str: 6-значный код
+            6-значный код
         """
         return str(random.randint(100000, 999999))
     

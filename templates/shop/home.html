@@ -77,20 +77,21 @@
 </section>
 {% endif %}
 
-<div id="size-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="size-modal-title" hidden>
+<!-- Модальное окно выбора размера -->
+<div id="size-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="size-modal-title">
     <div class="modal-content">
         <button class="modal-close" onclick="closeSizeModal()" aria-label="Закрыть окно выбора размера">&times;</button>
         <h3 id="size-modal-title" style="margin-bottom:20px; color:var(--accent);">Выберите размер</h3>
         <div id="size-options" class="size-buttons" role="group" aria-label="Доступные размеры"></div>
         <div id="stock-info" style="margin: 10px 0; font-size: 0.75rem;" aria-live="polite"></div>
         <div>
-            <label style="display: block; margin-bottom: 8px; color: var(--brown);">Количество:</label>
+            <label id="quantity-label" for="modal-quantity" style="display: block; margin-bottom: 8px; color: var(--brown);">Количество:</label>
             <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                <button type="button" id="size-qty-minus" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer; font-size: 18px;">-</button>
+                <button type="button" id="size-qty-minus" aria-label="Уменьшить количество на 1" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer; font-size: 18px;">-</button>
                 <input type="number" id="modal-quantity" value="1" min="1" step="1" 
                     style="width: 80px; padding: 8px; text-align: center; border: 1px solid #ddd; border-radius: 8px;" 
-                    aria-label="Количество товара">
-                <button type="button" id="size-qty-plus" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer; font-size: 18px;">+</button>
+                    aria-label="Количество товара" aria-describedby="quantity-label">
+                <button type="button" id="size-qty-plus" aria-label="Увеличить количество на 1" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer; font-size: 18px;">+</button>
             </div>
         </div>
         <button id="confirm-add-to-cart" class="btn-modal-confirm" aria-label="Подтвердить добавление в корзину">
@@ -102,19 +103,20 @@
     </div>
 </div>
 
-<div id="quantity-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="quantity-modal-title" hidden>
+<!-- Модальное окно выбора количества -->
+<div id="quantity-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="quantity-modal-title">
     <div class="modal-content">
         <button class="modal-close" onclick="closeQuantityModal()" aria-label="Закрыть окно выбора количества">&times;</button>
         <h3 id="quantity-modal-title" style="margin-bottom:20px; color:var(--accent);">Выберите количество</h3>
         <div id="qty-stock-info" style="margin: 10px 0; font-size: 0.75rem;" aria-live="polite"></div>
         <div>
-            <label for="modal-qty-value">Количество:</label>
+            <label id="qty-label" for="modal-qty-value">Количество:</label>
             <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px;">
-                <button id="qty-minus" class="qty-control-btn" aria-label="Уменьшить количество">-</button>
+                <button id="qty-minus" class="qty-control-btn" aria-label="Уменьшить количество на 1">-</button>
                 <input type="number" id="modal-qty-value" value="1" min="1" step="1" 
                        style="width: 80px; padding: 8px; text-align: center; border: 1px solid #ddd; border-radius: 8px;" 
-                       aria-label="Количество товара">
-                <button id="qty-plus" class="qty-control-btn" aria-label="Увеличить количество">+</button>
+                       aria-label="Количество товара" aria-describedby="qty-label">
+                <button id="qty-plus" class="qty-control-btn" aria-label="Увеличить количество на 1">+</button>
             </div>
         </div>
         <button id="confirm-add-to-cart-qty" class="btn-modal-confirm" aria-label="Подтвердить добавление в корзину">
@@ -137,7 +139,34 @@
     --discount-bg: #ff4444;
     --focus-ring: #3b5a7a;
 }
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+.product-card[role="link"]:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.75rem;
+}
 
+.collection-card[role="link"]:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 1rem;
+}
+
+.review-card a:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
 .section-title-left {
     font-weight: bold;
     color: var(--accent);
@@ -1053,160 +1082,6 @@ async function getCurrentCartQuantityForVariant(productId, variantId) {
     }
 }
 
-function createQuantityModal() {
-    let modal = document.getElementById('quantity-modal');
-    if (modal) return;
-    
-    modal = document.createElement('div');
-    modal.id = 'quantity-modal';
-    modal.className = 'modal';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeQuantityModal()">&times;</span>
-            <h3 style="margin-bottom:20px; color:var(--accent);">Выберите количество</h3>
-            <div id="qty-stock-info" style="margin: 10px 0; font-size: 12px;"></div>
-            <div>
-                <label>Количество:</label>
-                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px;">
-                    <button id="qty-minus" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer;">-</button>
-                    <input type="number" id="modal-qty-value" value="1" min="1" style="width: 80px; padding: 8px; text-align: center; border: 1px solid #ddd; border-radius: 8px;">
-                    <button id="qty-plus" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer;">+</button>
-                </div>
-            </div>
-            <button id="confirm-add-to-cart-qty" style="margin-top:20px; padding:12px 24px; background:var(--accent); color:white; border:none; border-radius:30px; cursor:pointer;">Добавить в корзину</button>
-            <button onclick="closeQuantityModal()" style="margin-top:10px; padding:8px 20px; background:transparent; border:none; cursor:pointer;">Отмена</button>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    
-    if (!document.getElementById('quantity-modal-styles')) {
-        const style = document.createElement('style');
-        style.id = 'quantity-modal-styles';
-        style.textContent = `
-            #quantity-modal {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                z-index: 1000;
-                align-items: center;
-                justify-content: center;
-            }
-            #quantity-modal.active {
-                display: flex;
-            }
-            #quantity-modal .modal-content {
-                background: white;
-                border-radius: 24px;
-                padding: 30px;
-                max-width: 350px;
-                width: 90%;
-                text-align: center;
-                position: relative;
-            }
-            #quantity-modal .modal-close {
-                position: absolute;
-                top: 15px;
-                right: 20px;
-                font-size: 24px;
-                cursor: pointer;
-                color: var(--gray);
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    const qtyInput = document.getElementById('modal-qty-value');
-    const minusBtn = document.getElementById('qty-minus');
-    const plusBtn = document.getElementById('qty-plus');
-    
-    if (qtyInput) {
-        qtyInput.addEventListener('input', function() {
-            let val = parseInt(this.value);
-            const maxVal = parseInt(this.max) || 999;
-            if (isNaN(val) || val < 1) {
-                this.value = 1;
-                showNotification('Количество не может быть меньше 1');
-            } else if (val > maxVal) {
-                this.value = maxVal;
-                showNotification(`Доступно только ${maxVal} шт. для добавления`);
-            }
-        });
-    }
-    
-    if (minusBtn) {
-        minusBtn.addEventListener('click', () => {
-            let val = parseInt(qtyInput.value) || 1;
-            if (val > 1) {
-                qtyInput.value = val - 1;
-                qtyInput.dispatchEvent(new Event('input'));
-            }
-        });
-    }
-    
-    if (plusBtn) {
-        plusBtn.addEventListener('click', () => {
-            let val = parseInt(qtyInput.value) || 1;
-            const maxVal = parseInt(qtyInput.max) || 999;
-            if (val < maxVal) {
-                qtyInput.value = val + 1;
-                qtyInput.dispatchEvent(new Event('input'));
-            } else {
-                showNotification(`Можно добавить не более ${maxVal} шт.`);
-            }
-        });
-    }
-    
-    const confirmBtn = document.getElementById('confirm-add-to-cart-qty');
-    if (confirmBtn) {
-        confirmBtn.addEventListener('click', function() {
-            const quantity = parseInt(qtyInput.value);
-            const totalAfterAdd = qtyModalCurrentInCart + quantity;
-            
-            if (totalAfterAdd > qtyModalAvailableQty) {
-                const remaining = Math.max(0, qtyModalAvailableQty - qtyModalCurrentInCart);
-                showNotification(`В корзине уже ${qtyModalCurrentInCart} шт. Доступно для добавления: ${remaining} шт.`);
-                return;
-            }
-            
-            if (quantity > qtyModalAvailableQty) {
-                showNotification(`Доступно только ${qtyModalAvailableQty} шт.`);
-                return;
-            }
-            
-            fetch('/api/cart/add_item/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                    product_id: qtyModalProductId,
-                    quantity: quantity,
-                    size: ''
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    showNotification(data.error);
-                } else {
-                    closeQuantityModal();
-                    updateCartCount();
-                    showNotification(`Товар добавлен в корзину! (теперь в корзине ${totalAfterAdd} шт.)`);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification('Ошибка при добавлении в корзину');
-            });
-        });
-    }
-}
-
 function closeSizeModal() {
     const modal = document.getElementById('size-modal');
     modal.classList.remove('active');
@@ -1217,8 +1092,7 @@ function closeSizeModal() {
 }
 
 async function openQuantityModal(productId, availableQty) {
-    createQuantityModal();  
-    
+
     qtyModalProductId = productId;
     qtyModalAvailableQty = availableQty;
     qtyModalCurrentInCart = await getCurrentCartQuantity(productId);
@@ -1516,7 +1390,15 @@ function renderProductCard(product) {
     }
     else if (variants.length === 1) {
         const variant = variants[0];
-        cartButton = `<button class="${cartButtonClass}" onclick="event.stopPropagation(); addToCartWithVariant(${variant.id}, ${variant.available_quantity})" ${isOutOfStock ? 'disabled' : ''} aria-label="${cartButtonText} ${product.name}">${cartButtonText}</button>`;
+
+        cartButton = `
+            <button class="${cartButtonClass}" 
+                onclick="event.stopPropagation(); openQuantityModalForVariant(${variant.id}, ${variant.available_quantity}, ${product.id})"
+                ${isOutOfStock ? 'disabled' : ''}
+                aria-label="${cartButtonText} ${product.name}">
+                ${cartButtonText}
+            </button>
+        `;
     }
     else {
         cartButton = `<button class="${cartButtonClass}" onclick="event.stopPropagation(); openSizeModal(${product.id}, '${variantsJson}')" ${isOutOfStock ? 'disabled' : ''} aria-label="${cartButtonText} ${product.name}">${cartButtonText}</button>`;
@@ -1558,8 +1440,7 @@ function escapeHtml(text) {
 let qtyModalVariantId = null;
 
 async function openQuantityModalForVariant(variantId, availableQty, productId) {
-    createQuantityModal();
-    
+
     qtyModalVariantId = variantId;
     qtyModalProductId = productId;
     qtyModalAvailableQty = availableQty;
@@ -1798,6 +1679,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const isAuth = document.body.classList.contains('user-authenticated');
     if (isAuth) {
         loadProducts('recommended-products', '/api/products/?page_size=4', 4);
+    }
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const sizeModal = document.getElementById('size-modal');
+        const qtyModal = document.getElementById('quantity-modal');
+        if (sizeModal && sizeModal.classList.contains('active')) {
+            closeSizeModal();
+        }
+        if (qtyModal && qtyModal.classList.contains('active')) {
+            closeQuantityModal();
+        }
     }
 });
 </script>

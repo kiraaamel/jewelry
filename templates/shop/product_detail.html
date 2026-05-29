@@ -22,7 +22,22 @@
         --orange: #ff9800;
         --red: #dc3545;
     }
-    
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    :focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+    }
     .product-detail-page {
         background-color: var(--bg-cream);
         padding-bottom: 2.5rem;
@@ -280,7 +295,17 @@
         font-size: 1.125rem;
         color: var(--gray);
     }
-    
+    .thumbnail[role="button"]:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+        border-radius: 0.5rem;
+    }
+
+    .delivery-city:focus-visible {
+        outline: 3px solid var(--focus-ring);
+        outline-offset: 2px;
+        border-radius: 0.5rem;
+    }
     .delivery-main {
         color: #2a6ecb;
         font-weight: 500;
@@ -640,7 +665,7 @@
         color: var(--brown);
         line-height: 1.45;
         margin-top: 0.625rem;
-        font-size: 0.8125rem;
+        font-size: 1rem;
     }
     
     .review-images {
@@ -941,12 +966,12 @@
     </div>
 </div>
 
-<div id="size-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="size-modal-title" hidden>
+<div id="size-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="size-modal-title">
     <div class="modal-content">
-        <button class="modal-close" onclick="closeModal()" aria-label="Закрыть окно">&times;</button>
+        <button class="modal-close" onclick="closeModal()" aria-label="Закрыть окно уведомления">&times;</button>
         <h2 id="size-modal-title" class="modal-title">Сообщить о поступлении</h2>
         <div class="modal-text">Оставьте ваш email, и мы сообщим, когда товар появится в нужном размере.</div>
-        <label for="notify-email" class="sr-only">Ваш email</label>
+        <label for="notify-email" class="visually-hidden">Ваш email</label>
         <input type="email" id="notify-email" class="modal-input" placeholder="Ваш email" aria-label="Email для уведомления">
         <button class="modal-btn" onclick="sendNotification()" aria-label="Отправить запрос на уведомление">Уведомить меня</button>
     </div>
@@ -965,7 +990,6 @@ async function canUserReview(productId) {
         console.log('can_review response:', data);
         return data.can_review || false;
     } catch (error) {
-        console.error('Error checking review permission:', error);
         return false;
     }
 }
@@ -1047,10 +1071,11 @@ function renderProductPage(product) {
     const isOutOfStock = !hasVariantsWithStock && totalAvailable <= 0;
     
     let stockStatusHtml = isOutOfStock 
-        ? `<div style="margin-bottom: 15px; padding: 10px; background: #ffebee; border-radius: 8px; color: #c62828;">
-             <i class="fas fa-times-circle"></i> Товар временно отсутствует на складе
+        ? `<div style="margin-bottom: 15px; padding: 10px; background: #ffebee; border-radius: 8px; color: #c62828;" role="status">
+             <i class="fas fa-times-circle" aria-hidden="true"></i> Товар временно отсутствует на складе
            </div>`
         : `<div id="stock-info" style="margin-bottom: 10px; font-size: 12px;" aria-live="polite"></div>`;
+    
     const images = [];
     if (product.image) images.push({ url: product.image, name: 'Главное фото' });
     if (product.image_2) images.push({ url: product.image_2, name: 'Фото 2' });
@@ -1085,7 +1110,7 @@ function renderProductPage(product) {
     
     let thumbnailsHtml = '';
     if (images.length > 1) {
-        thumbnailsHtml = '<div class="product-thumbnails">';
+        thumbnailsHtml = '<div class="product-thumbnails" role="group" aria-label="Миниатюры изображений товара">';
         images.forEach((img, index) => {
             thumbnailsHtml += `<img src="${img.url}" class="thumbnail ${index === 0 ? 'active' : ''}" onclick="changeMainImage('${img.url}', this)" onkeypress="if(event.key==='Enter') changeMainImage('${img.url}', this)" tabindex="0" role="button" aria-label="Показать ${img.name}">`;
         });
@@ -1119,13 +1144,13 @@ function renderProductPage(product) {
                         <button class="image-action-btn" onclick="shareProduct()" aria-label="Поделиться товаром">
                             <i class="fas fa-share-alt" aria-hidden="true"></i>
                         </button>
-                        <button class="image-action-btn" onclick="toggleFavorite(${product.id})" id="favorite-icon-btn" aria-label="В избранное">
+                        <button class="image-action-btn" onclick="toggleFavorite(${product.id})" id="favorite-icon-btn" aria-label="Добавить в избранное">
                             <i class="far fa-heart" aria-hidden="true"></i>
                         </button>
                     </div>
                     <div class="main-image-container">
                         ${mainImage 
-                            ? `<img src="${mainImage}" alt="${product.name}" class="main-image" id="main-image">`
+                            ? `<img src="${mainImage}" alt="${escapeHtml(product.name)}" class="main-image" id="main-image">`
                             : `<div style="height: 400px; background: #e9ecef; display: flex; align-items: center; justify-content: center; border-radius: 12px;" aria-label="Изображение отсутствует">
                                  <i class="fas fa-gem fa-5x text-secondary" aria-hidden="true"></i>
                                </div>`
@@ -1182,7 +1207,7 @@ function renderProductPage(product) {
                     <div class="quantity-price-row" ${isOutOfStock ? 'style="opacity: 0.5; pointer-events: none;"' : ''}>
                         <div class="quantity-control">
                             <button id="decrease-qty" aria-label="Уменьшить количество" ${isOutOfStock ? 'disabled' : ''}>-</button>
-                            <input type="text" id="quantity" value="1" readonly aria-label="Количество товара" ${isOutOfStock ? 'disabled' : ''}>
+                            <input type="text" id="quantity" value="1" aria-label="Количество товара" ${isOutOfStock ? 'disabled' : ''}>
                             <button id="increase-qty" aria-label="Увеличить количество" ${isOutOfStock ? 'disabled' : ''}>+</button>
                         </div>
                         <div class="total-price">
@@ -1198,7 +1223,7 @@ function renderProductPage(product) {
                         ${isOutOfStock ? 'Нет в наличии' : 'В корзину'}
                     </button>
                     <button class="btn-favorite" onclick="toggleFavorite(${product.id})" id="favorite-btn">
-                        <i class="far fa-heart"></i> В избранное
+                        <i class="far fa-heart" aria-hidden="true"></i> В избранное
                     </button>
                 </div>
                 
@@ -1242,8 +1267,8 @@ function renderProductPage(product) {
         </div>
         
         <div class="tabs" role="tablist">
-            <button class="tab-btn active" data-tab="description" role="tab" aria-selected="true">Описание</button>
-            <button class="tab-btn" data-tab="specs" role="tab" aria-selected="false">Характеристики</button>
+            <button class="tab-btn active" data-tab="description" role="tab" aria-selected="true" id="description-tab">Описание</button>
+            <button class="tab-btn" data-tab="specs" role="tab" aria-selected="false" id="specs-tab">Характеристики</button>
         </div>
         
         <div class="tab-content active" id="tab-description" role="tabpanel" aria-labelledby="description-tab">
@@ -1285,8 +1310,7 @@ function renderProductPage(product) {
     initTabs();
     updateFavoriteButton(product.is_in_favorites);
     updateFavoriteIcon(product.is_in_favorites);
-    updateQuantityMax();
-}    
+} 
     function updateFavoriteIcon(isInFavorites) {
         const iconBtn = document.getElementById('favorite-icon-btn');
         if (iconBtn) {
@@ -1629,165 +1653,115 @@ function renderProductPage(product) {
         return totalAvailable;
     }
 
-    function updateQuantityMax() {
-        const quantityInput = document.getElementById('quantity');
-        if (!quantityInput || !currentProduct) return;
-        
-        const decreaseBtn = document.getElementById('decrease-qty');
-        const increaseBtn = document.getElementById('increase-qty');
-        const stockInfo = document.getElementById('stock-info');
-        
-        const needsSizeSelection = productVariants.length > 1;
-
-        if (needsSizeSelection && !selectedVariant) {
-            if (stockInfo) {
-                stockInfo.innerHTML = '<span style="color: var(--gray);"><i class="fas fa-hand-point-up"></i> Выберите размер для проверки наличия</span>';
-            }
-   
-            if (decreaseBtn) decreaseBtn.disabled = true;
-            if (increaseBtn) increaseBtn.disabled = true;
-            if (quantityInput) quantityInput.disabled = true;
-            return;
-        }
-        
-        let activeVariant = selectedVariant;
-        if (!needsSizeSelection && !activeVariant && productVariants.length === 1) {
-            activeVariant = productVariants[0];
-            selectedVariant = activeVariant; 
-        }
-        
-        const maxQty = getMaxAvailableQuantity(currentProduct, activeVariant);
-        
-        let currentQty = parseInt(quantityInput.value);
-        if (isNaN(currentQty)) currentQty = 1;
-        
-        if (currentQty > maxQty && maxQty > 0) {
-            currentQty = maxQty;
-            quantityInput.value = currentQty;
-            const totalSpan = document.getElementById('total-price');
-            if (totalSpan && currentProduct) {
-                totalSpan.textContent = (currentProduct.price * currentQty).toFixed(0);
-            }
-        }
-
-        if (decreaseBtn) {
-            decreaseBtn.disabled = (currentQty <= 1);
-        }
-        if (increaseBtn) {
-            increaseBtn.disabled = (currentQty >= maxQty || maxQty <= 0);
-        }
-        if (quantityInput) {
-            quantityInput.disabled = false;
-        }
-        
-        if (stockInfo && currentProduct && activeVariant) {
-            const cartQty = getCartQuantityForVariant(activeVariant.id);
-            const available = activeVariant.available_quantity;
-            
-            if (available <= 0) {
-                stockInfo.innerHTML = '<span style="color: #dc3545;"><i class="fas fa-times-circle"></i> Нет в наличии</span>';
-                if (increaseBtn) increaseBtn.disabled = true;
-            } else if (cartQty >= available) {
-                stockInfo.innerHTML = `<span style="color: #fd7e14;"><i class="fas fa-exclamation-triangle"></i> В корзине уже максимальное количество (${available} шт.)</span>`;
-                if (increaseBtn) increaseBtn.disabled = true;
-            } else {
-                const canAdd = available - cartQty;
-                stockInfo.innerHTML = `<span style="color: #28a745;"><i class="fas fa-check-circle"></i> В наличии ${available} шт. (в корзине ${cartQty}, можно добавить ${canAdd})</span>`;
-            }
-        }
-    }
     function initQuantityControls(price) {
         const quantityInput = document.getElementById('quantity');
         const decreaseBtn = document.getElementById('decrease-qty');
         const increaseBtn = document.getElementById('increase-qty');
         const totalSpan = document.getElementById('total-price');
         
-        let qty = 1;
         const needsSizeSelection = productVariants.length > 1;
 
+        // Если товар с одним размером, сразу выбираем его
         if (!needsSizeSelection && productVariants.length === 1 && !selectedVariant) {
             selectedVariant = productVariants[0];
         }
         
-        function updateTotal() {
-            totalSpan.textContent = (price * qty).toFixed(0);
-            quantityInput.value = qty;
+        let currentQty = 1;
+        quantityInput.value = currentQty;
+        
+        function updateDisplay() {
+            // Обновляем поле ввода
+            quantityInput.value = currentQty;
+            
+            // Обновляем цену
+            const activeVariant = selectedVariant || (productVariants.length === 1 ? productVariants[0] : null);
+            const maxQty = getMaxAvailableQuantity(currentProduct, activeVariant);
+            totalSpan.textContent = (price * currentQty).toFixed(0);
+            
+            // Обновляем состояние кнопок
+            if (decreaseBtn) {
+                decreaseBtn.disabled = (currentQty <= 1) || (needsSizeSelection && !selectedVariant);
+            }
+            if (increaseBtn) {
+                increaseBtn.disabled = (currentQty >= maxQty) || (maxQty <= 0) || (needsSizeSelection && !selectedVariant);
+            }
+            if (quantityInput) {
+                quantityInput.disabled = (needsSizeSelection && !selectedVariant);
+            }
+        }
+
+        // ✅ Используем onclick вместо cloneNode и addEventListener
+        // Кнопка "-"
+        decreaseBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             
             if (needsSizeSelection && !selectedVariant) {
-                if (decreaseBtn) decreaseBtn.disabled = true;
-                if (increaseBtn) increaseBtn.disabled = true;
-                if (quantityInput) quantityInput.disabled = true;
+                showNotification('Пожалуйста, сначала выберите размер');
+                return;
+            }
+            
+            if (currentQty > 1) {
+                currentQty--;
+                updateDisplay();
+            }
+        };
+
+        // Кнопка "+"
+        increaseBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (needsSizeSelection && !selectedVariant) {
+                showNotification('Пожалуйста, сначала выберите размер');
                 return;
             }
             
             const activeVariant = selectedVariant || (productVariants.length === 1 ? productVariants[0] : null);
-            const maxQty = getMaxAvailableQuantity(currentProduct, activeVariant);
+            if (!activeVariant) return;
             
-            if (decreaseBtn) decreaseBtn.disabled = (qty <= 1);
-            if (increaseBtn) increaseBtn.disabled = (qty >= maxQty || maxQty <= 0);
-            if (quantityInput) quantityInput.disabled = false;
-        }
+            const cartQty = getCartQuantityForVariant(activeVariant.id);
+            const maxQty = Math.max(0, activeVariant.available_quantity - cartQty);
+            
+            if (currentQty < maxQty) {
+                currentQty++;
+                updateDisplay();
+            } else {
+                showNotification(`Нельзя добавить больше ${maxQty} шт.`);
+            }
+        };
 
-        if (decreaseBtn) {
-            const newDecreaseBtn = decreaseBtn.cloneNode(true);
-            decreaseBtn.parentNode.replaceChild(newDecreaseBtn, decreaseBtn);
+        // Ручной ввод
+        quantityInput.oninput = () => {
+            if (needsSizeSelection && !selectedVariant) {
+                showNotification('Пожалуйста, сначала выберите размер');
+                quantityInput.value = 1;
+                currentQty = 1;
+                updateDisplay();
+                return;
+            }
             
-            newDecreaseBtn.addEventListener('click', () => {
-                if (needsSizeSelection && !selectedVariant) {
-                    showNotification('Пожалуйста, сначала выберите размер');
-                    return;
-                }
-                if (qty > 1) {
-                    qty--;
-                    updateTotal();
-                }
-            });
-        }
-
-        if (increaseBtn) {
-            const newIncreaseBtn = increaseBtn.cloneNode(true);
-            increaseBtn.parentNode.replaceChild(newIncreaseBtn, increaseBtn);
+            let val = parseInt(quantityInput.value);
+            if (isNaN(val) || val < 1) {
+                val = 1;
+            }
             
-            newIncreaseBtn.addEventListener('click', () => {
-                if (needsSizeSelection && !selectedVariant) {
-                    showNotification('Пожалуйста, сначала выберите размер');
-                    return;
-                }
-                const activeVariant = selectedVariant || (productVariants.length === 1 ? productVariants[0] : null);
-                const maxQty = getMaxAvailableQuantity(currentProduct, activeVariant);
-                if (qty < maxQty) {
-                    qty++;
-                    updateTotal();
-                } else {
-                    showNotification(`Нельзя добавить больше ${maxQty} шт.`);
-                }
-            });
-        }
-
-        if (quantityInput) {
-            const newQuantityInput = quantityInput.cloneNode(true);
-            quantityInput.parentNode.replaceChild(newQuantityInput, quantityInput);
-            
-            newQuantityInput.addEventListener('change', function() {
-                if (needsSizeSelection && !selectedVariant) {
-                    showNotification('Пожалуйста, сначала выберите размер');
-                    this.value = 1;
-                    return;
-                }
-                let val = parseInt(this.value);
-                const activeVariant = selectedVariant || (productVariants.length === 1 ? productVariants[0] : null);
-                const maxQty = getMaxAvailableQuantity(currentProduct, activeVariant);
-                if (isNaN(val) || val < 1) val = 1;
-                if (val > maxQty) {
+            const activeVariant = selectedVariant || (productVariants.length === 1 ? productVariants[0] : null);
+            if (activeVariant) {
+                const cartQty = getCartQuantityForVariant(activeVariant.id);
+                const maxQty = Math.max(0, activeVariant.available_quantity - cartQty);
+                if (val > maxQty && maxQty > 0) {
                     val = maxQty;
                     showNotification(`Доступно только ${maxQty} шт.`);
                 }
-                qty = val;
-                updateTotal();
-            });
-        }
+            }
+            currentQty = val;
+            quantityInput.value = currentQty;
+            updateDisplay();
+        };
         
-        updateTotal();
+        // Начальное отображение
+        updateDisplay();
     }
     function initSizeButtons() {
         const sizeBtns = document.querySelectorAll('.size-btn');
@@ -1812,6 +1786,7 @@ function renderProductPage(product) {
                     }
                 }
 
+                // Обновляем количество через initQuantityControls
                 const quantityInput = document.getElementById('quantity');
                 if (quantityInput) {
                     quantityInput.value = 1;
@@ -1820,8 +1795,8 @@ function renderProductPage(product) {
                         totalSpan.textContent = currentProduct.price;
                     }
                 }
-                
-                updateQuantityMax();
+                // Принудительно обновляем состояние кнопок
+                initQuantityControls(currentProduct.price);
             });
         });
         document.getElementById('size-guide-link')?.addEventListener('click', (e) => {
@@ -1890,7 +1865,8 @@ function renderProductPage(product) {
                 updateCartCount();
                 showNotification('Товар добавлен в корзину!');
                 loadCartItems().then(() => {
-                    updateQuantityMax();
+                    // ✅ ЗАМЕНИТЬ updateQuantityMax() НА:
+                    initQuantityControls(currentProduct.price);
                 });
             }
         })

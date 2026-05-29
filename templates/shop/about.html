@@ -413,7 +413,7 @@
     letter-spacing: 0.5px;
 }
 
-.sr-only {
+.sr-only, .visually-hidden {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -451,16 +451,16 @@
                 </p>
                 
                 <div class="about-stats">
-                    <div class="stats-row">
-                        <div class="stat">
+                    <div class="stats-row" role="list" aria-label="Статистика компании">
+                        <div class="stat" role="listitem">
                             <div class="stat-number">15+</div>
                             <div class="stat-label">лет опыта</div>
                         </div>
-                        <div class="stat">
+                        <div class="stat" role="listitem">
                             <div class="stat-number">50+</div>
                             <div class="stat-label">наград</div>
                         </div>
-                        <div class="stat">
+                        <div class="stat" role="listitem">
                             <div class="stat-number">10K+</div>
                             <div class="stat-label">довольных клиентов</div>
                         </div>
@@ -472,7 +472,9 @@
         <h2 class="section-title">Наша команда</h2>
         
         <div class="team-quote">
-            <i class="fas fa-quote-left" aria-hidden="true"></i>
+            <div aria-hidden="true">
+                <i class="fas fa-quote-left"></i>
+            </div>
             <p>Наша команда — наши главные драгоценности. Вместе мы создаем для вас красоту, за которой стоят годы опыта и любовь к своему делу.</p>
             <div class="quote-author">Argentic Jewelry Team</div>
         </div>
@@ -498,7 +500,7 @@
             </div>
             <div class="team-card" role="listitem">
                 <img src="{% static 'shop/img/team3.jpg' %}" 
-                     alt="Алексей Ковалев - директор компании Argentic" 
+                     alt="Марина Сергеева - директор компании Argentic" 
                      onerror="this.src='https://via.placeholder.com/300x300?text=Team'">
                 <div class="team-info">
                     <div class="team-name">Марина Сергеева</div>
@@ -507,7 +509,7 @@
             </div>
             <div class="team-card" role="listitem">
                 <img src="{% static 'shop/img/team4.jpg' %}" 
-                     alt="Марина Сергеева - ювелир-мастер Argentic" 
+                     alt="Алексей Ковалев - ювелир-мастер Argentic" 
                      onerror="this.src='https://via.placeholder.com/300x300?text=Team'">
                 <div class="team-info">
                     <div class="team-name">Алексей Ковалев</div>
@@ -519,25 +521,25 @@
         <h2 class="section-title">Сертификаты и лицензии</h2>
         
         <div class="certs" role="list" aria-label="Сертификаты и лицензии компании">
-            <div class="cert-item" role="listitem" tabindex="0">
+            <div class="cert-item" role="listitem">
                 <img src="{% static 'shop/img/cert1.jpg' %}" 
                      alt="Сертификат качества Argentic Jewelry - подтверждение высокого стандарта изделий" 
                      onerror="this.src='https://via.placeholder.com/300x430?text=Certificate'">
                 <div class="cert-title">Сертификат качества</div>
             </div>
-            <div class="cert-item" role="listitem" tabindex="0">
+            <div class="cert-item" role="listitem">
                 <img src="{% static 'shop/img/cert2.jpg' %}" 
                      alt="Лицензия на осуществление ювелирной деятельности Argentic" 
                      onerror="this.src='https://via.placeholder.com/300x430?text=Certificate'">
                 <div class="cert-title">Лицензия</div>
             </div>
-            <div class="cert-item" role="listitem" tabindex="0">
+            <div class="cert-item" role="listitem">
                 <img src="{% static 'shop/img/cert3.jpg' %}" 
                      alt="Гарантия подлинности всех изделий Argentic Jewelry" 
                      onerror="this.src='https://via.placeholder.com/300x430?text=Certificate'">
                 <div class="cert-title">Гарантия подлинности</div>
             </div>
-            <div class="cert-item" role="listitem" tabindex="0">
+            <div class="cert-item" role="listitem">
                 <img src="{% static 'shop/img/cert4.jpg' %}" 
                      alt="Международный стандарт качества ISO Argentic Jewelry" 
                      onerror="this.src='https://via.placeholder.com/300x430?text=Certificate'">

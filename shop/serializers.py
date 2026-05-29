@@ -21,13 +21,15 @@ from .models import (
 
 User = get_user_model()
 
+
 class ProductVariantSerializer(serializers.ModelSerializer):
     """Сериализатор для варианта товара (размера)."""
     available_quantity = serializers.IntegerField(read_only=True)
-    
+
     class Meta:
         model = ProductVariant
         fields = ('id', 'size', 'stock_quantity', 'reserved_quantity', 'available_quantity', 'sku')
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     """
@@ -52,10 +54,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         Проверяет, что пароли совпадают.
 
         Args:
-            attrs (dict): Данные для валидации
+            attrs: Данные для валидации
 
         Returns:
-            dict: Проверенные данные
+            Проверенные данные
 
         Raises:
             ValidationError: Если пароли не совпадают
@@ -69,10 +71,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         Создаёт нового пользователя.
 
         Args:
-            validated_data (dict): Проверенные данные пользователя
+            validated_data: Проверенные данные пользователя
 
         Returns:
-            User: Созданный пользователь
+            Созданный пользователь
         """
         validated_data.pop('password2')
         user = User.objects.create_user(**validated_data)
@@ -89,10 +91,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         Валидирует данные входа и добавляет информацию о пользователе.
 
         Args:
-            attrs (dict): Данные для входа (email, password)
+            attrs: Данные для входа (email, password)
 
         Returns:
-            dict: Токены и информация о пользователе
+            Токены и информация о пользователе
         """
         data = super().validate(attrs)
         data['user'] = {
@@ -130,12 +132,12 @@ class ProductSerializer(serializers.ModelSerializer):
     Сериализатор для товара.
     """
     discount_percent = serializers.IntegerField(read_only=True)
-    available_quantity = serializers.IntegerField(read_only=True) 
+    available_quantity = serializers.IntegerField(read_only=True)
     is_in_favorites = serializers.SerializerMethodField()
-    variants = ProductVariantSerializer(many=True, read_only=True) 
-    has_variants = serializers.BooleanField(read_only=True) 
-    min_price = serializers.DecimalField(read_only=True, max_digits=10, decimal_places=2) 
-    max_price = serializers.DecimalField(read_only=True, max_digits=10, decimal_places=2) 
+    variants = ProductVariantSerializer(many=True, read_only=True)
+    has_variants = serializers.BooleanField(read_only=True)
+    min_price = serializers.DecimalField(read_only=True, max_digits=10, decimal_places=2)
+    max_price = serializers.DecimalField(read_only=True, max_digits=10, decimal_places=2)
 
     silver_type_display = serializers.CharField(source='get_silver_type_display', read_only=True)
     fineness_display = serializers.CharField(source='get_fineness_display', read_only=True)
@@ -151,12 +153,12 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = (
             'id', 'name', 'slug', 'description', 'price', 'old_price',
-           
-            'available_quantity', 
+
+            'available_quantity',
             'category', 'category_name', 'country',
             'silver_type', 'silver_type_display',
             'fineness', 'fineness_display',
-            'weight', 
+            'weight',
             'stones', 'stone_type', 'stone_type_display', 'stone_weight',
             'collection', 'collection_name', 'collection_slug',
             'image', 'image_2', 'image_3', 'image_4', 'image_5',
@@ -174,17 +176,19 @@ class ProductSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.is_in_wishlist(request.user)
         return False
-    
+
     def get_has_variants(self, obj: Product) -> bool:
         """Проверяет, есть ли варианты у товара."""
         return obj.variants.exists()
-    
+
     def get_min_price(self, obj: Product) -> Decimal:
-        """Возвращает минимальную цену среди вариантов (если есть варианты, иначе цену товара)."""
+        """
+        Возвращает минимальную цену среди вариантов (если есть варианты, иначе цену товара).
+        """
         if obj.variants.exists():
             return obj.price
         return obj.price
-    
+
     def get_max_price(self, obj: Product) -> Decimal:
         """Возвращает максимальную цену среди вариантов."""
         return obj.price
@@ -202,13 +206,35 @@ class CartItemSerializer(serializers.ModelSerializer):
     variant_size = serializers.CharField(source='variant.size', read_only=True)
     variant_id = serializers.IntegerField(source='variant.id', read_only=True)
     available_quantity = serializers.IntegerField(source='variant.available_quantity', read_only=True)
+    is_available = serializers.SerializerMethodField()
+    stock_status = serializers.SerializerMethodField()
+
+    def get_is_available(self, obj: CartItem) -> bool:
+        """Проверяет, доступно ли запрашиваемое количество товара."""
+        return obj.variant.available_quantity >= obj.quantity
+
+    def get_stock_status(self, obj: CartItem) -> str:
+        """
+        Возвращает статус наличия товара.
+
+        Returns:
+            'out_of_stock' - нет в наличии,
+            'insufficient' - недостаточно,
+            'available' - доступно
+        """
+        if obj.variant.available_quantity <= 0:
+            return 'out_of_stock'
+        elif obj.variant.available_quantity < obj.quantity:
+            return 'insufficient'
+        return 'available'
+
     class Meta:
         model = CartItem
         fields = (
-            'id', 'product', 'variant', 
+            'id', 'product', 'variant',
             'product_name', 'product_price', 'old_price', 'product_image',
             'quantity', 'added_at', 'total_price',
-            'variant_size', 'variant_id', 'available_quantity' 
+            'variant_size', 'variant_id', 'available_quantity', 'is_available', 'stock_status'
         )
 
 
@@ -223,7 +249,9 @@ class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = ('id', 'user', 'items', 'total_price', 'total_items', 'updated_at')
-    def get_items(self, obj):
+
+    def get_items(self, obj: Cart) -> CartItemSerializer:
+        """Возвращает элементы корзины, отсортированные по дате добавления (новые сверху)."""
         items = obj.items.all().order_by('-added_at')
         return CartItemSerializer(items, many=True).data
 
@@ -235,10 +263,13 @@ class OrderItemSerializer(serializers.ModelSerializer):
     total_price = serializers.DecimalField(read_only=True, max_digits=10, decimal_places=2)
     product_image = serializers.ImageField(source='product.image', read_only=True)
     size = serializers.CharField(source='variant.size', read_only=True, default='')
+    variant_id = serializers.IntegerField(source='variant.id', read_only=True, default=None)
+    product_id = serializers.IntegerField(source='product.id', read_only=True)
 
     class Meta:
         model = OrderItem
-        fields = ('id', 'product', 'product_name', 'price', 'quantity', 'total_price', 'product_image', 'size')
+        fields = ('id', 'product', 'product_id', 'variant', 'variant_id', 'product_name', 
+                  'price', 'quantity', 'total_price', 'product_image', 'size')
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -260,25 +291,47 @@ class OrderSerializer(serializers.ModelSerializer):
             'comment', 'delivered_at', 'items', 'bonus_earned', 'pickup_code', 'code_generated_at'
         )
         read_only_fields = ('id', 'order_number', 'created_at', 'total_price')
-    def get_user_email(self, obj):
+
+    def get_user_email(self, obj: Order) -> str:
+        """Возвращает email пользователя или 'Гость' если пользователь не авторизован."""
         return obj.user.email if obj.user else 'Гость'
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для создания заказа.
+    """
     phone = serializers.CharField(write_only=True, required=True)
     promo_code = serializers.CharField(write_only=True, required=False, allow_blank=True)
     delivery_date = serializers.CharField(write_only=True, required=False, allow_blank=True)
     delivery_time = serializers.CharField(write_only=True, required=False, allow_blank=True)
-
+    items = serializers.ListField(
+            write_only=True,
+            required=False,
+            child=serializers.DictField(),
+            help_text="Список выбранных товаров с variant_id и quantity"
+        )
     class Meta:
         model = Order
         fields = (
             'delivery_address', 'delivery_method', 'payment_method',
             'delivery_date', 'delivery_time', 'gift_wrap', 'gift_message',
-            'comment', 'phone', 'promo_code'
+            'comment', 'phone', 'promo_code', 'items'
         )
 
     def create(self, validated_data: Dict[str, Any]) -> Order:
+        """
+        Создаёт заказ из корзины пользователя.
+
+        Args:
+            validated_data: Проверенные данные заказа
+
+        Returns:
+            Созданный заказ
+
+        Raises:
+            ValidationError: Если корзина не найдена или пуста
+        """
         request = self.context.get('request')
         user = request.user
 
@@ -286,20 +339,62 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         promo_code_str = validated_data.pop('promo_code', None)
         delivery_date = validated_data.pop('delivery_date', None)
         delivery_time = validated_data.pop('delivery_time', None)
+        items_data = validated_data.pop('items', None) 
 
         if phone and user.is_authenticated:
             user.phone = phone
             user.save()
 
-        try:
-            cart = Cart.objects.get(user=user)
-        except Cart.DoesNotExist:
-            raise serializers.ValidationError("Корзина не найдена")
+        if items_data:
+            # Проверяем доступность выбранных товаров
+            total_price = Decimal('0')
+            items_to_order = []
+            
+            for item_data in items_data:
+                variant_id = item_data.get('variant_id')
+                quantity = item_data.get('quantity', 1)
+                
+                try:
+                    variant = ProductVariant.objects.select_related('product').get(id=variant_id)
+                except ProductVariant.DoesNotExist:
+                    raise serializers.ValidationError(f"Вариант товара {variant_id} не найден")
+                
+                if not variant.product.is_active:
+                    raise serializers.ValidationError(f"Товар {variant.product.name} неактивен")
+                
+                if quantity > variant.available_quantity:
+                    raise serializers.ValidationError(
+                        f"Товара {variant.product.name} (размер {variant.size}) доступно только {variant.available_quantity} шт."
+                    )
+                
+                total_price += variant.product.price * quantity
+                items_to_order.append({
+                    'variant': variant,
+                    'quantity': quantity,
+                    'price': variant.product.price,
+                    'product': variant.product
+                })
+        else:
+            # ✅ Если нет выбранных товаров, берём всё из корзины
+            try:
+                cart = Cart.objects.get(user=user)
+            except Cart.DoesNotExist:
+                raise serializers.ValidationError("Корзина не найдена")
 
-        if not cart.items.exists():
-            raise serializers.ValidationError("Корзина пуста")
+            if not cart.items.exists():
+                raise serializers.ValidationError("Корзина пуста")
 
-        total_price = cart.total_price
+            total_price = cart.total_price
+            items_to_order = []
+            for cart_item in cart.items.all():
+                items_to_order.append({
+                    'variant': cart_item.variant,
+                    'quantity': cart_item.quantity,
+                    'price': cart_item.product.price,
+                    'product': cart_item.product
+                })
+
+        # Применяем промокод
         promo_discount = 0
         promo_obj = None
 
@@ -322,6 +417,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
         final_price = total_price - promo_discount
 
+        # Создаём заказ
         order = Order.objects.create(
             user=user,
             total_price=final_price,
@@ -332,21 +428,24 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             **validated_data
         )
 
-        for cart_item in cart.items.all():
+        # Создаём позиции заказа и уменьшаем остатки
+        for item in items_to_order:
             OrderItem.objects.create(
                 order=order,
-                product=cart_item.product,
-                variant=cart_item.variant, 
-                product_name=cart_item.product.name,
-                size=cart_item.variant.size if cart_item.variant else '', 
-                price=cart_item.product.price,
-                quantity=cart_item.quantity
+                product=item['product'],
+                variant=item['variant'],
+                product_name=item['product'].name,
+                size=item['variant'].size,
+                price=item['price'],
+                quantity=item['quantity']
             )
             
-            variant = cart_item.variant
-            variant.stock_quantity -= cart_item.quantity
+            # Уменьшаем количество в варианте
+            variant = item['variant']
+            variant.stock_quantity -= item['quantity']
             variant.save()
 
+        # Обновляем использованный промокод
         if promo_obj:
             PromoCodeUsage.objects.create(
                 user=user,
@@ -357,8 +456,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             promo_obj.used_count += 1
             promo_obj.save()
 
-        cart.items.all().delete()
-        request.session.pop('applied_promo', None)
+        # Если использовали корзину, очищаем её
+        if not items_data:
+            cart.items.all().delete()
+            request.session.pop('applied_promo', None)
 
         return order
 
@@ -381,10 +482,10 @@ class ReviewSerializer(serializers.ModelSerializer):
         Возвращает название товара для отзыва.
 
         Args:
-            obj (Review): Объект отзыва
+            obj: Объект отзыва
 
         Returns:
-            str: Название товара
+            Название товара
         """
         if hasattr(obj, 'product_name'):
             return obj.product_name
@@ -395,10 +496,10 @@ class ReviewSerializer(serializers.ModelSerializer):
         Проверяет, что пользователь покупал этот товар.
 
         Args:
-            attrs (dict): Данные для валидации
+            attrs: Данные для валидации
 
         Returns:
-            dict: Проверенные данные
+            Проверенные данные
 
         Raises:
             ValidationError: Если пользователь не покупал товар
@@ -425,10 +526,10 @@ class ReviewSerializer(serializers.ModelSerializer):
         Создаёт отзыв, автоматически подставляя пользователя.
 
         Args:
-            validated_data (dict): Проверенные данные отзыва
+            validated_data: Проверенные данные отзыва
 
         Returns:
-            Review: Созданный отзыв
+            Созданный отзыв
         """
         request = self.context.get('request')
         validated_data['user'] = request.user
@@ -452,10 +553,10 @@ class WishlistSerializer(serializers.ModelSerializer):
         Создаёт запись в избранном, автоматически подставляя пользователя.
 
         Args:
-            validated_data (dict): Проверенные данные
+            validated_data: Проверенные данные
 
         Returns:
-            Wishlist: Созданная запись избранного
+            Созданная запись избранного
         """
         request = self.context.get('request')
         validated_data['user'] = request.user
@@ -484,10 +585,10 @@ class PromoCodeSerializer(serializers.ModelSerializer):
         Возвращает количество дней до окончания действия промокода.
 
         Args:
-            obj (PromoCode): Объект промокода
+            obj: Объект промокода
 
         Returns:
-            Optional[int]: Количество дней или None
+            Количество дней или None
         """
         if obj.valid_to:
             days = (obj.valid_to - timezone.now()).days
@@ -507,10 +608,10 @@ class ApplyPromoCodeSerializer(serializers.Serializer):
         Проверяет промокод и рассчитывает скидку.
 
         Args:
-            attrs (dict): Данные для валидации
+            attrs: Данные для валидации
 
         Returns:
-            dict: Данные с добавленными полями promo и discount_amount
+            Данные с добавленными полями promo и discount_amount
 
         Raises:
             ValidationError: Если промокод недействителен

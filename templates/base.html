@@ -530,7 +530,7 @@
             line-height: 1;
         }
         
-        .sr-only {
+        .visually-hidden, .sr-only {
             position: absolute;
             width: 1px;
             height: 1px;
@@ -730,16 +730,17 @@
 </head>
 <body class="{% if user.is_authenticated %}user-authenticated{% endif %}">
     <a href="#main-content" class="skip-link">Перейти к основному содержанию</a>
+    
     <div class="top-bar-first" role="region" aria-label="Верхняя панель">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center flex-wrap">
                 <div>
-                    <span class="me-4" aria-label="Телефон">+7 (999) 999-99-99</span>
-                    <span aria-label="Email">argentic@gmail.com</span>
+                    <span class="me-4" aria-label="Телефон: +7 (999) 999-99-99">+7 (999) 999-99-99</span>
+                    <span aria-label="Email: argentic@gmail.com">argentic@gmail.com</span>
                 </div>
                 <div>
-                    <a href="{% url 'about' %}" class="me-3">О нас</a>
-                    <a href="{% url 'stores' %}">Магазины</a>
+                    <a href="{% url 'about' %}" class="me-3" aria-label="О компании">О нас</a>
+                    <a href="{% url 'stores' %}" aria-label="Наши магазины">Магазины</a>
                 </div>
             </div>
         </div>
@@ -749,20 +750,21 @@
         <div class="container">
             <div class="custom-row align-items-center">
                 <div class="col-md-20 text-center text-md-start">
-                    <a href="{% url 'home' %}" class="logo" aria-label="Argentic Jewelry, на главную">
+                    <a href="{% url 'home' %}" class="logo" aria-label="Argentic Jewelry, на главную страницу">
                         ARGENTIC JEWELRY
                     </a>
                 </div>
                 <div class="col-md-40">
                     <div class="search-bar-new" role="search" aria-label="Поиск по каталогу">
-                        <a href="{% url 'catalog' %}" class="catalog-btn" aria-label="Открыть каталог">
+                        <a href="{% url 'catalog' %}" class="catalog-btn" aria-label="Открыть каталог товаров">
                             <i class="fas fa-bars" aria-hidden="true"></i> Каталог
                         </a>
+                        <label for="search-input" class="visually-hidden">Поиск по каталогу</label>
                         <input type="text" 
                                placeholder="Поиск по каталогу..." 
                                id="search-input"
                                aria-label="Введите поисковый запрос">
-                        <button id="search-btn" aria-label="Найти">
+                        <button id="search-btn" aria-label="Найти товары по запросу">
                             <i class="fas fa-search" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -806,7 +808,7 @@
         {% block breadcrumbs %}
         <div class="breadcrumbs" aria-label="Навигационная цепочка">
             <div class="container">
-                <nav aria-label="Breadcrumb">
+                <nav aria-label="Хлебные крошки">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home" aria-hidden="true"></i> Главная</a></li>
                         {% block breadcrumb_items %}{% endblock %}
@@ -815,14 +817,16 @@
             </div>
         </div>
         {% endblock %}
+        
         {% if user.is_authenticated and user.is_staff %}
-            <a href="{% url 'admin_dashboard' %}" class="admin-btn">
-                <i class="fas fa-shield-alt"></i> Админ-панель
+            <a href="{% url 'admin_dashboard' %}" class="admin-btn" aria-label="Перейти в панель администратора">
+                <i class="fas fa-shield-alt" aria-hidden="true"></i> Админ-панель
             </a>
-            <a href="/admin/" class="django-admin-btn">
-                <i class="fas fa-cog"></i> Django Admin
+            <a href="/admin/" class="django-admin-btn" aria-label="Перейти в Django административную панель">
+                <i class="fas fa-cog" aria-hidden="true"></i> Django Admin
             </a>
         {% endif %}
+        
         {% if messages %}
         <div class="container mt-3" aria-live="polite">
             {% for message in messages %}
@@ -846,22 +850,22 @@
             <div class="custom-row">
                 <div class="col-md-4 mb-4 mb-md-0">
                     <h5>Покупателям</h5>
-                    <a href="{% url 'faq' %}">Как сделать заказ</a>
-                    <a href="{% url 'faq' %}#payment">Способы оплаты</a>
-                    <a href="{% url 'faq' %}#delivery">Доставка и оплата</a>
-                    <a href="{% url 'faq' %}#return">Возврат товара</a>
+                    <a href="{% url 'faq' %}" aria-label="Часто задаваемые вопросы">Как сделать заказ</a>
+                    <a href="{% url 'faq' %}#payment" aria-label="Способы оплаты">Способы оплаты</a>
+                    <a href="{% url 'faq' %}#delivery" aria-label="Доставка и оплата">Доставка и оплата</a>
+                    <a href="{% url 'faq' %}#return" aria-label="Возврат товара">Возврат товара</a>
                 </div>
                 <div class="col-md-4 mb-4 mb-md-0">
                     <h5>О компании</h5>
-                    <a href="{% url 'about' %}">О нас</a>
-                    <a href="{% url 'stores' %}">Магазины</a>
-                    <a href="{% url 'faq' %}#vacancies">Вакансии</a>
+                    <a href="{% url 'about' %}" aria-label="О компании">О нас</a>
+                    <a href="{% url 'stores' %}" aria-label="Магазины">Магазины</a>
+                    <a href="{% url 'faq' %}#vacancies" aria-label="Вакансии">Вакансии</a>
                 </div>
                 <div class="col-md-4">
                     <h5>Контакты</h5>
-                    <p>+7 (999) 999-99-99</p>
-                    <p>argentic@gmail.com</p>
-                    <p>г. Москва, ул. Тверская, 1</p>
+                    <p aria-label="Телефон: +7 (999) 999-99-99">+7 (999) 999-99-99</p>
+                    <p aria-label="Email: argentic@gmail.com">argentic@gmail.com</p>
+                    <p aria-label="Адрес: г. Москва, ул. Тверская, 1">г. Москва, ул. Тверская, 1</p>
                     <div class="social-links mt-3" aria-label="Социальные сети">
                         <a href="#" aria-label="Instagram"><i class="fab fa-instagram" aria-hidden="true"></i></a>
                         <a href="#" aria-label="Telegram"><i class="fab fa-telegram" aria-hidden="true"></i></a>
@@ -988,29 +992,37 @@
                         if (cart.items && cart.items.length > 0) {
                             console.log('Restoring', cart.items.length, 'items from localStorage after login');
                             
-                            const addPromises = cart.items.map(item => {
-                                return fetch('/api/cart/add_item/', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRFToken': getCookie('csrftoken')
-                                    },
-                                    body: JSON.stringify({
-                                        product_id: item.product,
-                                        quantity: item.quantity,
-                                        size: item.size || ''
-                                    })
+                            // Небольшая задержка, чтобы пользователь точно авторизовался
+                            setTimeout(() => {
+                                const addPromises = cart.items.map(item => {
+                                    // ✅ Используем variant_id
+                                    return fetch('/api/cart/add_item/', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRFToken': getCookie('csrftoken')
+                                        },
+                                        body: JSON.stringify({
+                                            variant_id: item.variant_id,
+                                            quantity: item.quantity
+                                        })
+                                    });
                                 });
-                            });
-                            
-                            Promise.all(addPromises)
-                                .then(() => {
-                                    localStorage.removeItem('guest_cart');
-                                    updateCartCount();
-                                    console.log('Guest cart restored successfully after login');
-                                    setTimeout(() => location.reload(), 500);
-                                })
-                                .catch(error => console.error('Error restoring cart:', error));
+                                
+                                Promise.all(addPromises)
+                                    .then(responses => {
+                                        const allOk = responses.every(r => r.ok);
+                                        if (allOk) {
+                                            localStorage.removeItem('guest_cart');
+                                            updateCartCount();
+                                            console.log('Guest cart restored successfully after login');
+                                            // Не перезагружаем, просто обновляем счётчик
+                                        } else {
+                                            console.error('Some requests failed');
+                                        }
+                                    })
+                                    .catch(error => console.error('Error restoring cart:', error));
+                            }, 500);
                             return;
                         }
                     }
@@ -1080,11 +1092,22 @@
         }
         
         function saveGuestCart() {
+            console.log('saveGuestCart called');  // для отладки
             fetch('/api/cart/')
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Cart data for save:', data);  // для отладки
                     if (data.items && data.items.length > 0) {
-                        localStorage.setItem('guest_cart', JSON.stringify(data));
+                        // Сохраняем полную информацию о товарах в корзине
+                        const cartToSave = {
+                            items: data.items.map(item => ({
+                                variant_id: item.variant_id,
+                                quantity: item.quantity,
+                                product_id: item.product,
+                                size: item.variant_size
+                            }))
+                        };
+                        localStorage.setItem('guest_cart', JSON.stringify(cartToSave));
                         console.log('Guest cart saved to localStorage:', data.items.length);
                     }
                 })
@@ -1143,6 +1166,27 @@
                         }
                     })
                     .catch(error => console.error('Error saving cart before unload:', error));
+            }
+        });
+        window.addEventListener('beforeunload', function() {
+            if (!isAuthenticated()) {
+                fetch('/api/cart/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.items && data.items.length > 0) {
+                            const cartToSave = {
+                                items: data.items.map(item => ({
+                                    variant_id: item.variant_id,
+                                    quantity: item.quantity,
+                                    product_id: item.product,
+                                    size: item.variant_size
+                                }))
+                            };
+                            localStorage.setItem('guest_cart', JSON.stringify(cartToSave));
+                            console.log('Cart saved on beforeunload');
+                        }
+                    })
+                    .catch(error => console.error('Error saving cart:', error));
             }
         });
     </script>

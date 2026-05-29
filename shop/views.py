@@ -7,11 +7,13 @@
 
 from typing import Optional, List, Dict, Any, Union
 from decimal import Decimal
+from datetime import datetime
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from django.db.models import Avg, Value, FloatField
 from django.db.models.functions import Coalesce
@@ -23,13 +25,8 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_simplejwt.views import TokenObtainPairView
 from allauth.account.views import SignupView
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-import json
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
+
 from .models import (
     Category, Product, Cart, CartItem, Order, Review, Wishlist, User, Collection,
     PromoCode, PromoCodeUsage, OrderItem, ProductVariant
@@ -41,35 +38,42 @@ from .serializers import (
     PromoCodeSerializer, ApplyPromoCodeSerializer
 )
 from .filters import ProductFilter
-from django.contrib.admin.views.decorators import staff_member_required
-from django.shortcuts import render
+
 
 @login_required
 @require_http_methods(["GET"])
-def can_review_product(request, product_id):
+def can_review_product(request: HttpRequest, product_id: int) -> JsonResponse:
     """
     Проверяет, может ли пользователь оставить отзыв на товар.
+
     Условия:
     1. Пользователь купил этот товар
     2. Заказ со статусом 'received' (Получен)
     3. Пользователь ещё не оставлял отзыв на этот товар
+
+    Args:
+        request: HTTP запрос
+        product_id: ID товара
+
+    Returns:
+        JsonResponse с полями can_review, has_purchased, has_reviewed
     """
-    has_purchased = OrderItem.objects.filter(
+    has_purchased: bool = OrderItem.objects.filter(
         order__user=request.user,
         order__status=Order.Status.RECEIVED,
         product_id=product_id
     ).exists()
-    
-    has_reviewed = Review.objects.filter(
+
+    has_reviewed: bool = Review.objects.filter(
         user=request.user,
         product_id=product_id
     ).exists()
-    
+
     print(f"User: {request.user.email}")
     print(f"Product ID: {product_id}")
     print(f"Has purchased (received): {has_purchased}")
     print(f"Has reviewed: {has_reviewed}")
-    
+
     return JsonResponse({
         'can_review': has_purchased and not has_reviewed,
         'has_purchased': has_purchased,
@@ -80,15 +84,21 @@ def can_review_product(request, product_id):
 @login_required
 @csrf_exempt
 @require_http_methods(["POST"])
-def create_product_review(request):
+def create_product_review(request: HttpRequest) -> JsonResponse:
     """
-    Создаёт новый отзыв на товар
+    Создаёт новый отзыв на товар.
+
+    Args:
+        request: HTTP запрос (может быть multipart/form-data или JSON)
+
+    Returns:
+        JsonResponse с результатом создания отзыва
     """
     try:
         if request.content_type and 'multipart' in request.content_type:
-            product_id = request.POST.get('product')
-            rating = request.POST.get('rating')
-            comment = request.POST.get('comment')
+            product_id: Optional[str] = request.POST.get('product')
+            rating: Optional[str] = request.POST.get('rating')
+            comment: Optional[str] = request.POST.get('comment')
             image = request.FILES.get('image')
         else:
             data = json.loads(request.body)
@@ -96,50 +106,51 @@ def create_product_review(request):
             rating = data.get('rating')
             comment = data.get('comment')
             image = None
-        
+
         if not product_id or not rating or not comment:
             return JsonResponse({'error': 'Заполните все обязательные поля'}, status=400)
-        
-        rating = int(rating)
-        if rating < 1 or rating > 5:
+
+        rating_int: int = int(rating)
+        if rating_int < 1 or rating_int > 5:
             return JsonResponse({'error': 'Оценка должна быть от 1 до 5'}, status=400)
 
-        has_purchased = OrderItem.objects.filter(
+        has_purchased: bool = OrderItem.objects.filter(
             order__user=request.user,
-            order__status=Order.Status.RECEIVED,  
+            order__status=Order.Status.RECEIVED,
             product_id=product_id
         ).exists()
-        
+
         if not has_purchased:
             return JsonResponse({'error': 'Вы можете оставить отзыв только после получения заказа'}, status=400)
 
-        has_reviewed = Review.objects.filter(
+        has_reviewed: bool = Review.objects.filter(
             user=request.user,
             product_id=product_id
         ).exists()
-        
+
         if has_reviewed:
             return JsonResponse({'error': 'Вы уже оставили отзыв на этот товар'}, status=400)
 
-        review = Review.objects.create(
+        review: Review = Review.objects.create(
             user=request.user,
             product_id=product_id,
-            rating=rating,
+            rating=rating_int,
             comment=comment,
             image=image,
             moderated=False
         )
-        
+
         return JsonResponse({
             'id': review.id,
             'message': 'Спасибо за отзыв! Он будет опубликован после проверки модератором.'
         })
-        
+
     except Exception as e:
         print(f"Error creating review: {e}")
         import traceback
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
+
 
 class CustomSignupView(SignupView):
     """
@@ -154,7 +165,7 @@ class CustomSignupView(SignupView):
             form: Форма регистрации
 
         Returns:
-            HttpResponse: Ответ после успешной регистрации
+            Ответ после успешной регистрации
         """
         self.request.session['signup_first_name'] = form.cleaned_data.get('first_name', '')
         self.request.session['signup_last_name'] = form.cleaned_data.get('last_name', '')
@@ -165,12 +176,19 @@ class CustomSignupView(SignupView):
 def product_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """
     Детальная страница товара.
+
+    Args:
+        request: HTTP запрос
+        pk: ID товара
+
+    Returns:
+        Рендер страницы товара
     """
-    product = get_object_or_404(Product, id=pk, is_active=True)
-    variants = product.variants.all()  
-    context = {
+    product: Product = get_object_or_404(Product, id=pk, is_active=True)
+    variants = product.variants.all()
+    context: Dict[str, Any] = {
         'product': product,
-        'variants': variants,  
+        'variants': variants,
         'has_variants': variants.exists()
     }
     return render(request, 'shop/product_detail.html', context)
@@ -181,10 +199,10 @@ def index(request: HttpRequest) -> HttpResponse:
     Индексная страница.
 
     Args:
-        request (HttpRequest): HTTP запрос
+        request: HTTP запрос
 
     Returns:
-        HttpResponse: Приветственное сообщение
+        Приветственное сообщение
     """
     return HttpResponse("Добро пожаловать в ювелирный магазин!")
 
@@ -216,30 +234,42 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         Возвращает текущего авторизованного пользователя.
 
         Returns:
-            User: Текущий пользователь
+            Текущий пользователь
         """
         return self.request.user
+
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet для пользователей (только для админов)"""
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
-    
+
     def get_queryset(self):
+        """Возвращает всех пользователей, отсортированных по дате регистрации."""
         return User.objects.all().order_by('-date_joined')
-    
+
     @action(detail=True, methods=['post'])
-    def add_bonus(self, request, pk=None):
-        """Начисление бонусов пользователю"""
-        user = self.get_object()
-        bonus = request.data.get('bonus_points', 0)
-        
+    def add_bonus(self, request: Request, pk: Optional[int] = None) -> Response:
+        """
+        Начисление бонусов пользователю.
+
+        Args:
+            request: HTTP запрос с полем bonus_points
+            pk: ID пользователя
+
+        Returns:
+            Response с новым количеством бонусов
+        """
+        user: User = self.get_object()
+        bonus: int = request.data.get('bonus_points', 0)
+
         if bonus > 0:
             user.bonus_points += bonus
             user.save()
             return Response({'status': 'ok', 'bonus_points': user.bonus_points})
-        
+
         return Response({'error': 'Invalid bonus'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -250,7 +280,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
-class ProductViewSet(viewsets.ModelViewSet): 
+class ProductViewSet(viewsets.ModelViewSet):
     """
     ViewSet для товаров.
     """
@@ -261,7 +291,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     ordering_fields = ['price', 'created_at']
     search_fields = ['name', 'name_lower', 'description']
 
-    def get_queryset(self) -> Product:
+    def get_queryset(self):
         """
         Возвращает QuerySet товаров с учётом фильтрации по поиску и ids.
         """
@@ -283,21 +313,22 @@ class ProductViewSet(viewsets.ModelViewSet):
             print(f"Error in get_queryset: {e}")
             return Product.objects.none()
 
-    def update(self, request, *args, **kwargs):
+    def update(self, request: Request, *args, **kwargs) -> Response:
         """Обновление товара (PATCH) - для админ-панели"""
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        
-        allowed_fields = ['price', 'name', 'description', 'old_price', 'is_active']
-        data = {k: v for k, v in request.data.items() if k in allowed_fields}
-        
+        partial: bool = kwargs.pop('partial', False)
+        instance: Product = self.get_object()
+
+        allowed_fields: List[str] = ['price', 'name', 'description', 'old_price', 'is_active']
+        data: Dict[str, Any] = {k: v for k, v in request.data.items() if k in allowed_fields}
+
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        
+
         return Response(serializer.data)
-    
-    def perform_update(self, serializer):
+
+    def perform_update(self, serializer) -> None:
+        """Выполняет обновление товара."""
         serializer.save()
 
     def list(self, request: Request, *args, **kwargs) -> Response:
@@ -369,7 +400,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         try:
             product: Product = self.get_object()
             discount = request.data.get('discount_percent', 0)
-            
+
             if not isinstance(discount, (int, float)) or discount <= 0 or discount > 100:
                 return Response({'error': 'Скидка должна быть числом от 1 до 100'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -378,7 +409,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
             product.price = product.price * (100 - discount) / 100
             product.save()
-            
+
             return Response({
                 'status': 'ok',
                 'message': f'Скидка {discount}% применена к товару "{product.name}"',
@@ -387,6 +418,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             })
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class CartViewSet(viewsets.GenericViewSet):
     """
@@ -414,11 +446,10 @@ class CartViewSet(viewsets.GenericViewSet):
             return cart
         else:
             session_key = self.get_session_key(self.request)
-  
+
             try:
                 cart = Cart.objects.get(session_key=session_key, user__isnull=True)
             except Cart.DoesNotExist:
-
                 cart = Cart.objects.create(session_key=session_key)
             return cart
 
@@ -440,20 +471,20 @@ class CartViewSet(viewsets.GenericViewSet):
             print("=== ADD ITEM ===")
             print("User:", request.user)
             print("Data:", request.data)
-            
+
             cart = self.get_object()
             variant_id = request.data.get('variant_id')
             quantity = int(request.data.get('quantity', 1))
-            
+
             if not variant_id:
                 return Response({'error': 'variant_id обязателен'}, status=400)
-            
+
             variant = get_object_or_404(ProductVariant, id=variant_id)
             product = variant.product
 
             if not product.is_active:
                 return Response({'error': 'Товар неактивен'}, status=400)
-            
+
             if quantity > variant.available_quantity:
                 return Response(
                     {'error': f'Доступно только {variant.available_quantity} шт. товара "{product.name}" (размер {variant.size})'},
@@ -461,9 +492,8 @@ class CartViewSet(viewsets.GenericViewSet):
                 )
 
             cart_item = CartItem.objects.filter(cart=cart, variant=variant).first()
-            
+
             if cart_item:
-   
                 new_quantity = cart_item.quantity + quantity
                 if new_quantity > variant.available_quantity:
                     return Response(
@@ -479,10 +509,10 @@ class CartViewSet(viewsets.GenericViewSet):
                     variant=variant,
                     quantity=quantity
                 )
-            
+
             serializer = self.get_serializer(cart)
             return Response(serializer.data)
-            
+
         except Exception as e:
             print(f"Error in add_item: {e}")
             import traceback
@@ -544,6 +574,7 @@ class CartViewSet(viewsets.GenericViewSet):
             print(f"Error in clear: {e}")
             return Response({'error': str(e)}, status=500)
 
+
 class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet для просмотра заказов.
@@ -551,12 +582,9 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self) -> Order:
+    def get_queryset(self):
         """
         Возвращает заказы текущего пользователя.
-
-        Returns:
-            QuerySet: Заказы пользователя
         """
         return Order.objects.filter(user=self.request.user).prefetch_related('items').order_by('-created_at')
 
@@ -566,10 +594,10 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
         Создание нового заказа из корзины.
 
         Args:
-            request (Request): HTTP запрос с данными заказа
+            request: HTTP запрос с данными заказа
 
         Returns:
-            Response: Созданный заказ или ошибка
+            Созданный заказ или ошибка
         """
         try:
             print("=== CREATE ORDER REQUEST ===")
@@ -606,11 +634,11 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
         Изменение адреса доставки заказа (только для новых и подтверждённых).
 
         Args:
-            request (Request): HTTP запрос с новым адресом
-            pk (int, optional): ID заказа
+            request: HTTP запрос с новым адресом
+            pk: ID заказа
 
         Returns:
-            Response: Статус операции
+            Статус операции
         """
         order: Order = self.get_object()
 
@@ -634,24 +662,34 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=['post'])
     def cancel(self, request: Request, pk: Optional[int] = None) -> Response:
-        """Отмена заказа (только для новых и подтверждённых)."""
+        """
+        Отмена заказа (только для новых и подтверждённых).
+
+        Args:
+            request: HTTP запрос
+            pk: ID заказа
+
+        Returns:
+            Статус операции
+        """
         order: Order = self.get_object()
-        
+
         if order.status not in [Order.Status.NEW, Order.Status.CONFIRMED]:
             return Response(
                 {'error': 'Нельзя отменить заказ в текущем статусе'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         order.status = Order.Status.CANCELLED
         order.save()
-        
+
         for item in order.items.all():
             if item.variant:
                 item.variant.stock_quantity += item.quantity
                 item.variant.save()
-        
+
         return Response({'status': 'ok'})
+
     @action(detail=True, methods=['get'])
     def get_pickup_code(self, request: Request, pk: Optional[int] = None) -> Response:
         """
@@ -659,41 +697,49 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
         Доступен только для заказов со статусом DELIVERED.
         """
         order: Order = self.get_object()
-        
+
         if order.status not in [Order.Status.DELIVERED, Order.Status.RECEIVED]:
             return Response(
                 {'error': 'Код получения доступен только для доставленных заказов'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         order.regenerate_pickup_code()
-        
+
         return Response({
             'pickup_code': order.pickup_code,
             'generated_at': order.code_generated_at,
             'expires_in': 600 - (timezone.now() - order.code_generated_at).total_seconds()
         })
-    
+
     @action(detail=True, methods=['post'])
     def mark_as_received(self, request: Request, pk: Optional[int] = None) -> Response:
         """
         Отмечает заказ как полученный (для пользователя).
+
+        Args:
+            request: HTTP запрос
+            pk: ID заказа
+
+        Returns:
+            Статус операции
         """
         order: Order = self.get_object()
-        
+
         if order.status != Order.Status.DELIVERED:
             return Response(
                 {'error': 'Заказ можно подтвердить как полученный только после доставки'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         order.mark_as_received()
-        
+
         return Response({
             'status': 'ok',
             'message': 'Заказ отмечен как полученный',
             'received_at': order.delivered_at
         })
+
 
 class AdminOrderViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -702,23 +748,33 @@ class AdminOrderViewSet(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAdminUser]
-    
+
     def get_queryset(self):
         """Возвращает ВСЕ заказы для админ-панели"""
         return Order.objects.all().prefetch_related('items', 'user').order_by('-created_at')
-    
+
     @action(detail=True, methods=['post'])
-    def update_status(self, request, pk=None):
-        """Обновление статуса заказа (только для админов)"""
-        order = self.get_object()
+    def update_status(self, request: Request, pk: Optional[int] = None) -> Response:
+        """
+        Обновление статуса заказа (только для админов).
+
+        Args:
+            request: HTTP запрос с полем status
+            pk: ID заказа
+
+        Returns:
+            Статус операции
+        """
+        order: Order = self.get_object()
         new_status = request.data.get('status')
-        
+
         if new_status in dict(Order.Status.choices):
             order.status = new_status
             order.save()
             return Response({'status': 'ok'})
-        
+
         return Response({'error': 'Invalid status'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ReviewViewSet(viewsets.ModelViewSet):
     """
@@ -727,12 +783,12 @@ class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    def get_queryset(self) -> Review:
+    def get_queryset(self):
         """
         Возвращает отзывы с учётом прав пользователя.
 
         Returns:
-            QuerySet: Отзывы
+            QuerySet отзывов
         """
         user: User = self.request.user
         if user.is_staff:
@@ -744,29 +800,38 @@ class ReviewViewSet(viewsets.ModelViewSet):
         Добавляет request в контекст сериализатора.
 
         Returns:
-            dict: Контекст сериализатора
+            Контекст сериализатора
         """
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
-    
+
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
-    def moderate(self, request, pk=None):
-        """Модерация отзыва (только для админов)"""
+    def moderate(self, request: Request, pk: Optional[int] = None) -> Response:
+        """
+        Модерация отзыва (только для админов).
+
+        Args:
+            request: HTTP запрос с полем moderated
+            pk: ID отзыва
+
+        Returns:
+            Статус операции
+        """
         try:
             review_id = pk
             moderated = request.data.get('moderated', False)
 
             if isinstance(moderated, str):
                 moderated = moderated.lower() == 'true'
-            
+
             updated_count = Review.objects.filter(id=review_id).update(moderated=moderated)
-            
+
             if updated_count == 0:
                 return Response({'error': 'Отзыв не найден'}, status=status.HTTP_404_NOT_FOUND)
-            
+
             return Response({
-                'status': 'ok', 
+                'status': 'ok',
                 'moderated': moderated,
                 'message': 'Отзыв одобрен' if moderated else 'Отзыв снят с публикации'
             })
@@ -784,12 +849,12 @@ class WishlistViewSet(viewsets.ModelViewSet):
     serializer_class = WishlistSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self) -> Wishlist:
+    def get_queryset(self):
         """
         Возвращает избранное текущего пользователя.
 
         Returns:
-            QuerySet: Избранное пользователя
+            QuerySet избранного пользователя
         """
         return Wishlist.objects.filter(user=self.request.user).order_by('-added_at')
 
@@ -798,7 +863,7 @@ class WishlistViewSet(viewsets.ModelViewSet):
         Добавляет request в контекст сериализатора.
 
         Returns:
-            dict: Контекст сериализатора
+            Контекст сериализатора
         """
         context = super().get_serializer_context()
         context['request'] = self.request
@@ -810,10 +875,10 @@ def home(request: HttpRequest) -> HttpResponse:
     Главная страница.
 
     Args:
-        request (HttpRequest): HTTP запрос
+        request: HTTP запрос
 
     Returns:
-        HttpResponse: Рендер главной страницы
+        Рендер главной страницы
     """
     from django.templatetags.static import static
     context = {'banner_image': static('shop/images/main_banner.jpeg')}
@@ -825,10 +890,10 @@ def catalog(request: HttpRequest) -> HttpResponse:
     Страница каталога.
 
     Args:
-        request (HttpRequest): HTTP запрос
+        request: HTTP запрос
 
     Returns:
-        HttpResponse: Рендер страницы каталога
+        Рендер страницы каталога
     """
     return render(request, 'shop/catalog.html')
 
@@ -838,10 +903,10 @@ def cart_page(request: HttpRequest) -> HttpResponse:
     Страница корзины.
 
     Args:
-        request (HttpRequest): HTTP запрос
+        request: HTTP запрос
 
     Returns:
-        HttpResponse: Рендер страницы корзины
+        Рендер страницы корзины
     """
     return render(request, 'shop/cart.html')
 
@@ -852,10 +917,10 @@ def profile(request: HttpRequest) -> HttpResponse:
     Страница профиля пользователя.
 
     Args:
-        request (HttpRequest): HTTP запрос
+        request: HTTP запрос
 
     Returns:
-        HttpResponse: Рендер страницы профиля
+        Рендер страницы профиля
     """
     return render(request, 'shop/profile.html')
 
@@ -866,10 +931,10 @@ def orders(request: HttpRequest) -> HttpResponse:
     Страница заказов пользователя.
 
     Args:
-        request (HttpRequest): HTTP запрос
+        request: HTTP запрос
 
     Returns:
-        HttpResponse: Рендер страницы заказов
+        Рендер страницы заказов
     """
     return render(request, 'shop/orders.html')
 
@@ -880,10 +945,10 @@ def favorites(request: HttpRequest) -> HttpResponse:
     Страница избранного пользователя.
 
     Args:
-        request (HttpRequest): HTTP запрос
+        request: HTTP запрос
 
     Returns:
-        HttpResponse: Рендер страницы избранного
+        Рендер страницы избранного
     """
     return render(request, 'shop/favorites.html')
 
@@ -893,15 +958,15 @@ def checkout_page(request: HttpRequest) -> HttpResponse:
     Страница оформления заказа.
 
     Args:
-        request (HttpRequest): HTTP запрос
+        request: HTTP запрос
 
     Returns:
-        HttpResponse: Рендер страницы оформления заказа
+        Рендер страницы оформления заказа
     """
     context = {
-        'user': request.user 
+        'user': request.user
     }
-    return render(request, 'shop/checkout.html')
+    return render(request, 'shop/checkout.html', context)
 
 
 def about(request: HttpRequest) -> HttpResponse:
@@ -909,10 +974,10 @@ def about(request: HttpRequest) -> HttpResponse:
     Страница "О нас".
 
     Args:
-        request (HttpRequest): HTTP запрос
+        request: HTTP запрос
 
     Returns:
-        HttpResponse: Рендер страницы о компании
+        Рендер страницы о компании
     """
     return render(request, 'shop/about.html')
 
@@ -922,10 +987,10 @@ def faq(request: HttpRequest) -> HttpResponse:
     Страница часто задаваемых вопросов.
 
     Args:
-        request (HttpRequest): HTTP запрос
+        request: HTTP запрос
 
     Returns:
-        HttpResponse: Рендер страницы FAQ
+        Рендер страницы FAQ
     """
     return render(request, 'shop/faq.html')
 
@@ -935,10 +1000,10 @@ def stores(request: HttpRequest) -> HttpResponse:
     Страница магазинов и пунктов самовывоза.
 
     Args:
-        request (HttpRequest): HTTP запрос
+        request: HTTP запрос
 
     Returns:
-        HttpResponse: Рендер страницы магазинов
+        Рендер страницы магазинов
     """
     return render(request, 'shop/stores.html')
 
@@ -954,12 +1019,12 @@ class PromoCodeViewSet(viewsets.GenericViewSet):
         Получение списка активных промокодов.
 
         Args:
-            request (Request): HTTP запрос
+            request: HTTP запрос
 
         Returns:
-            Response: Список активных промокодов
+            Список активных промокодов
         """
-        now: DateTime = timezone.now()
+        now: datetime = timezone.now()
         promoCodes = PromoCode.objects.filter(
             is_active=True,
             valid_from__lte=now,
@@ -975,10 +1040,10 @@ class PromoCodeViewSet(viewsets.GenericViewSet):
         Применение промокода.
 
         Args:
-            request (Request): HTTP запрос с кодом промокода и суммой заказа
+            request: HTTP запрос с кодом промокода и суммой заказа
 
         Returns:
-            Response: Результат применения промокода
+            Результат применения промокода
         """
         serializer = ApplyPromoCodeSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -996,41 +1061,48 @@ class PromoCodeViewSet(viewsets.GenericViewSet):
         Удаление применённого промокода.
 
         Args:
-            request (Request): HTTP запрос
+            request: HTTP запрос
 
         Returns:
-            Response: Статус операции
+            Статус операции
         """
         request.session.pop('applied_promo', None)
         return Response({'message': 'Промокод удалён'})
+
     @action(detail=False, methods=['post'], permission_classes=[permissions.IsAdminUser])
     def create_promo(self, request: Request) -> Response:
         """
         Создание нового промокода (только для админов).
+
+        Args:
+            request: HTTP запрос с данными промокода
+
+        Returns:
+            Результат создания промокода
         """
         try:
-            code = request.data.get('code', '').upper()
+            code: str = request.data.get('code', '').upper()
             discount_value = request.data.get('discount_value')
             valid_to = request.data.get('valid_to')
-            discount_type = request.data.get('discount_type', 'percent')
+            discount_type: str = request.data.get('discount_type', 'percent')
             min_order_amount = request.data.get('min_order_amount', 0)
             max_discount_amount = request.data.get('max_discount_amount', None)
-            only_new_users = request.data.get('only_new_users', False)
+            only_new_users: bool = request.data.get('only_new_users', False)
             user_limit = request.data.get('user_limit', 1)
-            
+
             if not code:
                 return Response({'error': 'Код промокода обязателен'}, status=400)
-            
+
             if not discount_value or float(discount_value) <= 0:
                 return Response({'error': 'Скидка должна быть больше 0'}, status=400)
-            
+
             if float(discount_value) > 100 and discount_type == 'percent':
                 return Response({'error': 'Процент скидки не может быть больше 100'}, status=400)
 
             if PromoCode.objects.filter(code=code).exists():
                 return Response({'error': 'Промокод с таким кодом уже существует'}, status=400)
 
-            promo_code = PromoCode.objects.create(
+            promo_code: PromoCode = PromoCode.objects.create(
                 code=code,
                 discount_type=discount_type,
                 discount_value=float(discount_value),
@@ -1042,7 +1114,7 @@ class PromoCodeViewSet(viewsets.GenericViewSet):
                 user_limit=int(user_limit) if user_limit else 1,
                 is_active=True
             )
-            
+
             return Response({
                 'status': 'ok',
                 'message': f'Промокод "{code}" успешно создан',
@@ -1053,7 +1125,7 @@ class PromoCodeViewSet(viewsets.GenericViewSet):
                     'valid_to': promo_code.valid_to
                 }
             }, status=status.HTTP_201_CREATED)
-            
+
         except Exception as e:
             print(f"Error creating promo code: {e}")
             import traceback
@@ -1069,14 +1141,22 @@ class CollectionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CollectionSerializer
     permission_classes = [permissions.AllowAny]
 
+
 @staff_member_required
-def admin_dashboard(request):
+def admin_dashboard(request: HttpRequest) -> HttpResponse:
     """
     Админ-панель для управления магазином.
     Доступна только сотрудникам (is_staff=True).
+
+    Args:
+        request: HTTP запрос
+
+    Returns:
+        Рендер админ-панели
     """
     return render(request, 'shop/admin_dashboard.html')
 
-#def trigger_error(request):
-#    """Тестовая функция для проверки Sentry"""
-#    division_by_zero = 1 / 0
+
+# def trigger_error(request):
+#     """Тестовая функция для проверки Sentry"""
+#     division_by_zero = 1 / 0

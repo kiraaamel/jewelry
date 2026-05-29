@@ -70,6 +70,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Адаптер для кастомной модели пользователя
 ACCOUNT_ADAPTER = 'shop.adapters.CustomAccountAdapter'
 
+ACCOUNT_FORMS = {
+    'signup': 'shop.forms.CustomSignupForm',
+}
+
 # Настройки входа и регистрации
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'

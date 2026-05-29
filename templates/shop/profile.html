@@ -565,7 +565,39 @@
     background: none;
     border: none;
 }
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
 
+.empty-promo {
+    text-align: center;
+    padding: 2.5rem 1.25rem;
+    background: #f8f9fa;
+    border-radius: 1rem;
+}
+
+.empty-promo i {
+    font-size: 3rem;
+    color: var(--gray);
+    margin-bottom: 0.9375rem;
+}
+
+.empty-promo h3 {
+    color: var(--brown);
+    margin-bottom: 0.5rem;
+}
+
+.empty-promo p {
+    color: var(--gray);
+}
 .modal-close:focus-visible {
     outline: 3px solid var(--focus-ring);
     outline-offset: 2px;
@@ -826,7 +858,6 @@
     to { transform: translateX(0); opacity: 1; }
 }
 </style>
-
 <div class="profile-page">
     <div class="profile-container">
         <div class="profile-grid">
@@ -838,23 +869,23 @@
                 </div>
                 <nav aria-label="Разделы профиля">
                     <ul class="sidebar-menu">
-                        <li><a href="#" class="active" data-tab="profile" aria-label="Личные данные"><i class="fas fa-user" aria-hidden="true"></i> Профиль</a></li>
-                        <li><a href="#" data-tab="addresses" aria-label="Мои адреса доставки"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Мои адреса</a></li>
-                        <li><a href="#" data-tab="reviews" aria-label="Мои отзывы о товарах"><i class="fas fa-star" aria-hidden="true"></i> Мои отзывы</a></li>
-                        <li><a href="#" data-tab="promocodes" aria-label="Доступные промокоды и акции"><i class="fas fa-tags" aria-hidden="true"></i> Промокоды и акции</a></li>
-                        <li><a href="#" data-tab="bonus" aria-label="Мои бонусы"><i class="fas fa-coins" aria-hidden="true"></i> Бонусы</a></li>
+                        <li><a href="#" class="active" data-tab="profile" aria-label="Личные данные"><i class="fas fa-user" aria-hidden="true"></i> <span>Профиль</span></a></li>
+                        <li><a href="#" data-tab="addresses" aria-label="Мои адреса доставки"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> <span>Мои адреса</span></a></li>
+                        <li><a href="#" data-tab="reviews" aria-label="Мои отзывы о товарах"><i class="fas fa-star" aria-hidden="true"></i> <span>Мои отзывы</span></a></li>
+                        <li><a href="#" data-tab="promocodes" aria-label="Доступные промокоды и акции"><i class="fas fa-tags" aria-hidden="true"></i> <span>Промокоды и акции</span></a></li>
+                        <li><a href="#" data-tab="bonus" aria-label="Мои бонусы"><i class="fas fa-coins" aria-hidden="true"></i> <span>Бонусы</span></a></li>
                     </ul>
                 </nav>
             </aside>
 
             <main class="profile-content">
                 <a href="/orders/" class="btn-orders" aria-label="Перейти к списку заказов">
-                    <i class="fas fa-list-alt" aria-hidden="true"></i> Мои заказы
+                    <i class="fas fa-list-alt" aria-hidden="true"></i> <span>Мои заказы</span>
                 </a>
 
                 <div id="profile-tab" class="tab-content active" role="tabpanel" aria-labelledby="profile-tab-title">
                     <h2 id="profile-tab-title" class="content-title">Личные данные</h2>
-                    <form class="profile-form" id="profile-form" aria-label="Форма редактирования профиля">
+                    <form class="profile-form" id="profile-form" aria-label="Форма редактирования профиля" novalidate>
                         <div class="form-group">
                             <label for="profile-email">Email</label>
                             <input type="email" id="profile-email" readonly disabled aria-readonly="true">
@@ -1083,7 +1114,9 @@ function renderPromoCodes(promoCodes) {
     if (!promoCodes || promoCodes.length === 0) {
         container.innerHTML = `
             <div class="empty-promo">
-                <i class="fas fa-tags"></i>
+                <div aria-hidden="true">
+                    <i class="fas fa-tags"></i>
+                </div>
                 <h3>Нет активных промокодов</h3>
                 <p>Следите за нашими акциями, скоро появятся новые промокоды!</p>
             </div>
@@ -1104,13 +1137,13 @@ function renderPromoCodes(promoCodes) {
         
         let termsHtml = '';
         if (promo.min_order_amount > 0) {
-            termsHtml += `<span class="promo-term"><i class="fas fa-shopping-cart"></i> от ${promo.min_order_amount} ₽</span>`;
+            termsHtml += `<span class="promo-term"><i class="fas fa-shopping-cart" aria-hidden="true"></i> от ${promo.min_order_amount} ₽</span>`;
         }
         if (promo.max_discount_amount) {
-            termsHtml += `<span class="promo-term"><i class="fas fa-tag"></i> макс. скидка ${promo.max_discount_amount} ₽</span>`;
+            termsHtml += `<span class="promo-term"><i class="fas fa-tag" aria-hidden="true"></i> макс. скидка ${promo.max_discount_amount} ₽</span>`;
         }
         if (promo.only_new_users) {
-            termsHtml += `<span class="promo-term"><i class="fas fa-user-plus"></i> для новых покупателей</span>`;
+            termsHtml += `<span class="promo-term"><i class="fas fa-user-plus" aria-hidden="true"></i> для новых покупателей</span>`;
         }
         
         const expiryClass = isUrgent ? 'urgent' : '';
@@ -1119,14 +1152,14 @@ function renderPromoCodes(promoCodes) {
         html += `
             <div class="col-md-6 mb-3">
                 <div class="promo-card ${discountTypeClass}">
-                    <div class="promo-expiry ${expiryClass}">${expiryText}</div>
-                    <div class="promo-code">${promo.code}</div>
-                    <div class="promo-discount">${discountDisplay}</div>
-                    <div class="promo-terms">
+                    <div class="promo-expiry ${expiryClass}" aria-label="Срок действия: ${expiryText}">${expiryText}</div>
+                    <div class="promo-code" aria-label="Код промокода: ${promo.code}">${promo.code}</div>
+                    <div class="promo-discount" aria-label="Размер скидки: ${discountDisplay}">${discountDisplay}</div>
+                    <div class="promo-terms" aria-label="Условия применения">
                         ${termsHtml}
                     </div>
-                    <button class="copy-btn" onclick="copyPromoCode('${promo.code}')">
-                        <i class="fas fa-copy"></i> Скопировать код
+                    <button class="copy-btn" onclick="copyPromoCode('${promo.code}')" aria-label="Скопировать промокод ${promo.code}">
+                        <i class="fas fa-copy" aria-hidden="true"></i> Скопировать код
                     </button>
                 </div>
             </div>

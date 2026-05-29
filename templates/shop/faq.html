@@ -396,7 +396,6 @@
     outline-offset: 2px;
 }
 </style>
-
 <div class="faq-page">
     <div class="faq-container">
         <h1 class="faq-title">Помощь и поддержка</h1>
@@ -472,7 +471,7 @@
             <div class="methods-grid">
                 <div class="method-card">
                     <div class="method-icon" aria-hidden="true">
-                        <i class="fas fa-store"></i>
+                        <i class="fas fa-store" aria-hidden="true"></i>
                     </div>
                     <h3>Самовывоз</h3>
                     <div class="price">Бесплатно</div>
@@ -480,7 +479,7 @@
                 </div>
                 <div class="method-card">
                     <div class="method-icon" aria-hidden="true">
-                        <i class="fas fa-motorcycle"></i>
+                        <i class="fas fa-motorcycle" aria-hidden="true"></i>
                     </div>
                     <h3>Курьерская доставка</h3>
                     <div class="price">300 ₽</div>
@@ -488,7 +487,7 @@
                 </div>
                 <div class="method-card">
                     <div class="method-icon" aria-hidden="true">
-                        <i class="fas fa-envelope"></i>
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
                     </div>
                     <h3>Почта России</h3>
                     <div class="price">200 ₽</div>
@@ -613,7 +612,7 @@
             <div class="methods-grid">
                 <div class="method-card">
                     <div class="method-icon" aria-hidden="true">
-                        <i class="fas fa-user-tie"></i>
+                        <i class="fas fa-user-tie" aria-hidden="true"></i>
                     </div>
                     <h3>Менеджер по продажам</h3>
                     <div class="price">от 60 000 ₽</div>
@@ -624,7 +623,7 @@
                 
                 <div class="method-card">
                     <div class="method-icon" aria-hidden="true">
-                        <i class="fas fa-box"></i>
+                        <i class="fas fa-box" aria-hidden="true"></i>
                     </div>
                     <h3>Комплектовщик заказов</h3>
                     <div class="price">от 45 000 ₽</div>
@@ -635,7 +634,7 @@
                 
                 <div class="method-card">
                     <div class="method-icon" aria-hidden="true">
-                        <i class="fas fa-truck"></i>
+                        <i class="fas fa-truck" aria-hidden="true"></i>
                     </div>
                     <h3>Курьер</h3>
                     <div class="price">от 50 000 ₽</div>
@@ -646,7 +645,7 @@
                 
                 <div class="method-card">
                     <div class="method-icon" aria-hidden="true">
-                        <i class="fas fa-camera"></i>
+                        <i class="fas fa-camera" aria-hidden="true"></i>
                     </div>
                     <h3>Контент-менеджер</h3>
                     <div class="price">от 55 000 ₽</div>
@@ -702,9 +701,16 @@ function toggleFaq(button) {
     
     button.setAttribute('aria-expanded', !isExpanded);
     answer.setAttribute('aria-hidden', isExpanded);
+    
+    // Устанавливаем фокус на открытом ответе для лучшей навигации
+    if (!isExpanded) {
+        answer.setAttribute('tabindex', '-1');
+        answer.focus();
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Обработка якорных ссылок
     if (window.location.hash) {
         const targetId = window.location.hash.substring(1);
         const targetElement = document.getElementById(targetId);
@@ -719,12 +725,35 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Клавиатурная навигация для аккордеона
     const buttons = document.querySelectorAll('.faq-question');
     buttons.forEach(button => {
         button.addEventListener('keypress', function(e) {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 toggleFaq(this);
+            }
+        });
+        
+        // Навигация между кнопками стрелками
+        button.addEventListener('keydown', function(e) {
+            const buttonsList = Array.from(document.querySelectorAll('.faq-question'));
+            const currentIndex = buttonsList.indexOf(this);
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const nextIndex = (currentIndex + 1) % buttonsList.length;
+                buttonsList[nextIndex].focus();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prevIndex = (currentIndex - 1 + buttonsList.length) % buttonsList.length;
+                buttonsList[prevIndex].focus();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                buttonsList[0].focus();
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                buttonsList[buttonsList.length - 1].focus();
             }
         });
     });

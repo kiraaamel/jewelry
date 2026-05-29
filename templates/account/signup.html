@@ -14,94 +14,172 @@
                     <h1 class="mb-0 h4">Регистрация</h1>
                 </div>
                 <div class="card-body">
-                    <form method="post" action="{% url 'account_signup' %}">
+                    <form method="post" action="{% url 'account_signup' %}" novalidate>
                         {% csrf_token %}
                         
                         <!-- Email -->
                         <div class="mb-3">
-                            <label for="id_email" class="form-label">Email *</label>
-                            <input type="email" name="email" 
+                            <label for="id_email" class="form-label">
+                                Email 
+                                <span class="text-danger" aria-hidden="true">*</span>
+                                <span class="visually-hidden">(обязательное поле)</span>
+                            </label>
+                            <input type="email" 
+                                   name="email" 
                                    class="form-control {% if form.email.errors %}is-invalid{% endif %}" 
                                    id="id_email" 
                                    value="{{ form.email.value|default:'' }}" 
-                                   required aria-required="true">
+                                   required 
+                                   aria-required="true"
+                                   aria-describedby="email-help">
+                            <div id="email-help" class="form-text visually-hidden">Введите ваш email адрес для регистрации</div>
                             {% if form.email.errors %}
-                            <div class="invalid-feedback">
-                                {{ form.email.errors.0 }}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <span class="visually-hidden">Ошибка:</span>
+                                {% for error in form.email.errors %}
+                                    {{ error }}
+                                {% endfor %}
                             </div>
                             {% endif %}
                         </div>
                         
                         <!-- Имя -->
                         <div class="mb-3">
-                            <label for="id_first_name" class="form-label">Имя</label>
-                            <input type="text" name="first_name" 
-                                   class="form-control" 
+                            <label for="id_first_name" class="form-label">
+                                Имя 
+                                <span class="text-danger" aria-hidden="true">*</span>
+                                <span class="visually-hidden">(обязательное поле)</span>
+                            </label>
+                            <input type="text" 
+                                   name="first_name" 
+                                   class="form-control {% if form.first_name.errors %}is-invalid{% endif %}" 
                                    id="id_first_name" 
-                                   value="{{ request.POST.first_name|default:'' }}">
+                                   value="{{ form.first_name.value|default:'' }}"
+                                   aria-describedby="firstname-help">
+                            <div id="firstname-help" class="form-text visually-hidden">Введите ваше имя</div>
+                            {% if form.first_name.errors %}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <span class="visually-hidden">Ошибка:</span>
+                                {% for error in form.first_name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
                         
                         <!-- Фамилия -->
                         <div class="mb-3">
                             <label for="id_last_name" class="form-label">Фамилия</label>
-                            <input type="text" name="last_name" 
-                                   class="form-control" 
+                            <input type="text" 
+                                   name="last_name" 
+                                   class="form-control {% if form.last_name.errors %}is-invalid{% endif %}" 
                                    id="id_last_name" 
-                                   value="{{ request.POST.last_name|default:'' }}">
+                                   value="{{ form.last_name.value|default:'' }}"
+                                   aria-describedby="lastname-help">
+                            <div id="lastname-help" class="form-text visually-hidden">Введите вашу фамилию (необязательно)</div>
+                            {% if form.last_name.errors %}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <span class="visually-hidden">Ошибка:</span>
+                                {% for error in form.last_name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
                         
                         <!-- Телефон -->
                         <div class="mb-3">
-                            <label for="id_phone" class="form-label">Телефон</label>
-                            <input type="tel" name="phone" 
-                                   class="form-control" 
+                            <label for="id_phone" class="form-label">
+                                Телефон 
+                                <span class="text-danger" aria-hidden="true">*</span>
+                                <span class="visually-hidden">(обязательное поле)</span>
+                            </label>
+                            <input type="tel" 
+                                   name="phone" 
+                                   class="form-control {% if form.phone.errors %}is-invalid{% endif %}" 
                                    id="id_phone" 
-                                   value="{{ request.POST.phone|default:'' }}">
-                            <small class="form-text text-muted">Формат: +79161234567 или 89161234567</small>
+                                   value="{{ form.phone.value|default:'' }}"
+                                   required 
+                                   aria-required="true"
+                                   aria-describedby="phone-help">
+                            <small id="phone-help" class="form-text text-muted">Формат: +7 999 123-45-67</small>
+                            {% if form.phone.errors %}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <span class="visually-hidden">Ошибка:</span>
+                                {% for error in form.phone.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
                         
                         <!-- Пароль -->
                         <div class="mb-3">
-                            <label for="id_password1" class="form-label">Пароль *</label>
-                            <input type="password" name="password1" 
+                            <label for="id_password1" class="form-label">
+                                Пароль 
+                                <span class="text-danger" aria-hidden="true">*</span>
+                                <span class="visually-hidden">(обязательное поле)</span>
+                            </label>
+                            <input type="password" 
+                                   name="password1" 
                                    class="form-control {% if form.password1.errors %}is-invalid{% endif %}" 
                                    id="id_password1" 
-                                   required aria-required="true">
-                            <small class="form-text text-muted">Пароль должен содержать не менее 8 символов</small>
+                                   required 
+                                   aria-required="true"
+                                   aria-describedby="password1-help">
+                            <small id="password1-help" class="form-text text-muted">Пароль должен содержать не менее 8 символов</small>
                             {% if form.password1.errors %}
-                            <div class="invalid-feedback">
-                                {{ form.password1.errors.0 }}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <span class="visually-hidden">Ошибка:</span>
+                                {% for error in form.password1.errors %}
+                                    {{ error }}
+                                {% endfor %}
                             </div>
                             {% endif %}
                         </div>
                         
                         <!-- Подтверждение пароля -->
                         <div class="mb-3">
-                            <label for="id_password2" class="form-label">Подтверждение пароля *</label>
-                            <input type="password" name="password2" 
+                            <label for="id_password2" class="form-label">
+                                Подтверждение пароля 
+                                <span class="text-danger" aria-hidden="true">*</span>
+                                <span class="visually-hidden">(обязательное поле)</span>
+                            </label>
+                            <input type="password" 
+                                   name="password2" 
                                    class="form-control {% if form.password2.errors %}is-invalid{% endif %}" 
                                    id="id_password2" 
-                                   required aria-required="true">
+                                   required 
+                                   aria-required="true"
+                                   aria-describedby="password2-help">
+                            <div id="password2-help" class="form-text visually-hidden">Повторите введённый пароль для подтверждения</div>
                             {% if form.password2.errors %}
-                            <div class="invalid-feedback">
-                                {{ form.password2.errors.0 }}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <span class="visually-hidden">Ошибка:</span>
+                                {% for error in form.password2.errors %}
+                                    {{ error }}
+                                {% endfor %}
                             </div>
                             {% endif %}
                         </div>
                         
                         {% if form.non_field_errors %}
                         <div class="alert alert-danger" role="alert">
+                            <span class="visually-hidden">Ошибка:</span>
                             {% for error in form.non_field_errors %}
                                 {{ error }}<br>
                             {% endfor %}
                         </div>
                         {% endif %}
                         
-                        <button type="submit" class="btn btn-gold w-100" aria-label="Зарегистрироваться">Зарегистрироваться</button>
+                        <button type="submit" class="btn btn-gold w-100" aria-label="Зарегистрироваться">
+                            <span>Зарегистрироваться</span>
+                        </button>
                     </form>
-                    <hr>
+                    <hr class="my-4" aria-hidden="true">
                     <p class="text-center mb-0">
-                        Уже есть аккаунт? <a href="{% url 'account_login' %}" aria-label="Перейти на страницу входа">Войти</a>
+                        Уже есть аккаунт? 
+                        <a href="{% url 'account_login' %}" aria-label="Перейти на страницу входа">Войти</a>
                     </p>
                 </div>
             </div>

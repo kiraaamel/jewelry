@@ -11,14 +11,18 @@
                 </div>
                 <div class="card-body">
                     {% if confirmation %}
-                        <i class="fas fa-envelope fa-4x mb-3" style="color: var(--accent);" aria-hidden="true"></i>
+                        <div aria-hidden="true">
+                            <i class="fas fa-envelope fa-4x mb-3" style="color: var(--accent);"></i>
+                        </div>
                         <p>Подтвердите email <strong>{{ confirmation.email_address.email }}</strong> для завершения регистрации.</p>
                         <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-gold mt-3" aria-label="Подтвердить email адрес">Подтвердить</button>
                         </form>
                     {% else %}
-                        <i class="fas fa-exclamation-triangle fa-4x mb-3" style="color: #dc3545;" aria-hidden="true"></i>
+                        <div aria-hidden="true">
+                            <i class="fas fa-exclamation-triangle fa-4x mb-3" style="color: #dc3545;"></i>
+                        </div>
                         <p>Ссылка для подтверждения недействительна или уже использована.</p>
                         <a href="{% url 'account_signup' %}" class="btn btn-gold mt-3" aria-label="Зарегистрироваться заново">Зарегистрироваться заново</a>
                     {% endif %}

@@ -562,6 +562,7 @@ let currentBonusPoints=0;
 let appliedPromo = null;
 let promoDiscount = 0;
 let currentPromoCode = null;
+let cartData = null;
 
 function getCookie(name) {
     let cookieValue = null;
@@ -603,6 +604,7 @@ function loadCart(){
     fetch('/api/cart/')
     .then(r => r.json())
     .then(cart => {
+        cartData = cart;  
         if (isAuthenticated()) {
             return Promise.all([
                 fetch('/api/auth/me/').then(r => r.json()),
@@ -710,57 +712,103 @@ function goToProduct(productId, event) {
 
 function renderCart(cart, favoriteIds){
     let html='';
-    let subtotal=0;
-    let oldTotal=0;
     
     if (!cart.items || cart.items.length === 0) {
         renderEmptyCart();
         return;
     }
 
-    cart.items.forEach(item=>{
-        const imageUrl=item.product_image || '/static/shop/images/placeholder.png';
-        const price=parseFloat(item.product_price) || 0;
-        const oldPrice=parseFloat(item.old_price) || price;
-        const qty=parseInt(item.quantity) || 1;
-        const maxStock=item.available_quantity || 0; 
-        const size = item.variant_size || '-';  
+    selectedItems.clear();
+    cart.items.forEach(item => {
+        selectedItems.add(item.id);
+    });
 
-        const total=price*qty;
-        const old=oldPrice*qty;
+    cart.items.forEach(item => {
+        const imageUrl = item.product_image || '/static/shop/images/placeholder.png';
+        const price = parseFloat(item.product_price) || 0;
+        const oldPrice = parseFloat(item.old_price) || price;
+        const qty = parseInt(item.quantity) || 1;
+        const maxStock = item.available_quantity || 0; 
+        const size = item.variant_size || '-';
 
-        subtotal+=total;
-        oldTotal+=old;
+        const isOutOfStock = maxStock <= 0;
+        const isInsufficientStock = !isOutOfStock && maxStock < qty;
+
+        const total = price * qty;
+        const old = oldPrice * qty;
         
         const isFavorite = favoriteIds && favoriteIds.has(item.product);
-        const hasDiscount=oldPrice>price;
-        const discountPercent=hasDiscount ? Math.round((1-price/oldPrice)*100) : 0;
+        const hasDiscount = oldPrice > price;
+        const discountPercent = hasDiscount ? Math.round((1 - price / oldPrice) * 100) : 0;
         
-        const isMaxQuantity = qty >= maxStock;
+        const isMaxQuantity = qty >= maxStock && !isOutOfStock;
         const isMinQuantity = qty <= 1;
+        
+        let stockWarningHtml = '';
+        if (isOutOfStock) {
+            stockWarningHtml = `
+                <div style="margin-top: 8px; padding: 6px 10px; background: #ffebee; border-radius: 8px; color: #c62828; font-size: 12px;" role="status">
+                    <i class="fas fa-times-circle" aria-hidden="true"></i> Товар закончился
+                </div>
+            `;
+        } else if (isInsufficientStock) {
+            stockWarningHtml = `
+                <div style="margin-top: 8px; padding: 6px 10px; background: #fff3e0; border-radius: 8px; color: #e65100; font-size: 12px;" role="status">
+                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Доступно только ${maxStock} шт. (в корзине ${qty})
+                </div>
+            `;
+        }
 
-        html+=`
-        <div class="cart-item" data-id="${item.id}" data-product-id="${item.product}" data-max-stock="${maxStock}" data-current-qty="${qty}" data-variant-id="${item.variant_id || ''}">
-            <input type="checkbox" onchange="toggleSelect(${item.id})" onclick="event.stopPropagation()" aria-label="Выбрать товар ${escapeHtml(item.product_name)}">
-            <img src="${imageUrl}" class="product-image" onclick="goToProduct(${item.product}, event)" alt="${escapeHtml(item.product_name)}" onerror="this.src='/static/shop/images/placeholder.png'">
+        html += `
+        <div class="cart-item ${isOutOfStock ? 'out-of-stock' : ''}" data-id="${item.id}" data-product-id="${item.product}" data-max-stock="${maxStock}" data-current-qty="${qty}" data-variant-id="${item.variant_id || ''}" style="${isOutOfStock ? 'opacity: 0.7;' : ''}">
+            <input type="checkbox" 
+                   onchange="toggleSelectAndUpdate(${item.id})" 
+                   ${selectedItems.has(item.id) ? 'checked' : ''} 
+                   ${isOutOfStock ? 'disabled' : ''} 
+                   aria-label="Выбрать товар ${escapeHtml(item.product_name)}">
+            <img src="${imageUrl}" 
+                 class="product-image" 
+                 onclick="goToProduct(${item.product}, event)" 
+                 alt="${escapeHtml(item.product_name)}" 
+                 onerror="this.src='/static/shop/images/placeholder.png'">
             <div>
-                <div class="cart-title" onclick="goToProduct(${item.product}, event)" role="link" tabindex="0" onkeypress="if(event.key==='Enter') goToProduct(${item.product}, event)">${escapeHtml(item.product_name)}</div>
+                <div class="cart-title" 
+                     onclick="goToProduct(${item.product}, event)" 
+                     role="link" 
+                     tabindex="0" 
+                     onkeypress="if(event.key==='Enter') goToProduct(${item.product}, event)">${escapeHtml(item.product_name)}</div>
                 <div class="cart-size">Размер: ${escapeHtml(size)}</div> 
                 ${hasDiscount ? `<div style="font-size:12px;color:#ff4444;margin-top:4px;">-${discountPercent}%</div>` : ''}
+                ${stockWarningHtml}
                 <div class="quantity-control">
-                    <button onclick="updateQuantity(${item.id}, ${item.product}, ${qty-1}, ${maxStock})" ${isMinQuantity ? 'disabled' : ''} aria-label="Уменьшить количество">-</button>
-                    <input type="text" value="${qty}" readonly aria-label="Количество товара ${escapeHtml(item.product_name)}">
-                    <button onclick="updateQuantity(${item.id}, ${item.product}, ${qty+1}, ${maxStock})" ${isMaxQuantity ? 'disabled' : ''} aria-label="Увеличить количество">+</button>
+                    <button onclick="updateQuantity(${item.id}, ${item.product}, ${qty-1}, ${maxStock})" 
+                            ${isMinQuantity || isOutOfStock ? 'disabled' : ''} 
+                            aria-label="Уменьшить количество товара ${escapeHtml(item.product_name)}">-</button>
+                    <input type="text" 
+                           value="${qty}" 
+                           readonly 
+                           aria-label="Количество товара ${escapeHtml(item.product_name)}">
+                    <button onclick="updateQuantity(${item.id}, ${item.product}, ${qty+1}, ${maxStock})" 
+                            ${isMaxQuantity || isOutOfStock ? 'disabled' : ''} 
+                            aria-label="Увеличить количество товара ${escapeHtml(item.product_name)}">+</button>
                 </div>
-                ${isMaxQuantity ? `<div style="font-size:11px;color:#ff4444;margin-top:4px;">Максимальное количество</div>` : ''}
+                ${isMaxQuantity && !isOutOfStock ? `<div style="font-size:11px;color:#ff4444;margin-top:4px;" aria-live="polite">Максимальное количество</div>` : ''}
                 <div class="cart-actions">
-                    <span onclick="toggleFav(${item.product}, this)" onkeypress="if(event.key==='Enter') toggleFav(${item.product}, this)" tabindex="0" role="button" aria-label="${isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}">
+                    <span onclick="toggleFav(${item.product}, this)" 
+                          onkeypress="if(event.key==='Enter') toggleFav(${item.product}, this)" 
+                          tabindex="0" 
+                          role="button" 
+                          aria-label="${isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}">
                         <i class="heart ${isFavorite?'active':''}" aria-hidden="true">❤</i>
-                        избранное
+                        <span>избранное</span>
                     </span>
-                    <span onclick="removeFromCart(${item.id})" onkeypress="if(event.key==='Enter') removeFromCart(${item.id})" tabindex="0" role="button" aria-label="Удалить товар из корзины">
+                    <span onclick="removeFromCart(${item.id})" 
+                          onkeypress="if(event.key==='Enter') removeFromCart(${item.id})" 
+                          tabindex="0" 
+                          role="button" 
+                          aria-label="Удалить товар ${escapeHtml(item.product_name)} из корзины">
                         <i class="fas fa-trash" aria-hidden="true"></i>
-                        удалить
+                        <span>удалить</span>
                     </span>
                 </div>
             </div>
@@ -772,6 +820,112 @@ function renderCart(cart, favoriteIds){
     });
 
     let promoDiscountValue = promoDiscount || 0;
+    let promoHtml = '';
+    if(currentPromoCode && promoDiscountValue > 0){
+        promoHtml = `
+            <div class="promo-applied">
+                <span>✓ Промокод ${currentPromoCode} применён. Скидка: -${promoDiscountValue.toFixed(0)} ₽</span>
+                <i class="fas fa-times" 
+                   onclick="removePromoCode()" 
+                   onkeypress="if(event.key==='Enter') removePromoCode()" 
+                   tabindex="0" 
+                   role="button" 
+                   aria-label="Удалить промокод"></i>
+            </div>
+        `;
+    } else {
+        promoHtml = `
+            <div class="promo-input-group">
+                <label for="promo-code" class="visually-hidden">Промокод</label>
+                <input type="text" id="promo-code" placeholder="Введите промокод" aria-label="Поле ввода промокода">
+                <button onclick="applyPromoCode()" aria-label="Применить промокод">ОК</button>
+            </div>
+        `;
+    }
+
+    document.getElementById('cart-content').innerHTML = `
+    <div class="cart-grid">
+        <div class="cart-items-list">
+            <div class="top-actions">
+                <span onclick="toggleSelectAll()" 
+                      onkeypress="if(event.key==='Enter') toggleSelectAll()" 
+                      tabindex="0" 
+                      role="button" 
+                      aria-label="Выбрать все товары">✔ Выбрать всё</span>
+                <span onclick="deleteSelected()" 
+                      onkeypress="if(event.key==='Enter') deleteSelected()" 
+                      tabindex="0" 
+                      role="button" 
+                      aria-label="Удалить выбранные товары">Удалить</span>
+            </div>
+            ${html}
+        </div>
+        <div class="cart-summary" aria-label="Итоговая информация о заказе">
+            <div class="summary-row">
+                <span>Товары (выбрано: <span id="selected-count">0</span>)</span>
+                <span id="summary-subtotal">0 ₽</span>
+            </div>
+            <div class="summary-row">
+                <span>Скидка</span>
+                <span id="summary-discount">-0 ₽</span>
+            </div>
+            <div class="promo-section">
+                ${promoHtml}
+            </div>
+            <div class="summary-row">
+                <span>Бонусы (<span id="user-bonus-points">${currentBonusPoints}</span>)</span>
+                <span class="bonus-apply" 
+                      onclick="toggleBonus()" 
+                      onkeypress="if(event.key==='Enter') toggleBonus()" 
+                      tabindex="0" 
+                      role="button" 
+                      aria-label="${bonusApplied ? 'Отменить применение бонусов' : 'Применить бонусы'}">
+                    ${bonusApplied ? 'Отменить' : 'Применить'}
+                </span>
+            </div>
+            <div id="bonus-used" role="status" aria-live="polite"></div>
+            <div class="summary-row total">
+                <strong>Итого</strong>
+                <strong id="summary-total">0 ₽</strong>
+            </div>
+            <button class="checkout-btn" 
+                    id="checkout-btn" 
+                    onclick="checkout()" 
+                    aria-label="Перейти к оформлению заказа">
+                Перейти к оформлению
+            </button>
+            <div class="bonus-box">
+                <span>Начислим <span id="bonus-earn-summary">0</span> бонусов</span>
+            </div>
+            <div class="bonus-note" aria-live="polite">
+                Бонусы будут начислены на следующий день после получения заказа.
+            </div>
+        </div>
+    </div>`;
+    
+    updateCartSummary();
+}
+
+function updateCartSummary() {
+    if (!cartData || !cartData.items) return;
+    
+    let subtotal = 0;
+    let oldTotal = 0;
+    let selectedCount = 0;
+    
+    cartData.items.forEach(item => {
+        if (!selectedItems.has(item.id)) return;
+        
+        const price = parseFloat(item.product_price) || 0;
+        const oldPrice = parseFloat(item.old_price) || price;
+        const qty = parseInt(item.quantity) || 1;
+        
+        subtotal += price * qty;
+        oldTotal += oldPrice * qty;
+        selectedCount++;
+    });
+    
+    let promoDiscountValue = promoDiscount || 0;
     let finalPrice = subtotal;
     let discount = oldTotal - subtotal;
     
@@ -779,7 +933,7 @@ function renderCart(cart, favoriteIds){
         finalPrice -= promoDiscountValue;
         discount += promoDiscountValue;
     }
-
+    
     const maxBonusToUse = Math.floor(finalPrice * 0.5);
     const bonusToUse = bonusApplied ? Math.min(currentBonusPoints, maxBonusToUse) : 0;
     
@@ -787,69 +941,64 @@ function renderCart(cart, favoriteIds){
         finalPrice -= bonusToUse;
         discount += bonusToUse;
     }
-
+    
     const earnBonus = Math.floor(finalPrice * 0.05);
-
-    let promoHtml = '';
-    if(currentPromoCode && promoDiscountValue > 0){
-        promoHtml = `
-            <div class="promo-applied">
-                <span>✓ Промокод ${currentPromoCode} применён. Скидка: -${promoDiscountValue.toFixed(0)} ₽</span>
-                <i class="fas fa-times" onclick="removePromoCode()" onkeypress="if(event.key==='Enter') removePromoCode()" tabindex="0" role="button" aria-label="Удалить промокод"></i>
-            </div>
-        `;
+    
+    // Обновляем элементы
+    const selectedCountEl = document.getElementById('selected-count');
+    const subtotalEl = document.getElementById('summary-subtotal');
+    const discountEl = document.getElementById('summary-discount');
+    const totalEl = document.getElementById('summary-total');
+    const bonusEarnEl = document.getElementById('bonus-earn-summary');
+    const bonusUsedEl = document.getElementById('bonus-used');
+    
+    if (selectedCountEl) selectedCountEl.textContent = selectedCount;
+    if (subtotalEl) subtotalEl.textContent = `${oldTotal.toFixed(0)} ₽`;
+    if (discountEl) discountEl.textContent = `-${discount.toFixed(0)} ₽`;
+    if (totalEl) totalEl.textContent = `${Math.max(finalPrice, 0).toFixed(0)} ₽`;
+    if (bonusEarnEl) bonusEarnEl.textContent = `${earnBonus}`;
+    
+    if (bonusApplied && bonusToUse > 0) {
+        if (bonusUsedEl) bonusUsedEl.innerHTML = `<div style="font-size:12px;color:green;margin-top:5px;">✓ Списано ${bonusToUse} бонусов</div>`;
     } else {
-        promoHtml = `
-            <div class="promo-input-group">
-                <input type="text" id="promo-code" placeholder="Введите промокод" aria-label="Поле ввода промокода">
-                <button onclick="applyPromoCode()" aria-label="Применить промокод">ОК</button>
-            </div>
-        `;
+        if (bonusUsedEl) bonusUsedEl.innerHTML = '';
     }
+    
+    // Проверяем, есть ли доступные товары для оформления
+    let hasAvailableItem = false;
+    for (const item of cartData.items) {
+        if (selectedItems.has(item.id)) {
+            const availableQty = item.available_quantity || 0;
+            if (availableQty > 0) {
+                hasAvailableItem = true;
+                break;
+            }
+        }
+    }
+    
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutBtn) {
+        if (!hasAvailableItem || selectedItems.size === 0) {
+            checkoutBtn.disabled = true;
+            checkoutBtn.style.opacity = '0.5';
+            checkoutBtn.style.cursor = 'not-allowed';
+            checkoutBtn.innerHTML = '❌ Нет доступных товаров';
+        } else {
+            checkoutBtn.disabled = false;
+            checkoutBtn.style.opacity = '1';
+            checkoutBtn.style.cursor = 'pointer';
+            checkoutBtn.innerHTML = 'Перейти к оформлению';
+        }
+    }
+}
 
-    document.getElementById('cart-content').innerHTML=`
-    <div class="cart-grid">
-        <div class="cart-items-list">
-            <div class="top-actions">
-                <span onclick="toggleSelectAll()" onkeypress="if(event.key==='Enter') toggleSelectAll()" tabindex="0" role="button" aria-label="Выбрать все товары">✔ Выбрать всё</span>
-                <span onclick="deleteSelected()" onkeypress="if(event.key==='Enter') deleteSelected()" tabindex="0" role="button" aria-label="Удалить выбранные товары">Удалить</span>
-            </div>
-            ${html}
-        </div>
-        <div class="cart-summary" aria-label="Итоговая информация о заказе">
-            <div class="summary-row">
-                <span>Товары</span>
-                <span>${oldTotal.toFixed(0)} ₽</span>
-            </div>
-            <div class="summary-row">
-                <span>Скидка</span>
-                <span>-${discount.toFixed(0)} ₽</span>
-            </div>
-            <div class="promo-section">
-                ${promoHtml}
-            </div>
-            <div class="summary-row">
-                <span>Бонусы (${currentBonusPoints})</span>
-                <span class="bonus-apply" onclick="toggleBonus()" onkeypress="if(event.key==='Enter') toggleBonus()" tabindex="0" role="button" aria-label="${bonusApplied ? 'Отменить применение бонусов' : 'Применить бонусы'}">
-                    ${bonusApplied ? 'Отменить' : 'Применить'}
-                </span>
-            </div>
-            ${bonusApplied ? `<div style="font-size:12px;color:green;margin-top:5px;">✓ Списано ${bonusToUse} бонусов</div>` : ''}
-            <div class="summary-row">
-                <strong>Итого</strong>
-                <strong>${Math.max(finalPrice,0).toFixed(0)} ₽</strong>
-            </div>
-            <button class="checkout-btn" id="checkout-btn" onclick="checkout()" aria-label="Перейти к оформлению заказа">
-                Перейти к оформлению
-            </button>
-            <div class="bonus-box">
-                <span>Начислим ${earnBonus} бонусов</span>
-            </div>
-            <div class="bonus-note">
-                Бонусы будут начислены на следующий день после получения заказа.
-            </div>
-        </div>
-    </div>`;
+function toggleSelectAndUpdate(id) {
+    if (selectedItems.has(id)) {
+        selectedItems.delete(id);
+    } else {
+        selectedItems.add(id);
+    }
+    updateCartSummary();  // ✅ Просто вызываем updateCartSummary
 }
 
 function applyPromoCode() {
@@ -933,6 +1082,10 @@ function removePromoCode() {
 
 function toggleBonus(){
     bonusApplied=!bonusApplied;
+    const bonusBtn = document.querySelector('.bonus-apply');
+    if (bonusBtn) {
+        bonusBtn.setAttribute('aria-label', bonusApplied ? 'Отменить применение бонусов' : 'Применить бонусы');
+    }
     loadCart();
 }
 
@@ -1000,34 +1153,134 @@ function toggleSelect(id){
 }
 
 function toggleSelectAll(){
-    allSelected=!allSelected;
-    selectedItems.clear();
-    document.querySelectorAll('.cart-item input').forEach(cb=>{
-        cb.checked=allSelected;
-        if(allSelected){
-            const id=parseInt(cb.closest('.cart-item').dataset.id);
+    const checkboxes = document.querySelectorAll('.cart-item input[type="checkbox"]:not(:disabled)');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+        const id = parseInt(cb.closest('.cart-item').dataset.id);
+        if (cb.checked) {
             selectedItems.add(id);
+        } else {
+            selectedItems.delete(id);
         }
     });
+    
+    // ✅ Просто вызываем функцию обновления итогов
+    updateCartSummary();
 }
-
 function deleteSelected(){
     selectedItems.forEach(id=>removeFromCart(id));
     selectedItems.clear();
 }
 
-function checkout(){
-    if (currentPromoCode) {
-        localStorage.setItem('checkout_promo_code', currentPromoCode);
-        localStorage.setItem('checkout_promo_discount', promoDiscount.toString());
-    } else {
-        localStorage.removeItem('checkout_promo_code');
-        localStorage.removeItem('checkout_promo_discount');
+function checkout() {
+    const selectedCartItemIds = Array.from(selectedItems);
+    
+    if (selectedCartItemIds.length === 0) {
+        showNotification('Пожалуйста, выберите хотя бы один товар для оформления');
+        return;
     }
     
-    localStorage.setItem('checkout_bonus_applied', bonusApplied ? 'true' : 'false');
-    
-    window.location.href = '/checkout/';
+    fetch('/api/cart/')
+        .then(r => r.json())
+        .then(cart => {
+            if (!cart.items || cart.items.length === 0) {
+                showNotification('Корзина пуста');
+                return;
+            }
+            
+            const selectedCartItems = cart.items.filter(item => selectedCartItemIds.includes(item.id));
+            
+            if (selectedCartItems.length === 0) {
+                showNotification('Выберите товары для оформления');
+                return;
+            }
+            
+            let hasUnavailable = false;
+            let unavailableMessage = '';
+            let itemsToOrder = [];
+            
+            for (const item of selectedCartItems) {
+                const availableQty = item.available_quantity || 0;
+                const requestedQty = item.quantity || 0;
+                const productName = item.product_name || 'Товар';
+                const size = item.variant_size || '';
+                const sizeText = size ? ` (размер ${size})` : '';
+                
+                if (availableQty <= 0) {
+                    hasUnavailable = true;
+                    unavailableMessage += `\n• ${productName}${sizeText} - закончился`;
+                } else if (availableQty < requestedQty) {
+                    hasUnavailable = true;
+                    unavailableMessage += `\n• ${productName}${sizeText} - доступно только ${availableQty} шт.`;
+                } else {
+                    itemsToOrder.push(item);
+                }
+            }
+            
+            if (hasUnavailable) {
+                let message = 'Следующие товары недоступны:' + unavailableMessage;
+                message += '\n\nОформить заказ только на доступные товары?';
+                
+                if (confirm(message)) {
+                    const deletePromises = [];
+                    for (const item of selectedCartItems) {
+                        const availableQty = item.available_quantity || 0;
+                        if (availableQty <= 0 || availableQty < item.quantity) {
+                            deletePromises.push(
+                                fetch('/api/cart/remove_item/', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': getCookie('csrftoken')
+                                    },
+                                    body: JSON.stringify({ cart_item_id: item.id })
+                                })
+                            );
+                        }
+                    }
+                    
+                    Promise.all(deletePromises)
+                        .then(() => {
+                            showNotification('Недоступные товары удалены');
+                            loadCart();
+                            setTimeout(() => checkout(), 1000);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            showNotification('Ошибка при обновлении корзины');
+                        });
+                }
+                return;
+            }
+            
+            const selectedItemsData = itemsToOrder.map(item => ({
+                id: item.id,
+                variant_id: item.variant_id,
+                quantity: item.quantity,
+                product_name: item.product_name,
+                product_price: item.product_price,
+                variant_size: item.variant_size
+            }));
+            
+            localStorage.setItem('checkout_selected_items', JSON.stringify(selectedItemsData));
+            
+            if (currentPromoCode) {
+                localStorage.setItem('checkout_promo_code', currentPromoCode);
+                localStorage.setItem('checkout_promo_discount', promoDiscount.toString());
+            } else {
+                localStorage.removeItem('checkout_promo_code');
+                localStorage.removeItem('checkout_promo_discount');
+            }
+            
+            localStorage.setItem('checkout_bonus_applied', bonusApplied ? 'true' : 'false');
+            window.location.href = '/checkout/';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Ошибка проверки корзины');
+        });
 }
 
 document.addEventListener('DOMContentLoaded', function() {

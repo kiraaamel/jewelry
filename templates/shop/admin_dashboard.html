@@ -100,6 +100,11 @@
         color: var(--accent);
     }
     
+    .admin-tab:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+    }
+    
     .admin-tab.active {
         background: var(--accent);
         color: white;
@@ -176,6 +181,11 @@
         font-size: 12px;
     }
     
+    .action-btn:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+    }
+    
     .action-btn:hover {
         background: var(--accent);
         color: white;
@@ -242,6 +252,7 @@
     .form-group textarea:focus {
         outline: none;
         border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(93,110,128,0.2);
     }
     
     .submit-btn {
@@ -252,6 +263,11 @@
         border-radius: 8px;
         cursor: pointer;
         font-weight: 500;
+    }
+    
+    .submit-btn:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
     }
     
     .search-box {
@@ -267,6 +283,12 @@
         border-radius: 8px;
     }
     
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(93,110,128,0.2);
+    }
+    
     .search-box button {
         padding: 10px 20px;
         background: var(--accent);
@@ -274,6 +296,11 @@
         border: none;
         border-radius: 8px;
         cursor: pointer;
+    }
+    
+    .search-box button:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
     }
     
     .notification {
@@ -288,9 +315,30 @@
         animation: slideIn 0.3s ease;
     }
     
+    .notification:focus-visible {
+        outline: 3px solid var(--bg-cream);
+        outline-offset: 2px;
+    }
+    
     @keyframes slideIn {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .text-center {
+        text-align: center;
+    }
+    
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
     }
 </style>
 
@@ -298,68 +346,71 @@
     <div class="container">
         <div class="admin-header">
             <h1 class="admin-title">
-                <i class="fas fa-shield-alt"></i> Админ-панель
+                <i class="fas fa-shield-alt" aria-hidden="true"></i> 
+                <span>Админ-панель</span>
             </h1>
         </div>
         
         <!-- Статистика -->
-        <div class="stats-grid" id="stats-container">
+        <div class="stats-grid" id="stats-container" role="region" aria-label="Статистика магазина">
             <div class="stat-card">
-                <div class="stat-number" id="stat-products">-</div>
+                <div class="stat-number" id="stat-products" aria-live="polite">-</div>
                 <div class="stat-label">Товаров</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="stat-orders">-</div>
+                <div class="stat-number" id="stat-orders" aria-live="polite">-</div>
                 <div class="stat-label">Заказов</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="stat-users">-</div>
+                <div class="stat-number" id="stat-users" aria-live="polite">-</div>
                 <div class="stat-label">Пользователей</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="stat-reviews">-</div>
+                <div class="stat-number" id="stat-reviews" aria-live="polite">-</div>
                 <div class="stat-label">Отзывов</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="stat-revenue">-</div>
+                <div class="stat-number" id="stat-revenue" aria-live="polite">-</div>
                 <div class="stat-label">Выручка (₽)</div>
             </div>
         </div>
         
-        <div class="admin-tabs">
-            <button class="admin-tab active" data-tab="orders">Заказы</button>
-            <button class="admin-tab" data-tab="products">Товары</button>
-            <button class="admin-tab" data-tab="reviews">Отзывы</button>
-            <button class="admin-tab" data-tab="users">Пользователи</button>
-            <button class="admin-tab" data-tab="quick">Быстрые действия</button>
+        <div class="admin-tabs" role="tablist" aria-label="Разделы управления">
+            <button class="admin-tab active" data-tab="orders" role="tab" aria-selected="true" id="tab-orders">Заказы</button>
+            <button class="admin-tab" data-tab="products" role="tab" aria-selected="false" id="tab-products">Товары</button>
+            <button class="admin-tab" data-tab="reviews" role="tab" aria-selected="false" id="tab-reviews">Отзывы</button>
+            <button class="admin-tab" data-tab="users" role="tab" aria-selected="false" id="tab-users">Пользователи</button>
+            <button class="admin-tab" data-tab="quick" role="tab" aria-selected="false" id="tab-quick">Быстрые действия</button>
         </div>
         
-        <div id="panel-orders" class="admin-panel active">
+        <div id="panel-orders" class="admin-panel active" role="tabpanel" aria-labelledby="tab-orders">
             <div class="search-box">
+                <label for="order-search" class="visually-hidden">Поиск по номеру заказа или email</label>
                 <input type="text" id="order-search" placeholder="Поиск по номеру заказа или email...">
-                <button onclick="searchOrders()"><i class="fas fa-search"></i></button>
+                <button onclick="searchOrders()" aria-label="Найти заказы"><i class="fas fa-search" aria-hidden="true"></i></button>
             </div>
             <div class="table-responsive">
                 <table class="admin-table">
                     <thead>
-                        <tr><th>№ заказа</th><th>Пользователь</th><th>Сумма</th><th>Статус</th><th>Дата</th><th>Действия</th></tr>
+                        <tr><th scope="col">№ заказа</th><th scope="col">Пользователь</th><th scope="col">Сумма</th><th scope="col">Статус</th><th scope="col">Дата</th><th scope="col">Действия</th></tr>
                     </thead>
                     <tbody id="orders-list">
-                        <tr><td colspan="6" class="text-center">Загрузка......</td></tr>
+                        <tr><td colspan="6" class="text-center">Загрузка...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
         
-        <div id="panel-products" class="admin-panel">
+        <div id="panel-products" class="admin-panel" role="tabpanel" aria-labelledby="tab-products">
             <div class="search-box">
+                <label for="product-search" class="visually-hidden">Поиск товаров</label>
                 <input type="text" id="product-search" placeholder="Поиск товаров...">
-                <button onclick="searchProducts()"><i class="fas fa-search"></i></button>
+                <button onclick="searchProducts()" aria-label="Найти товары"><i class="fas fa-search" aria-hidden="true"></i></button>
             </div>
             <div class="table-responsive">
                 <table class="admin-table">
                     <thead>
-                        <tr><th>ID</th><th>Название</th><th>Цена</th><th>В наличии</th><th>Действия</th></tr>
+                        <tr><th scope="col">ID</th><th scope="col">Название</th><th scope="col">Цена</th><th scope="col">В наличии</th><th scope="col">Действия</th></tr>
                     </thead>
                     <tbody id="products-list">
                         <tr><td colspan="5" class="text-center">Загрузка...</td></tr>
@@ -368,11 +419,11 @@
             </div>
         </div>
         
-        <div id="panel-reviews" class="admin-panel">
+        <div id="panel-reviews" class="admin-panel" role="tabpanel" aria-labelledby="tab-reviews">
             <div class="table-responsive">
                 <table class="admin-table">
                     <thead>
-                        <tr><th>Пользователь</th><th>Товар</th><th>Оценка</th><th>Статус</th><th>Дата</th><th>Действия</th></tr>
+                        <tr><th scope="col">Пользователь</th><th scope="col">Товар</th><th scope="col">Оценка</th><th scope="col">Статус</th><th scope="col">Дата</th><th scope="col">Действия</th></tr>
                     </thead>
                     <tbody id="reviews-list">
                         <tr><td colspan="6" class="text-center">Загрузка...</td></tr>
@@ -381,15 +432,16 @@
             </div>
         </div>
 
-        <div id="panel-users" class="admin-panel">
+        <div id="panel-users" class="admin-panel" role="tabpanel" aria-labelledby="tab-users">
             <div class="search-box">
+                <label for="user-search" class="visually-hidden">Поиск по email</label>
                 <input type="text" id="user-search" placeholder="Поиск по email...">
-                <button onclick="searchUsers()"><i class="fas fa-search"></i></button>
+                <button onclick="searchUsers()" aria-label="Найти пользователей"><i class="fas fa-search" aria-hidden="true"></i></button>
             </div>
             <div class="table-responsive">
                 <table class="admin-table">
                     <thead>
-                        <tr><th>ID</th><th>Email</th><th>Телефон</th><th>Бонусы</th><th>Дата регистрации</th> 
+                        <tr><th scope="col">ID</th><th scope="col">Email</th><th scope="col">Телефон</th><th scope="col">Бонусы</th><th scope="col">Дата регистрации</th>
                     </thead>
                     <tbody id="users-list">
                         <tr><td colspan="5" class="text-center">Загрузка...</td></tr>
@@ -398,38 +450,38 @@
             </div>
         </div>
         
-        <div id="panel-quick" class="admin-panel">
+        <div id="panel-quick" class="admin-panel" role="tabpanel" aria-labelledby="tab-quick">
             <div class="row">
                 <div class="col-md-6">
                     <div class="quick-form">
-                        <h3><i class="fas fa-tag"></i> Управление скидками</h3>
+                        <h3><i class="fas fa-tag" aria-hidden="true"></i> Управление скидками</h3>
                         <div class="form-group">
-                            <label>ID товара</label>
+                            <label for="discount-product-id">ID товара</label>
                             <input type="number" id="discount-product-id" placeholder="ID товара">
                         </div>
                         <div class="form-group">
-                            <label>Скидка (%)</label>
-                            <input type="number" id="discount-percent" placeholder="0-100">
+                            <label for="discount-percent">Скидка (%)</label>
+                            <input type="number" id="discount-percent" placeholder="0-100" min="0" max="100">
                         </div>
-                        <button class="submit-btn" onclick="applyDiscount()">Применить скидку</button>
+                        <button class="submit-btn" onclick="applyDiscount()" aria-label="Применить скидку к товару">Применить скидку</button>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="quick-form">
-                        <h3><i class="fas fa-ticket-alt"></i> Добавление промокода</h3>
+                        <h3><i class="fas fa-ticket-alt" aria-hidden="true"></i> Добавление промокода</h3>
                         <div class="form-group">
-                            <label>Код промокода</label>
+                            <label for="promo-code">Код промокода</label>
                             <input type="text" id="promo-code" placeholder="Например: SUMMER2024">
                         </div>
                         <div class="form-group">
-                            <label>Скидка (%)</label>
-                            <input type="number" id="promo-discount" placeholder="0-100">
+                            <label for="promo-discount">Скидка (%)</label>
+                            <input type="number" id="promo-discount" placeholder="0-100" min="0" max="100">
                         </div>
                         <div class="form-group">
-                            <label>Действителен до</label>
+                            <label for="promo-valid-to">Действителен до</label>
                             <input type="date" id="promo-valid-to">
                         </div>
-                        <button class="submit-btn" onclick="addPromoCode()">Добавить промокод</button>
+                        <button class="submit-btn" onclick="addPromoCode()" aria-label="Добавить новый промокод">Добавить промокод</button>
                     </div>
                 </div>
             </div>
@@ -540,7 +592,7 @@ async function loadOrders(search = '') {
                 <td><span class="status-badge ${statusClass}">${statusName}</span></td>
                 <td>${new Date(order.created_at).toLocaleDateString()}</td>
                 <td>
-                    <select onchange="updateOrderStatus(${order.id}, this.value)" class="action-btn">
+                    <select onchange="updateOrderStatus(${order.id}, this.value)" class="action-btn" aria-label="Изменить статус заказа ${order.order_number}">
                         <option value="new" ${order.status === 'new' ? 'selected' : ''}>Новый</option>
                         <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Подтверждён</option>
                         <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Отправлен</option>
@@ -548,8 +600,8 @@ async function loadOrders(search = '') {
                         <option value="received" ${order.status === 'received' ? 'selected' : ''}>Получен</option>
                         <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Отменён</option>
                     </select>
-                  </td>
-            </tr>`;
+                   </td>
+             </tr>`;
         }).join('');
     } catch(e) { console.error('Error loading orders:', e); }
 }
@@ -593,12 +645,12 @@ async function loadProducts(search = '') {
                 <td>${product.id}</td>
                 <td>${product.name}</td>
                 <td>${product.price} ₽</td>
-                <td>${product.available_quantity || 0}</td>  <!-- ✅ ИСПРАВЛЕНО -->
+                <td>${product.available_quantity || 0}</td>
                 <td>
-                    <button class="action-btn" onclick="editProductField(${product.id}, 'price', ${product.price})">Цена</button>
-                    <button class="action-btn" onclick="editProductField(${product.id}, 'stock', 0)">Кол-во</button>
-                    <button class="action-btn danger" onclick="deleteProduct(${product.id})">🗑️</button>
-                </td>
+                    <button class="action-btn" onclick="editProductField(${product.id}, 'price', ${product.price})" aria-label="Изменить цену товара ${product.name}">Цена</button>
+                    <button class="action-btn" onclick="editProductField(${product.id}, 'stock', 0)" aria-label="Изменить количество товара ${product.name}">Кол-во</button>
+                    <button class="action-btn danger" onclick="deleteProduct(${product.id})" aria-label="Удалить товар ${product.name}">🗑️</button>
+                 </td>
             </tr>
         `).join('');
     } catch(e) { console.error(e); }
@@ -679,15 +731,15 @@ async function loadReviews() {
                 <td>${review.product_name || '-'}</td>
                 <td>${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</td>
                 <td>
-                    <select onchange="toggleModeration(${review.id}, this.value)" class="action-btn">
+                    <select onchange="toggleModeration(${review.id}, this.value)" class="action-btn" aria-label="Изменить статус модерации отзыва">
                         <option value="true" ${review.moderated ? 'selected' : ''}>Одобрен</option>
                         <option value="false" ${!review.moderated ? 'selected' : ''}>На модерации</option>
                     </select>
-                 </td>
+                  </td>
                 <td>${new Date(review.created_at).toLocaleDateString()}</td>
                 <td>
-                    <button class="action-btn danger" onclick="deleteReview(${review.id})">🗑️</button>
-                 </td>
+                    <button class="action-btn danger" onclick="deleteReview(${review.id})" aria-label="Удалить отзыв">🗑️</button>
+                  </td>
             </tr>
         `).join('');
     } catch(e) { console.error(e); }
@@ -767,9 +819,9 @@ async function loadUsers(search = '') {
                 <td>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <span>${user.bonus_points || 0}</span>
-                        <button class="action-btn" onclick="addBonus(${user.id})">➕ Начислить</button>
+                        <button class="action-btn" onclick="addBonus(${user.id})" aria-label="Начислить бонусы пользователю ${user.email}">➕ Начислить</button>
                     </div>
-                  </td>
+                   </td>
                 <td>${new Date(user.date_joined).toLocaleDateString()}</td>
             </tr>
         `).join('');
@@ -903,25 +955,52 @@ function searchUsers() {
     loadUsers(search);
 }
 
+// Tab switching with ARIA attributes
 document.querySelectorAll('.admin-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+        // Update tab states
+        document.querySelectorAll('.admin-tab').forEach(t => {
+            t.classList.remove('active');
+            t.setAttribute('aria-selected', 'false');
+        });
         tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
         
+        // Update panel states
         const panelId = `panel-${tab.dataset.tab}`;
         document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
         document.getElementById(panelId).classList.add('active');
         
+        // Load data for the active panel
         if (tab.dataset.tab === 'orders') loadOrders();
         if (tab.dataset.tab === 'products') loadProducts();
         if (tab.dataset.tab === 'reviews') loadReviews();
         if (tab.dataset.tab === 'users') loadUsers();
+    });
+    
+    // Keyboard support for tabs
+    tab.addEventListener('keydown', (e) => {
+        const tabs = Array.from(document.querySelectorAll('.admin-tab'));
+        const currentIndex = tabs.indexOf(e.target);
+        let nextIndex;
+        
+        if (e.key === 'ArrowRight') {
+            nextIndex = (currentIndex + 1) % tabs.length;
+            tabs[nextIndex].focus();
+            tabs[nextIndex].click();
+        } else if (e.key === 'ArrowLeft') {
+            nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+            tabs[nextIndex].focus();
+            tabs[nextIndex].click();
+        }
     });
 });
 
 function showNotification(message) {
     const notification = document.createElement('div');
     notification.className = 'notification';
+    notification.setAttribute('role', 'status');
+    notification.setAttribute('aria-live', 'polite');
     notification.textContent = message;
     document.body.appendChild(notification);
     setTimeout(() => notification.remove(), 3000);

@@ -14,21 +14,50 @@
                     <h1 class="mb-0 h4">Вход</h1>
                 </div>
                 <div class="card-body">
-                    <form method="post" action="{% url 'account_login' %}">
+                    <form method="post" action="{% url 'account_login' %}" novalidate>
                         {% csrf_token %}
+                        
+                        <!-- Поле Email -->
                         <div class="mb-3">
-                            <label for="id_login" class="form-label">Email</label>
-                            <input type="email" name="login" class="form-control" id="id_login" required aria-required="true">
+                            <label for="id_login" class="form-label">
+                                Email <span class="text-danger" aria-hidden="true">*</span>
+                                <span class="visually-hidden">(обязательное поле)</span>
+                            </label>
+                            <input type="email" 
+                                   name="login" 
+                                   class="form-control" 
+                                   id="id_login" 
+                                   required 
+                                   aria-required="true"
+                                   aria-describedby="email-help">
+                            <div id="email-help" class="form-text visually-hidden">Введите ваш email адрес</div>
                         </div>
+                        
+                        <!-- Поле Пароль -->
                         <div class="mb-3">
-                            <label for="id_password" class="form-label">Пароль</label>
-                            <input type="password" name="password" class="form-control" id="id_password" required aria-required="true">
+                            <label for="id_password" class="form-label">
+                                Пароль <span class="text-danger" aria-hidden="true">*</span>
+                                <span class="visually-hidden">(обязательное поле)</span>
+                            </label>
+                            <input type="password" 
+                                   name="password" 
+                                   class="form-control" 
+                                   id="id_password" 
+                                   required 
+                                   aria-required="true"
+                                   aria-describedby="password-help">
+                            <div id="password-help" class="form-text visually-hidden">Введите ваш пароль</div>
                         </div>
+                        
+                        <!-- Ошибки формы -->
                         {% if form.errors %}
                         <div class="alert alert-danger" role="alert">
+                            <span class="visually-hidden">Ошибка:</span>
                             Неверный email или пароль
                         </div>
                         {% endif %}
+                        
+                        <!-- Кнопка входа -->
                         <button type="submit" class="btn btn-gold w-100" aria-label="Войти в аккаунт">Войти</button>
                     </form>
                     <hr>

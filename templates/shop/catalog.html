@@ -529,54 +529,53 @@
         to { transform: translateX(0); opacity: 1; }
     }
 </style>
-
 <div class="container py-4">
     <div class="row">
         <aside class="col-md-3" aria-label="Фильтры товаров">
             <div class="filter-section">
-                <h2 class="filter-title">Фильтры</h2>
+                <h2 class="filter-title" id="filter-title">Фильтры</h2>
                 
                 <div class="filter-group">
-                    <label for="filter-collection" class="filter-label">Коллекция</label>
-                    <select id="filter-collection" class="filter-select" aria-label="Выберите коллекцию">
+                    <label id="collection-label" for="filter-collection" class="filter-label">Коллекция</label>
+                    <select id="filter-collection" class="filter-select" aria-labelledby="collection-label">
                         <option value="">Все коллекции</option>
                     </select>
                 </div>
                 
                 <div class="filter-group">
-                    <label for="filter-category" class="filter-label">Категория</label>
-                    <select id="filter-category" class="filter-select" aria-label="Выберите категорию">
+                    <label id="category-label" for="filter-category" class="filter-label">Категория</label>
+                    <select id="filter-category" class="filter-select" aria-labelledby="category-label">
                         <option value="">Все категории</option>
                     </select>
                 </div>
                 
                 <div class="filter-group">
-                    <label for="filter-silver-type" class="filter-label">Тип серебра</label>
-                    <select id="filter-silver-type" class="filter-select" aria-label="Выберите тип серебра">
+                    <label id="silver-type-label" for="filter-silver-type" class="filter-label">Тип серебра</label>
+                    <select id="filter-silver-type" class="filter-select" aria-labelledby="silver-type-label">
                         <option value="">Все типы</option>
                     </select>
                 </div>
                 
                 <div class="filter-group">
-                    <label for="filter-fineness" class="filter-label">Проба</label>
-                    <select id="filter-fineness" class="filter-select" aria-label="Выберите пробу">
+                    <label id="fineness-label" for="filter-fineness" class="filter-label">Проба</label>
+                    <select id="filter-fineness" class="filter-select" aria-labelledby="fineness-label">
                         <option value="">Все пробы</option>
                     </select>
                 </div>
                 
                 <div class="filter-group">
                     <fieldset>
-                        <legend class="filter-label">Цена (₽)</legend>
+                        <legend class="filter-label" id="price-legend">Цена (₽)</legend>
                         <div class="price-inputs">
-                            <input type="number" id="price-min" placeholder="От" aria-label="Минимальная цена">
-                            <input type="number" id="price-max" placeholder="До" aria-label="Максимальная цена">
+                            <input type="number" id="price-min" placeholder="От" aria-label="Минимальная цена" aria-describedby="price-legend">
+                            <input type="number" id="price-max" placeholder="До" aria-label="Максимальная цена" aria-describedby="price-legend">
                         </div>
                     </fieldset>
                 </div>
                 
                 <div class="filter-group">
-                    <label for="filter-stones" class="filter-label">Камни</label>
-                    <select id="filter-stones" class="filter-select" aria-label="Наличие камней">
+                    <label id="stones-label" for="filter-stones" class="filter-label">Камни</label>
+                    <select id="filter-stones" class="filter-select" aria-labelledby="stones-label">
                         <option value="">Все</option>
                         <option value="true">С камнями</option>
                         <option value="false">Без камней</option>
@@ -584,15 +583,15 @@
                 </div>
                 
                 <div class="filter-group">
-                    <label for="filter-stone-type" class="filter-label">Тип камня</label>
-                    <select id="filter-stone-type" class="filter-select" aria-label="Тип камня">
+                    <label id="stone-type-label" for="filter-stone-type" class="filter-label">Тип камня</label>
+                    <select id="filter-stone-type" class="filter-select" aria-labelledby="stone-type-label">
                         <option value="">Любой</option>
                     </select>
                 </div>
                 
                 <div class="filter-group">
-                    <label for="filter-discount" class="filter-label">Акция</label>
-                    <select id="filter-discount" class="filter-select" aria-label="Товары со скидкой">
+                    <label id="discount-label" for="filter-discount" class="filter-label">Акция</label>
+                    <select id="filter-discount" class="filter-select" aria-labelledby="discount-label">
                         <option value="">Все товары</option>
                         <option value="true">Со скидкой</option>
                     </select>
@@ -606,15 +605,17 @@
         <main class="col-md-9" aria-label="Список товаров">
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                 <div class="products-count" id="products-count" aria-live="polite">Загрузка...</div>
-                <label class="sr-only" for="sort-select">Сортировка товаров</label>
-                <select class="sort-select" id="sort-select" aria-label="Сортировка товаров">
-                    <option value="-created_at">По новизне</option>
-                    <option value="price">Цена (по возрастанию)</option>
-                    <option value="-price">Цена (по убыванию)</option>
-                    <option value="-average_rating">По популярности</option>
-                </select>
+                <div>
+                    <label class="visually-hidden" for="sort-select">Сортировка товаров</label>
+                    <select class="sort-select" id="sort-select" aria-label="Сортировка товаров">
+                        <option value="-created_at">По новизне</option>
+                        <option value="price">Цена (по возрастанию)</option>
+                        <option value="-price">Цена (по убыванию)</option>
+                        <option value="-average_rating">По популярности</option>
+                    </select>
+                </div>
                 <button id="clear-search" class="btn-clear-search" style="display: none;" aria-label="Очистить поиск">
-                    <i class="fas fa-times" aria-hidden="true"></i> Очистить поиск
+                    <i class="fas fa-times" aria-hidden="true"></i> <span>Очистить поиск</span>
                 </button>
             </div>
             
@@ -631,6 +632,7 @@
     </div>
 </div>
 
+<!-- Модальное окно выбора размера -->
 <div id="size-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="size-modal-title">
     <div class="modal-content">
         <button class="modal-close" onclick="closeSizeModal()" aria-label="Закрыть окно выбора размера">&times;</button>
@@ -638,13 +640,13 @@
         <div id="size-options" class="size-buttons" role="group" aria-label="Доступные размеры"></div>
         <div id="stock-info" style="margin: 0.625rem 0; font-size: 0.75rem;" aria-live="polite"></div>
         <div>
-            <label for="modal-quantity">Количество:</label>
+            <label id="quantity-label" for="modal-quantity">Количество:</label>
             <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px;">
-                <button type="button" id="size-qty-minus" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer;">-</button>
+                <button type="button" id="size-qty-minus" aria-label="Уменьшить количество на 1" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer;">-</button>
                 <input type="number" id="modal-quantity" value="1" min="1" step="1" 
                     style="width: 80px; padding: 8px; text-align: center; border: 1px solid #ddd; border-radius: 8px;" 
-                    aria-label="Количество товара">
-                <button type="button" id="size-qty-plus" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer;">+</button>
+                    aria-label="Количество товара" aria-describedby="quantity-label">
+                <button type="button" id="size-qty-plus" aria-label="Увеличить количество на 1" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer;">+</button>
             </div>
         </div>
         <button id="confirm-add-to-cart" class="btn-modal-confirm" aria-label="Подтвердить добавление в корзину">
@@ -656,7 +658,37 @@
     </div>
 </div>
 
+<!-- Модальное окно выбора количества для товаров без размера -->
+<div id="quantity-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="quantity-modal-title">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeQuantityModal()" aria-label="Закрыть окно выбора количества">&times;</button>
+        <h3 id="quantity-modal-title" style="margin-bottom:20px; color:var(--accent);">Выберите количество</h3>
+        <div id="qty-stock-info" style="margin: 10px 0; font-size: 12px;" aria-live="polite"></div>
+        <div>
+            <label id="qty-label" for="modal-qty-value">Количество:</label>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px;">
+                <button id="qty-minus" aria-label="Уменьшить количество на 1" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer;">-</button>
+                <input type="number" id="modal-qty-value" value="1" min="1" style="width: 80px; padding: 8px; text-align: center; border: 1px solid #ddd; border-radius: 8px;" aria-label="Количество товара" aria-describedby="qty-label">
+                <button id="qty-plus" aria-label="Увеличить количество на 1" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer;">+</button>
+            </div>
+        </div>
+        <button id="confirm-add-to-cart-qty" style="margin-top:20px; padding:12px 24px; background:var(--accent); color:white; border:none; border-radius:30px; cursor:pointer;" aria-label="Подтвердить добавление в корзину">Добавить в корзину</button>
+        <button onclick="closeQuantityModal()" style="margin-top:10px; padding:8px 20px; background:transparent; border:none; cursor:pointer;" aria-label="Отменить добавление">Отмена</button>
+    </div>
+</div>
+
 <style>
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
     .modal {
         display: none;
         position: fixed;
@@ -801,14 +833,13 @@ let finenessChoices = [];
 let stoneTypeChoices = [];
 
 let sizeModalProductId = null;
+let sizeModalVariants = [];
+let sizeModalSelectedVariant = null;
+
 let sizeModalSizes = [];
 let sizeModalSelectedSize = null;
 let sizeModalAvailableQty = 0;
 let sizeModalCurrentInCart = 0;
-
-let qtyModalProductId = null;
-let qtyModalAvailableQty = 0;
-let qtyModalCurrentInCart = 0;
 
 let urlParams = new URLSearchParams(window.location.search);
 const collectionSlug = urlParams.get('collection');
@@ -905,166 +936,7 @@ async function getCurrentCartQuantity(productId) {
     }
 }
 
-function createQuantityModal() {
-    let modal = document.getElementById('quantity-modal');
-    if (modal) return;
-    
-    modal = document.createElement('div');
-    modal.id = 'quantity-modal';
-    modal.className = 'modal';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeQuantityModal()">&times;</span>
-            <h3 style="margin-bottom:20px; color:var(--accent);">Выберите количество</h3>
-            <div id="qty-stock-info" style="margin: 10px 0; font-size: 12px;"></div>
-            <div>
-                <label>Количество:</label>
-                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px;">
-                    <button id="qty-minus" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer;">-</button>
-                    <input type="number" id="modal-qty-value" value="1" min="1" style="width: 80px; padding: 8px; text-align: center; border: 1px solid #ddd; border-radius: 8px;">
-                    <button id="qty-plus" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--accent); background: white; cursor: pointer;">+</button>
-                </div>
-            </div>
-            <button id="confirm-add-to-cart-qty" style="margin-top:20px; padding:12px 24px; background:var(--accent); color:white; border:none; border-radius:30px; cursor:pointer;">Добавить в корзину</button>
-            <button onclick="closeQuantityModal()" style="margin-top:10px; padding:8px 20px; background:transparent; border:none; cursor:pointer;">Отмена</button>
-        </div>
-    `;
-    document.body.appendChild(modal);
-
-    if (!document.getElementById('quantity-modal-styles')) {
-        const style = document.createElement('style');
-        style.id = 'quantity-modal-styles';
-        style.textContent = `
-            #quantity-modal {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                z-index: 1000;
-                align-items: center;
-                justify-content: center;
-            }
-            #quantity-modal.active {
-                display: flex;
-            }
-            #quantity-modal .modal-content {
-                background: white;
-                border-radius: 24px;
-                padding: 30px;
-                max-width: 350px;
-                width: 90%;
-                text-align: center;
-                position: relative;
-            }
-            #quantity-modal .modal-close {
-                position: absolute;
-                top: 15px;
-                right: 20px;
-                font-size: 24px;
-                cursor: pointer;
-                color: var(--gray);
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    const qtyInput = document.getElementById('modal-qty-value');
-    const minusBtn = document.getElementById('qty-minus');
-    const plusBtn = document.getElementById('qty-plus');
-
-    if (qtyInput) {
-        qtyInput.addEventListener('input', function() {
-            let val = parseInt(this.value);
-            const maxVal = parseInt(this.max) || 999;
-            
-            if (isNaN(val) || val < 1) {
-                this.value = 1;
-                showNotification('Количество не может быть меньше 1');
-            }
-
-            else if (val > maxVal) {
-                this.value = maxVal;
-                showNotification(`Доступно только ${maxVal} шт. для добавления`);
-            }
-        });
-    }
-
-    if (minusBtn) {
-        minusBtn.addEventListener('click', () => {
-            let val = parseInt(qtyInput.value) || 1;
-            if (val > 1) {
-                qtyInput.value = val - 1;
-                qtyInput.dispatchEvent(new Event('input'));
-            }
-        });
-    }
-
-    if (plusBtn) {
-        plusBtn.addEventListener('click', () => {
-            let val = parseInt(qtyInput.value) || 1;
-            const maxVal = parseInt(qtyInput.max) || 999;
-            if (val < maxVal) {
-                qtyInput.value = val + 1;
-                qtyInput.dispatchEvent(new Event('input'));
-            } else {
-                showNotification(`Можно добавить не более ${maxVal} шт.`);
-            }
-        });
-    }
-
-    const confirmBtn = document.getElementById('confirm-add-to-cart-qty');
-    if (confirmBtn) {
-        confirmBtn.addEventListener('click', function() {
-            const quantity = parseInt(qtyInput.value);
-            const totalAfterAdd = qtyModalCurrentInCart + quantity;
-            
-            if (totalAfterAdd > qtyModalAvailableQty) {
-                const remaining = Math.max(0, qtyModalAvailableQty - qtyModalCurrentInCart);
-                showNotification(`В корзине уже ${qtyModalCurrentInCart} шт. Доступно для добавления: ${remaining} шт.`);
-                return;
-            }
-            
-            if (quantity > qtyModalAvailableQty) {
-                showNotification(`Доступно только ${qtyModalAvailableQty} шт.`);
-                return;
-            }
-            
-            fetch('/api/cart/add_item/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                    product_id: qtyModalProductId,
-                    quantity: quantity,
-                    size: ''
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    showNotification(data.error);
-                } else {
-                    closeQuantityModal();
-                    updateCartCount();
-                    showNotification(`Товар добавлен в корзину! (теперь в корзине ${totalAfterAdd} шт.)`);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification('Ошибка при добавлении в корзину');
-            });
-        });
-    }
-}
-
 async function openQuantityModal(productId, availableQty) {
-    createQuantityModal();
-
     qtyModalProductId = productId;
     qtyModalAvailableQty = availableQty;
     qtyModalCurrentInCart = await getCurrentCartQuantity(productId);
@@ -1188,8 +1060,11 @@ async function openSizeModal(productId, variantsJson) {
 function closeSizeModal() {
     document.getElementById('size-modal').classList.remove('active');
     sizeModalProductId = null;
+    sizeModalSelectedVariant = null;
+    sizeModalVariants = [];
     sizeModalSelectedSize = null;
     sizeModalSizes = [];
+    sizeModalCurrentInCart = 0;
 }
 
 function buildUrl() {
@@ -1254,33 +1129,6 @@ function loadCollections() {
             if (collectionSlug) loadProducts();
         })
         .catch(e => console.error('Error loading collections:', e));
-}
-
-const sizeQtyMinus = document.getElementById('size-qty-minus');
-const sizeQtyPlus = document.getElementById('size-qty-plus');
-const sizeQtyInput = document.getElementById('modal-quantity');
-
-if (sizeQtyMinus && sizeQtyInput) {
-    sizeQtyMinus.addEventListener('click', function() {
-        let val = parseInt(sizeQtyInput.value) || 1;
-        if (val > 1) {
-            sizeQtyInput.value = val - 1;
-            sizeQtyInput.dispatchEvent(new Event('input'));
-        }
-    });
-}
-
-if (sizeQtyPlus && sizeQtyInput) {
-    sizeQtyPlus.addEventListener('click', function() {
-        let val = parseInt(sizeQtyInput.value) || 1;
-        const maxVal = parseInt(sizeQtyInput.max) || 999;
-        if (val < maxVal) {
-            sizeQtyInput.value = val + 1;
-            sizeQtyInput.dispatchEvent(new Event('input'));
-        } else {
-            showNotification(`Можно добавить не более ${maxVal} шт.`);
-        }
-    });
 }
 
 function loadCategories() {
@@ -1367,6 +1215,37 @@ function loadFilterOptions() {
         option.textContent = s.label;
         stoneSelect.appendChild(option);
     });
+}
+
+function initModalButtons() {
+    const sizeQtyMinus = document.getElementById('size-qty-minus');
+    const sizeQtyPlus = document.getElementById('size-qty-plus');
+    const sizeQtyInput = document.getElementById('modal-quantity');
+
+    if (sizeQtyMinus && sizeQtyInput) {
+        sizeQtyMinus.addEventListener('click', function(e) {
+            e.preventDefault();
+            let val = parseInt(sizeQtyInput.value) || 1;
+            if (val > 1) {
+                sizeQtyInput.value = val - 1;
+                sizeQtyInput.dispatchEvent(new Event('input'));
+            }
+        });
+    }
+
+    if (sizeQtyPlus && sizeQtyInput) {
+        sizeQtyPlus.addEventListener('click', function(e) {
+            e.preventDefault();
+            let val = parseInt(sizeQtyInput.value) || 1;
+            const maxVal = parseInt(sizeQtyInput.max) || 999;
+            if (val < maxVal) {
+                sizeQtyInput.value = val + 1;
+                sizeQtyInput.dispatchEvent(new Event('input'));
+            } else {
+                showNotification(`Можно добавить не более ${maxVal} шт.`);
+            }
+        });
+    }
 }
 
 function loadFavorites() {
@@ -1490,30 +1369,32 @@ function renderProductCard(product) {
         <div class="col-md-4 mb-4">
             <div class="product-card">
                 <div class="product-image-wrapper">
-                    <a href="/product/${product.id}/">
-                        <img src="${imageUrl}" class="product-image" onerror="this.src='/static/shop/images/placeholder.png'">
+                    <a href="/product/${product.id}/" aria-label="Перейти к товару ${escapeHtml(product.name)}">
+                        <img src="${imageUrl}" class="product-image" alt="${escapeHtml(product.name)}" onerror="this.src='/static/shop/images/placeholder.png'">
                     </a>
                     ${favoriteButton}
                     ${discount}
                 </div>
                 <div class="product-info">
                     <div class="product-category">${product.category_name || 'Украшение'}</div>
-                    <a href="/product/${product.id}/">
+                    <a href="/product/${product.id}/" class="product-link" aria-label="Подробнее о товаре ${escapeHtml(product.name)}">
                         <div class="product-name">${escapeHtml(product.name)}</div>
                     </a>
-                    <div class="rating">
-                        <span class="rating-stars">${stars}</span>
+                    <div class="rating" aria-label="Рейтинг ${rating} из 5 звезд">
+                        <span class="rating-stars" aria-hidden="true">${stars}</span>
                         <span class="text-secondary ms-1">(${product.reviews_count || 0})</span>
                     </div>
                     <div class="product-price">
-                        ${product.price} ₽ ${oldPrice}
+                        <span class="current-price">${product.price} ₽</span>
+                        ${oldPrice ? `<span class="old-price" aria-label="Старая цена ${product.old_price} ₽">${product.old_price} ₽</span>` : ''}
                     </div>
                     <div class="product-sizes">
                         ${sizes.length > 0 ? `Размеры: ${sizes.join(', ')}` : '<span class="text-muted">Без размера</span>'}
                     </div>
                     <button class="${cartButtonClass}" 
                             onclick="event.stopPropagation(); ${cartButtonOnClick}"
-                            ${isOutOfStock ? 'disabled' : ''}>
+                            ${isOutOfStock ? 'disabled' : ''}
+                            aria-label="${isOutOfStock ? 'Товар временно отсутствует' : 'Добавить товар в корзину'}">
                         ${cartButtonText}
                     </button>
                 </div>
@@ -1564,7 +1445,12 @@ function fetchAndRenderProducts(url, container) {
             renderPagination();
         });
 }
-
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSizeModal();
+        closeQuantityModal();
+    }
+});
 function renderPagination() {
     const container = document.getElementById('pagination');
     if (!container) return;
@@ -1695,6 +1581,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
+    initModalButtons();
     const filterTitle = document.querySelector('.filter-title');
     const filterContent = document.querySelector('.filter-section');
     

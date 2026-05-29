@@ -482,7 +482,6 @@
     border: 0;
 }
 </style>
-
 <div class="favorites-page">
     <div class="favorites-container">
         <h1 class="favorites-title">
@@ -505,6 +504,7 @@
         <button class="modal-close" onclick="closeSizeModal()" aria-label="Закрыть окно выбора размера">&times;</button>
         <h2 id="size-modal-title" class="modal-title">Выберите размер</h2>
         <div id="size-options" class="size-buttons" role="group" aria-label="Доступные размеры"></div>
+        <div id="stock-info" class="stock-info" aria-live="polite"></div>
         <div class="modal-quantity-group">
             <label for="modal-quantity">Количество:</label>
             <input type="number" id="modal-quantity" value="1" min="1" aria-label="Количество товара">
@@ -526,6 +526,8 @@ let favoritesList = [];
 let selectedProductId = null;
 let selectedProductSizes = [];
 let selectedSize = null;
+let selectedVariants = [];     
+let selectedVariant = null;    
 
 function loadFavorites() {
     fetch('/api/favorites/')
@@ -533,7 +535,9 @@ function loadFavorites() {
             if (response.status === 401) {
                 document.getElementById('favorites-content').innerHTML = `
                     <div class="empty-favorites">
-                        <i class="fas fa-lock" aria-hidden="true"></i>
+                        <div aria-hidden="true">
+                            <i class="fas fa-lock"></i>
+                        </div>
                         <h3>Войдите, чтобы увидеть избранное</h3>
                         <p>Войдите в свой аккаунт или зарегистрируйтесь</p>
                         <a href="/accounts/login/" class="btn-catalog" aria-label="Перейти на страницу входа">Войти</a>
@@ -547,13 +551,16 @@ function loadFavorites() {
             if (data) {
                 favoritesList = data;
                 renderFavorites();
+                updateFavoritesCount();
             }
         })
         .catch(error => {
             console.error('Error:', error);
             document.getElementById('favorites-content').innerHTML = `
                 <div class="empty-favorites">
-                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                    <div aria-hidden="true">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
                     <h3>Ошибка загрузки</h3>
                     <p>Попробуйте обновить страницу</p>
                     <button onclick="location.reload()" class="btn-catalog" aria-label="Обновить страницу">Обновить</button>
@@ -567,7 +574,9 @@ function renderFavorites() {
     if (favoritesList.length === 0) {
         container.innerHTML = `
             <div class="empty-favorites">
-                <i class="far fa-heart" aria-hidden="true"></i>
+                <div aria-hidden="true">
+                    <i class="far fa-heart"></i>
+                </div>
                 <h3>В избранном пока пусто</h3>
                 <p>Добавляйте понравившиеся товары, чтобы не потерять их</p>
                 <a href="/catalog/" class="btn-catalog" aria-label="Перейти в каталог">Перейти в каталог</a>
@@ -587,7 +596,6 @@ function renderFavorites() {
         const stars = '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
 
         const variants = product.variants || [];
-        const sizes = variants.map(v => v.size);
         const variantsJson = JSON.stringify(variants.map(v => ({
             id: v.id,
             size: v.size,
@@ -611,7 +619,7 @@ function renderFavorites() {
                 <div class="favorite-info">
                     <div class="favorite-category">${escapeHtml(product.category_name || 'Украшение')}</div>
                     <a href="/product/${product.id}/" class="favorite-name" aria-label="${escapeHtml(product.name)}">${escapeHtml(product.name)}</a>
-                    <div class="rating" aria-label="Рейтинг ${rating} из 5">
+                    <div class="rating" aria-label="Рейтинг ${rating} из 5 звезд">
                         <span class="rating-stars" aria-hidden="true">${stars}</span>
                         <span class="text-secondary ms-1">(${product.reviews_count || 0})</span>
                     </div>
@@ -621,7 +629,7 @@ function renderFavorites() {
                     <button class="btn-add-to-cart" 
                             onclick="openSizeModal(${product.id}, '${escapeHtml(product.name)}', '${variantsJson}')"
                             ${isOutOfStock ? 'disabled' : ''}
-                            aria-label="Добавить ${escapeHtml(product.name)} в корзину">
+                            aria-label="Добавить ${escapeHtml(product.name)} в корзину${isOutOfStock ? ' - товар временно отсутствует' : ''}">
                         <i class="fas fa-shopping-cart" aria-hidden="true"></i> ${isOutOfStock ? 'Нет в наличии' : 'В корзину'}
                     </button>
                 </div>
@@ -649,20 +657,21 @@ function removeFromFavorites(favoriteId, productId) {
     });
 }
 
-let selectedVariants = [];     
-let selectedVariant = null;    
-
 function openSizeModal(productId, productName, variantsJson) {
     selectedProductId = productId;
     selectedVariants = JSON.parse(variantsJson);
     selectedVariant = null;
     
     const container = document.getElementById('size-options');
+    const stockInfo = document.getElementById('stock-info');
+    const confirmBtn = document.getElementById('confirm-add-to-cart');
+    
     if (!container) return;
     
     if (selectedVariants.length === 0) {
         container.innerHTML = '<div class="text-secondary">Товар временно недоступен</div>';
-        document.getElementById('confirm-add-to-cart').disabled = true;
+        if (confirmBtn) confirmBtn.disabled = true;
+        if (stockInfo) stockInfo.innerHTML = '';
     } else {
         let html = '';
         selectedVariants.forEach(variant => {
@@ -687,12 +696,11 @@ function openSizeModal(productId, productName, variantsJson) {
                     available_quantity: parseInt(this.dataset.available)
                 };
 
-                const stockInfo = document.getElementById('stock-info');
                 if (stockInfo) {
                     stockInfo.innerHTML = `<span style="color: green;">В наличии: ${selectedVariant.available_quantity} шт.</span>`;
                 }
                 
-                document.getElementById('confirm-add-to-cart').disabled = false;
+                if (confirmBtn) confirmBtn.disabled = false;
             };
             btn.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -702,35 +710,34 @@ function openSizeModal(productId, productName, variantsJson) {
             });
         });
         
-        document.getElementById('confirm-add-to-cart').disabled = true;
+        if (confirmBtn) confirmBtn.disabled = true;
     }
     
-    document.getElementById('modal-quantity').value = 1;
-    document.getElementById('modal-quantity').max = Math.max(...selectedVariants.map(v => v.available_quantity), 1);
-
-    let stockInfo = document.getElementById('stock-info');
-    if (!stockInfo) {
-        stockInfo = document.createElement('div');
-        stockInfo.id = 'stock-info';
-        stockInfo.style.margin = '10px 0';
-        stockInfo.style.fontSize = '12px';
-        const sizeOptions = document.getElementById('size-options');
-        if (sizeOptions) {
-            sizeOptions.insertAdjacentElement('afterend', stockInfo);
+    const quantityInput = document.getElementById('modal-quantity');
+    if (quantityInput) {
+        quantityInput.value = 1;
+        if (selectedVariants.length > 0) {
+            quantityInput.max = Math.max(...selectedVariants.map(v => v.available_quantity), 1);
         }
-    } else {
-        stockInfo.innerHTML = '';
+    }
+    
+    if (stockInfo && selectedVariants.length === 0) {
+        stockInfo.innerHTML = '<span style="color: #d32f2f;">Товар временно недоступен</span>';
     }
     
     const modal = document.getElementById('size-modal');
-    modal.classList.add('active');
-    modal.hidden = false;
+    if (modal) {
+        modal.classList.add('active');
+        modal.hidden = false;
+    }
 }
 
 function closeSizeModal() {
     const modal = document.getElementById('size-modal');
-    modal.classList.remove('active');
-    modal.hidden = true;
+    if (modal) {
+        modal.classList.remove('active');
+        modal.hidden = true;
+    }
     selectedProductId = null;
     selectedVariant = null;
     selectedVariants = [];
@@ -740,7 +747,8 @@ function closeSizeModal() {
 }
 
 function addToCart() {
-    const quantity = parseInt(document.getElementById('modal-quantity').value) || 1;
+    const quantityInput = document.getElementById('modal-quantity');
+    const quantity = quantityInput ? (parseInt(quantityInput.value) || 1) : 1;
     
     if (selectedVariants.length > 0 && !selectedVariant) {
         showNotification('Пожалуйста, выберите размер');
@@ -752,16 +760,17 @@ function addToCart() {
         return;
     }
     
+    const requestBody = selectedVariant 
+        ? { variant_id: selectedVariant.id, quantity: quantity }
+        : { product_id: selectedProductId, quantity: quantity, size: '' };
+    
     fetch('/api/cart/add_item/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCookie('csrftoken')
         },
-        body: JSON.stringify({
-            variant_id: selectedVariant.id, 
-            quantity: quantity
-        })
+        body: JSON.stringify(requestBody)
     })
     .then(response => response.json())
     .then(data => {
@@ -829,7 +838,10 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-document.getElementById('confirm-add-to-cart').addEventListener('click', addToCart);
+const confirmBtn = document.getElementById('confirm-add-to-cart');
+if (confirmBtn) {
+    confirmBtn.addEventListener('click', addToCart);
+}
 
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
@@ -849,6 +861,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (link) {
                     window.location.href = link.href;
                 }
+            }
+        });
+    }
+    
+    // Обработка клавиш для кнопок размера
+    const sizeModal = document.getElementById('size-modal');
+    if (sizeModal) {
+        sizeModal.addEventListener('keydown', function(e) {
+            const buttons = document.querySelectorAll('.size-btn:not([disabled])');
+            const currentFocus = document.activeElement;
+            const currentIndex = Array.from(buttons).indexOf(currentFocus);
+            
+            if (e.key === 'ArrowRight' && currentIndex < buttons.length - 1) {
+                e.preventDefault();
+                buttons[currentIndex + 1].focus();
+            } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                e.preventDefault();
+                buttons[currentIndex - 1].focus();
             }
         });
     }

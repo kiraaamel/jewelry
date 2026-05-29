@@ -313,15 +313,39 @@
     white-space: nowrap;
     border: 0;
 }
-</style>
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
 
+.store-phone a {
+    transition: color 0.3s ease;
+}
+
+.store-phone a:hover {
+    color: var(--accent) !important;
+}
+
+.store-phone a:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+</style>
 <div class="stores-page">
     <div class="stores-container">
 
         <h1 class="page-title">Наши магазины</h1>
         <p class="page-subtitle">Выберите удобный пункт самовывоза в Москве</p>
 
-        <div class="store-card" tabindex="0">
+        <div class="store-card" tabindex="0" role="article" aria-label="Информация о магазине на Тверской">
             <div class="store-image">
                 <img src="{% static 'shop/images/store1.jpg' %}" 
                      alt="Вход в магазин Argentic Jewelry на Тверской улице, фасад с вывеской" 
@@ -339,7 +363,7 @@
                 </div>
                 <div class="store-phone">
                     <i class="fas fa-phone" aria-hidden="true"></i>
-                    <a href="tel:+74951234567" class="store-phone-link" style="color: var(--gray); text-decoration: none;">+7 (495) 123-45-67</a>
+                    <a href="tel:+74951234567" class="store-phone-link" style="color: var(--gray); text-decoration: none;" aria-label="Позвонить в магазин на Тверской по номеру +7 (495) 123-45-67">+7 (495) 123-45-67</a>
                 </div>
                 <div class="store-description">
                     <strong>Как пройти:</strong> Вход со стороны ул. Тверская, подняться на 2 этаж, 
@@ -347,14 +371,15 @@
                 </div>
                 <a href="https://yandex.ru/maps/?text=Москва, Тверская, 1" 
                    target="_blank" 
+                   rel="noopener noreferrer"
                    class="btn-route"
-                   aria-label="Построить маршрут до магазина на Тверской">
+                   aria-label="Построить маршрут до магазина на Тверской в Яндекс.Картах">
                     <i class="fas fa-directions" aria-hidden="true"></i> Построить маршрут
                 </a>
             </div>
         </div>
 
-        <div class="store-card" tabindex="0">
+        <div class="store-card" tabindex="0" role="article" aria-label="Информация о магазине на Курской">
             <div class="store-image">
                 <img src="{% static 'shop/images/store2.jpg' %}" 
                      alt="Интерьер магазина Argentic Jewelry на Курской, витрины с украшениями" 
@@ -372,7 +397,7 @@
                 </div>
                 <div class="store-phone">
                     <i class="fas fa-phone" aria-hidden="true"></i>
-                    <a href="tel:+74952345678" class="store-phone-link" style="color: var(--gray); text-decoration: none;">+7 (495) 234-56-78</a>
+                    <a href="tel:+74952345678" class="store-phone-link" style="color: var(--gray); text-decoration: none;" aria-label="Позвонить в магазин на Курской по номеру +7 (495) 234-56-78">+7 (495) 234-56-78</a>
                 </div>
                 <div class="store-description">
                     <strong>Как пройти:</strong> Выход из метро №5, прямо 50 метров, вход в бизнес-центр, 
@@ -380,14 +405,15 @@
                 </div>
                 <a href="https://yandex.ru/maps/?text=Москва, Земляной Вал, 33" 
                    target="_blank" 
+                   rel="noopener noreferrer"
                    class="btn-route"
-                   aria-label="Построить маршрут до магазина на Курской">
+                   aria-label="Построить маршрут до магазина на Курской в Яндекс.Картах">
                     <i class="fas fa-directions" aria-hidden="true"></i> Построить маршрут
                 </a>
             </div>
         </div>
 
-        <div class="store-card" tabindex="0">
+        <div class="store-card" tabindex="0" role="article" aria-label="Информация о магазине на Дмитровской">
             <div class="store-image">
                 <img src="{% static 'shop/images/store3.jpg' %}" 
                      alt="Витрина магазина Argentic Jewelry на Дмитровской, освещенные украшения" 
@@ -405,7 +431,7 @@
                 </div>
                 <div class="store-phone">
                     <i class="fas fa-phone" aria-hidden="true"></i>
-                    <a href="tel:+74953456789" class="store-phone-link" style="color: var(--gray); text-decoration: none;">+7 (495) 345-67-89</a>
+                    <a href="tel:+74953456789" class="store-phone-link" style="color: var(--gray); text-decoration: none;" aria-label="Позвонить в магазин на Дмитровской по номеру +7 (495) 345-67-89">+7 (495) 345-67-89</a>
                 </div>
                 <div class="store-description">
                     <strong>Как пройти:</strong> Выход из метро №2, пройти ТЦ "Бутырский", 
@@ -413,8 +439,9 @@
                 </div>
                 <a href="https://yandex.ru/maps/?text=Москва, Бутырская, 46" 
                    target="_blank" 
+                   rel="noopener noreferrer"
                    class="btn-route"
-                   aria-label="Построить маршрут до магазина на Дмитровской">
+                   aria-label="Построить маршрут до магазина на Дмитровской в Яндекс.Картах">
                     <i class="fas fa-directions" aria-hidden="true"></i> Построить маршрут
                 </a>
             </div>
@@ -431,6 +458,7 @@
                     allowfullscreen="true" 
                     loading="lazy"
                     title="Карта с расположением магазинов Argentic Jewelry в Москве">
+                    <span class="visually-hidden">Интерактивная карта с тремя точками магазинов: на Тверской, Курской и Дмитровской улицах</span>
                 </iframe>
             </div>
         </div>
@@ -462,21 +490,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
-<style>
-.store-phone a {
-    transition: color 0.3s ease;
-}
-
-.store-phone a:hover {
-    color: var(--accent) !important;
-}
-
-.store-phone a:focus-visible {
-    outline: 3px solid var(--focus-ring);
-    outline-offset: 2px;
-    border-radius: 4px;
-}
-</style>
 
 {% endblock %}

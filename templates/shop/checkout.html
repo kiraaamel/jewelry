@@ -12,8 +12,10 @@
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="text-center py-5">
-                <i class="fas fa-lock fa-4x mb-4" style="color: var(--accent);" aria-hidden="true"></i>
-                <h2 style="color: var(--brown);">Требуется авторизация</h2>
+                <div aria-hidden="true">
+                    <i class="fas fa-lock fa-4x mb-4" style="color: var(--accent);"></i>
+                </div>
+                <h1 class="h2" style="color: var(--brown);">Требуется авторизация</h1>
                 <p style="color: var(--gray); margin-bottom: 30px;">Для оформления заказа необходимо войти в свой аккаунт</p>
                 <div>
                     <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn-gold" style="display: inline-block; padding: 12px 30px; border-radius: 30px; background: var(--accent); color: white; text-decoration: none; margin-right: 15px;" aria-label="Войти в аккаунт">Войти</a>
@@ -33,6 +35,28 @@
     --focus-ring: #3b5a7a;
     --green: #28a745;
     --red: #dc3545;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.method-item:focus-visible,
+.pickup-point:focus-visible,
+.sbp-app-btn:focus-visible,
+.modal-close:focus-visible,
+.modal-btn:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 0.75rem;
 }
 
 .checkout-page {
@@ -665,7 +689,6 @@
     to { transform: translateX(0); opacity: 1; }
 }
 </style>
-
 <div class="checkout-page">
     <div class="checkout-container">
         <h1 class="checkout-title">
@@ -675,7 +698,7 @@
 
         <div class="checkout-grid">
             <div class="checkout-form">
-                <form id="checkout-form" aria-label="Форма оформления заказа">
+                <form id="checkout-form" aria-label="Форма оформления заказа" novalidate>
 
                     <fieldset class="form-section">
                         <legend class="section-title">
@@ -684,7 +707,7 @@
                         </legend>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="first_name">Имя *</label>
+                                <label for="first_name">Имя <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(обязательное поле)</span></label>
                                 <input type="text" id="first_name" name="first_name" required aria-required="true">
                             </div>
                             <div class="form-group">
@@ -693,16 +716,15 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="email">Email *</label>
+                            <label for="email">Email <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(обязательное поле)</span></label>
                             <input type="email" id="email" name="email" required aria-required="true">
                         </div>
                         <div class="form-group">
-                            <label for="phone">Телефон *</label>
+                            <label for="phone">Телефон <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(обязательное поле)</span></label>
                             <input type="tel" id="phone" name="phone" placeholder="+7 (___)-___-__-__" required aria-required="true">
                         </div>
                     </fieldset>
 
-   
                     <fieldset class="form-section">
                         <legend class="section-title">
                             <i class="fas fa-truck" aria-hidden="true"></i>
@@ -769,16 +791,16 @@
                             <span>Адрес доставки</span>
                         </legend>
                         <div class="form-group">
-                            <label for="city">Город *</label>
+                            <label for="city">Город <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(обязательное поле)</span></label>
                             <input type="text" id="city" name="city" value="Москва" readonly>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="street">Улица *</label>
+                                <label for="street">Улица <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(обязательное поле)</span></label>
                                 <input type="text" id="street" name="street">
                             </div>
                             <div class="form-group">
-                                <label for="house">Дом *</label>
+                                <label for="house">Дом <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(обязательное поле)</span></label>
                                 <input type="text" id="house" name="house">
                             </div>
                         </div>
@@ -876,8 +898,8 @@
                     
                     <div class="promo-section">
                         <div class="promo-input-group">
-                            <label for="promo-code" class="sr-only">Промокод</label>
-                            <input type="text" id="promo-code" placeholder="Введите промокод">
+                            <label for="promo-code" class="visually-hidden">Промокод</label>
+                            <input type="text" id="promo-code" placeholder="Введите промокод" aria-describedby="promo-help">
                             <button onclick="applyPromoCode()" aria-label="Применить промокод">ОК</button>
                         </div>
                         <div id="promo-status" aria-live="polite"></div>
@@ -888,7 +910,7 @@
                             <input type="checkbox" id="use-bonus">
                             <label for="use-bonus">Списать бонусы</label>
                         </div>
-                        <span id="bonus-available">0 бонусов</span>
+                        <span id="bonus-available" aria-live="polite">0 бонусов</span>
                     </div>
 
                     <div class="summary-row total">
@@ -897,7 +919,7 @@
                     </div>
                     <div class="summary-row" style="font-size: 12px; color: var(--gray); margin-top: 5px;">
                         <span>Начислим бонусов:</span>
-                        <span id="bonus-earn">0 бонусов</span>
+                        <span id="bonus-earn" aria-live="polite">0 бонусов</span>
                     </div>
                 </div>
                 <button class="submit-btn" id="submit-order-btn" onclick="showPaymentModal()" disabled aria-label="Подтвердить заказ">Выберите способ доставки</button>
@@ -909,21 +931,22 @@
     </div>
 </div>
 
+<!-- Модальное окно оплаты картой -->
 <div id="payment-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title" hidden>
     <div class="modal-content">
         <button class="modal-close" onclick="closePaymentModal()" aria-label="Закрыть окно оплаты">&times;</button>
         <h2 id="payment-modal-title" class="modal-title">Оплата заказа</h2>
         <div class="modal-amount" id="payment-amount" aria-live="polite">0 ₽</div>
         <div id="payment-fields">
-            <label for="card-number" class="sr-only">Номер карты</label>
+            <label for="card-number" class="visually-hidden">Номер карты</label>
             <input type="text" class="modal-card-input" id="card-number" placeholder="Номер карты" maxlength="19" aria-label="Номер карты">
             <div class="modal-row">
                 <div>
-                    <label for="card-expiry" class="sr-only">Срок действия</label>
+                    <label for="card-expiry" class="visually-hidden">Срок действия</label>
                     <input type="text" id="card-expiry" placeholder="ММ/ГГ" maxlength="5" aria-label="Срок действия карты ММ/ГГ">
                 </div>
                 <div>
-                    <label for="card-cvv" class="sr-only">CVV код</label>
+                    <label for="card-cvv" class="visually-hidden">CVV код</label>
                     <input type="text" id="card-cvv" placeholder="CVV" maxlength="3" aria-label="CVV код">
                 </div>
             </div>
@@ -935,6 +958,7 @@
     </div>
 </div>
 
+<!-- Модальное окно оплаты через СБП -->
 <div id="sbp-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="sbp-modal-title" hidden>
     <div class="modal-content">
         <button class="modal-close" onclick="closeSbpModal()" aria-label="Закрыть окно оплаты СБП">&times;</button>
@@ -984,6 +1008,8 @@ let deliverySelected = false;
 let appliedPromo = null;
 let promoDiscount = 0;
 let currentPromoCode = null;
+let selectedCheckoutItems = [];
+let globalSelectedItems = []; 
 
 function getCookie(name) {
     let cookieValue = null;
@@ -1013,7 +1039,28 @@ function saveToStorage() {
     localStorage.setItem('checkout_bonus_applied', useBonus);
 }
 
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const paymentModal = document.getElementById('payment-modal');
+        const sbpModal = document.getElementById('sbp-modal');
+        if (paymentModal && paymentModal.classList.contains('active')) {
+            closePaymentModal();
+        }
+        if (sbpModal && sbpModal.classList.contains('active')) {
+            closeSbpModal();
+        }
+    }
+});
+
 function loadCheckout() {
+    const selectedItemsJson = localStorage.getItem('checkout_selected_items');
+    let selectedItems = null;
+    
+    if (selectedItemsJson) {
+        selectedItems = JSON.parse(selectedItemsJson);
+        globalSelectedItems = selectedItems;  // ← СОХРАНЯЕМ В ГЛОБАЛЬНУЮ ПЕРЕМЕННУЮ
+        localStorage.removeItem('checkout_selected_items');
+    }
     loadFromStorage();
     
     const savedPromoCode = localStorage.getItem('checkout_promo_code');
@@ -1047,7 +1094,17 @@ function loadCheckout() {
     fetch('/api/cart/')
         .then(r => r.json())
         .then(cart => {
+            let itemsToShow = cart.items || [];
+            if (selectedItems && selectedItems.length > 0) {
+                const selectedIds = new Set(selectedItems.map(s => s.id));
+                itemsToShow = itemsToShow.filter(item => selectedIds.has(item.id));
+                console.log('Filtered cart items:', itemsToShow.length, 'out of', cart.items?.length);
+            }
+            
             cartData = cart;
+            cartData.items = itemsToShow; 
+            selectedCheckoutItems = itemsToShow; 
+            
             return fetch('/api/auth/me/')
                 .then(r => r.json())
                 .then(user => {
@@ -1076,7 +1133,6 @@ function loadCheckout() {
                     }
                 });
         })
-        .catch(e => console.error('Error:', e));
 }
 
 function fillUserData() {
@@ -1795,6 +1851,14 @@ function submitOrderToServer() {
         return;
     }
     
+    const selectedItems = globalSelectedItems;
+    
+    if (!selectedItems || selectedItems.length === 0) {
+        showNotification('Нет выбранных товаров для оформления');
+        return;
+    }
+    
+    // ✅ Формируем данные заказа с выбранными товарами
     const orderData = {
         delivery_address: pendingOrderData.delivery_address,
         delivery_method: pendingOrderData.delivery_method,
@@ -1804,12 +1868,18 @@ function submitOrderToServer() {
         gift_wrap: pendingOrderData.gift_wrap,
         gift_message: pendingOrderData.gift_message,
         comment: pendingOrderData.comment,
-        phone: pendingOrderData.phone
+        phone: pendingOrderData.phone,
+        items: selectedItems.map(item => ({
+            variant_id: item.variant_id,
+            quantity: item.quantity
+        }))
     };
     
     if (currentPromoCode) {
         orderData.promo_code = currentPromoCode;
     }
+    
+    console.log('Sending order data:', orderData);
     
     fetch('/api/orders/create_order/', {
         method: 'POST',
@@ -1822,11 +1892,12 @@ function submitOrderToServer() {
     .then(response => {
         if (!response.ok) {
             return response.text().then(text => {
+                console.error('Server response:', text);
                 try {
                     const err = JSON.parse(text);
-                    throw new Error(err.error || 'Ошибка сервера');
+                    throw new Error(err.error || Object.values(err).join(', '));
                 } catch {
-                    throw new Error('Ошибка сервера: ' + text.substring(0, 100));
+                    throw new Error('Ошибка сервера: ' + text.substring(0, 200));
                 }
             });
         }
@@ -1834,6 +1905,31 @@ function submitOrderToServer() {
     })
     .then(data => {
         if (data.id) {
+            // ✅ Удаляем оформленные товары из корзины
+            const variantIds = selectedItems.map(item => item.variant_id);
+            
+            // Получаем текущую корзину и удаляем оформленные товары
+            fetch('/api/cart/')
+                .then(r => r.json())
+                .then(cart => {
+                    const itemsToRemove = cart.items.filter(item => variantIds.includes(item.variant_id));
+                    
+                    const deletePromises = itemsToRemove.map(item =>
+                        fetch('/api/cart/remove_item/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({ cart_item_id: item.id })
+                        })
+                    );
+                    
+                    return Promise.all(deletePromises);
+                })
+                .catch(e => console.error('Error cleaning cart:', e));
+            
+            localStorage.removeItem('checkout_selected_items');
             localStorage.removeItem('checkout_bonus_applied');
             showNotification(`Заказ успешно оформлен! Номер заказа: ${data.order_number}`);
             updateCartCount();
