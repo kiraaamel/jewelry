@@ -470,29 +470,6 @@
     margin-top: 0.375rem;
 }
 
-.address-actions {
-    display: flex;
-    gap: 0.625rem;
-}
-
-.address-actions button {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: var(--gray);
-    transition: all 0.3s;
-    padding: 0.3125rem;
-}
-
-.address-actions button:hover {
-    color: var(--red);
-}
-
-.address-actions button:focus-visible {
-    outline: 3px solid var(--focus-ring);
-    outline-offset: 2px;
-    border-radius: 0.5rem;
-}
 
 .btn-orders {
     display: inline-flex;
@@ -774,11 +751,6 @@
     .address-card {
         flex-direction: column;
         gap: 0.75rem;
-    }
-    
-    .address-actions {
-        justify-content: flex-end;
-        width: 100%;
     }
     
     .bonus-card {
@@ -1074,6 +1046,23 @@ function claimBirthdayBonus() {
         if (data.id) {
             currentUser = data;
             document.getElementById('bonus-points').innerHTML = data.bonus_points;
+
+            let history = [];
+            const saved = localStorage.getItem(`bonus_history_${currentUser.id}`);
+            if (saved) {
+                try {
+                    history = JSON.parse(saved);
+                } catch(e) {}
+            }
+            
+            history.push({
+                type: 'birthday',
+                amount: 1000,
+                date: new Date().toISOString(),
+                message: '🎂 Бонус за день рождения'
+            });
+            
+            localStorage.setItem(`bonus_history_${currentUser.id}`, JSON.stringify(history));
             
             document.getElementById('birthday-bonus-container').innerHTML = `
                 <div class="birthday-bonus-card" style="background: linear-gradient(135deg, #4caf50, #2e7d32);">
@@ -1219,11 +1208,6 @@ function renderAddresses() {
                     <div class="address-text">${escapeHtml(addr.address)}</div>
                     <div class="address-delivery-method">Последний раз использован: ${date}</div>
                 </div>
-                <div class="address-actions">
-                    <button onclick="editAddress(${index})" title="Редактировать">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                </div>
             </div>
         `;
     });
@@ -1266,7 +1250,7 @@ function saveAddressEdit() {
 }
 
 function loadReviews() {
-    fetch('/api/reviews/')
+    fetch('/api/reviews/?my_reviews=true')
         .then(response => response.json())
         .then(reviews => {
             currentReviews = reviews;
@@ -1349,60 +1333,142 @@ function deleteReview(reviewId) {
 }
 
 function loadBonusHistory() {
+    const container = document.getElementById('bonus-history-list');
+    let history = [];
+    if (currentUser && currentUser.id) {
+        const saved = localStorage.getItem(`bonus_history_${currentUser.id}`);
+        if (saved) {
+            try {
+                history = JSON.parse(saved);
+            } catch(e) {
+                history = [];
+            }
+        }
+    }
+
     fetch('/api/orders/')
         .then(response => response.json())
         .then(orders => {
-            const container = document.getElementById('bonus-history-list');
-            const ordersWithBonuses = orders.filter(o => o.bonus_earned > 0);
-            
-            let savedHistory = [];
-            if (currentUser && currentUser.id) {
-                const saved = localStorage.getItem(`bonus_history_${currentUser.id}`);
-                if (saved) {
-                    savedHistory = JSON.parse(saved);
+            orders.forEach(order => {
+                if (order.status === 'cancelled' && order.bonus_earned > 0) {
+                    const alreadyExists = history.some(h => 
+                        h.type === 'cancelled' && h.order_number === order.order_number
+                    );
+                    
+                    if (!alreadyExists) {
+                        history.push({
+                            type: 'cancelled',
+                            order_number: order.order_number,
+                            amount: order.bonus_earned,
+                            date: order.created_at,
+                            message: `Списано за отмену заказа №${order.order_number}`
+                        });
+                    }
                 }
-            }
-            
-            if (ordersWithBonuses.length === 0 && savedHistory.length === 0) {
-                container.innerHTML = '<div class="text-center py-3 text-secondary">Пока нет начислений</div>';
-                return;
-            }
-            
-            let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
-            
-            savedHistory.forEach(entry => {
-                const date = new Date(entry.date).toLocaleDateString('ru-RU');
-                html += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #fff3e0; border-radius: 12px; border-left: 4px solid #ff9800;">
-                        <div>
-                            <div style="font-weight: 500; color: #ff9800;">${entry.message || '🎂 Бонус за день рождения'}</div>
-                            <div style="font-size: 12px; color: var(--gray);">от ${date}</div>
-                        </div>
-                        <div style="color: #ff9800; font-weight: 600;">+${entry.amount} бонусов</div>
-                    </div>
-                `;
             });
-            
-            ordersWithBonuses.forEach(order => {
-                const date = new Date(order.created_at).toLocaleDateString('ru-RU');
-                html += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8f9fa; border-radius: 12px;">
-                        <div>
-                            <div style="font-weight: 500; color: var(--brown);">Заказ №${order.order_number}</div>
-                            <div style="font-size: 12px; color: var(--gray);">от ${date}</div>
-                        </div>
-                        <div style="color: var(--green); font-weight: 600;">+${order.bonus_earned} бонусов</div>
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            container.innerHTML = html;
+            if (currentUser && currentUser.id) {
+                localStorage.setItem(`bonus_history_${currentUser.id}`, JSON.stringify(history));
+            }
+
+            history.sort((a, b) => new Date(b.date) - new Date(a.date));
+            renderBonusHistory(history, orders);
         })
         .catch(error => {
             console.error('Error:', error);
-            document.getElementById('bonus-history-list').innerHTML = '<div class="text-center py-3 text-secondary">Ошибка загрузки истории</div>';
+            renderBonusHistory(history, []);
         });
+}
+
+function renderBonusHistory(history, orders) {
+    const container = document.getElementById('bonus-history-list');
+    const activeOrders = orders.filter(o => 
+        o.bonus_earned > 0 && o.status !== 'cancelled'
+    );
+    
+    let allHistory = [...history];
+    
+    activeOrders.forEach(order => {
+        const alreadyExists = allHistory.some(h => 
+            h.type === 'order' && h.order_number === order.order_number
+        );
+        
+        if (!alreadyExists) {
+            allHistory.push({
+                type: 'order',
+                order_number: order.order_number,
+                amount: order.bonus_earned,
+                date: order.created_at,
+                message: `Заказ №${order.order_number}`
+            });
+        }
+    });
+
+    if (currentUser && currentUser.id) {
+        const saved = localStorage.getItem(`bonus_history_${currentUser.id}`);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                parsed.forEach(entry => {
+                    if (entry.type === 'birthday') {
+                        const alreadyExists = allHistory.some(h => 
+                            h.type === 'birthday' && h.date === entry.date
+                        );
+                        if (!alreadyExists) {
+                            allHistory.push(entry);
+                        }
+                    }
+                });
+            } catch(e) {}
+        }
+    }
+    allHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    if (allHistory.length === 0) {
+        container.innerHTML = '<div class="text-center py-3 text-secondary">Пока нет начислений</div>';
+        return;
+    }
+    
+    let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+    
+    allHistory.forEach(entry => {
+        const date = new Date(entry.date).toLocaleDateString('ru-RU');
+        const isCancelled = entry.type === 'cancelled';
+        const isBirthday = entry.type === 'birthday';
+        
+        let bgColor, textColor, borderColor, prefix;
+        
+        if (isCancelled) {
+            bgColor = '#ffebee';
+            textColor = '#c62828';
+            borderColor = '#dc3545';
+            prefix = '-';
+        } else if (isBirthday) {
+            bgColor = '#fff3e0';
+            textColor = '#ff9800';
+            borderColor = '#ff9800';
+            prefix = '+';
+        } else {
+            bgColor = '#f8f9fa';
+            textColor = '#2e7d32';
+            borderColor = '#28a745';
+            prefix = '+';
+        }
+        
+        const displayMessage = entry.message || (isCancelled ? 'Списание за отмену заказа' : 'Начисление бонусов');
+        
+        html += `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: ${bgColor}; border-radius: 12px; border-left: 4px solid ${borderColor};">
+                <div>
+                    <div style="font-weight: 500; color: ${textColor};">${displayMessage}</div>
+                    <div style="font-size: 12px; color: var(--gray);">от ${date}</div>
+                </div>
+                <div style="color: ${textColor}; font-weight: 600;">${prefix}${entry.amount} бонусов</div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 document.getElementById('profile-form').addEventListener('submit', function(e) {

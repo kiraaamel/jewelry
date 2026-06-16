@@ -1058,7 +1058,7 @@ function loadCheckout() {
     
     if (selectedItemsJson) {
         selectedItems = JSON.parse(selectedItemsJson);
-        globalSelectedItems = selectedItems;  // ← СОХРАНЯЕМ В ГЛОБАЛЬНУЮ ПЕРЕМЕННУЮ
+        globalSelectedItems = selectedItems;
         localStorage.removeItem('checkout_selected_items');
     }
     loadFromStorage();
@@ -1858,7 +1858,6 @@ function submitOrderToServer() {
         return;
     }
     
-    // ✅ Формируем данные заказа с выбранными товарами
     const orderData = {
         delivery_address: pendingOrderData.delivery_address,
         delivery_method: pendingOrderData.delivery_method,
@@ -1905,10 +1904,8 @@ function submitOrderToServer() {
     })
     .then(data => {
         if (data.id) {
-            // ✅ Удаляем оформленные товары из корзины
             const variantIds = selectedItems.map(item => item.variant_id);
             
-            // Получаем текущую корзину и удаляем оформленные товары
             fetch('/api/cart/')
                 .then(r => r.json())
                 .then(cart => {

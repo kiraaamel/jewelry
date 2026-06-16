@@ -375,7 +375,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                     'product': variant.product
                 })
         else:
-            # ✅ Если нет выбранных товаров, берём всё из корзины
+            #Если нет выбранных товаров, берём всё из корзины
             try:
                 cart = Cart.objects.get(user=user)
             except Cart.DoesNotExist:

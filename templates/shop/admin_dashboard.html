@@ -648,7 +648,6 @@ async function loadProducts(search = '') {
                 <td>${product.available_quantity || 0}</td>
                 <td>
                     <button class="action-btn" onclick="editProductField(${product.id}, 'price', ${product.price})" aria-label="Изменить цену товара ${product.name}">Цена</button>
-                    <button class="action-btn" onclick="editProductField(${product.id}, 'stock', 0)" aria-label="Изменить количество товара ${product.name}">Кол-во</button>
                     <button class="action-btn danger" onclick="deleteProduct(${product.id})" aria-label="Удалить товар ${product.name}">🗑️</button>
                  </td>
             </tr>
@@ -955,30 +954,25 @@ function searchUsers() {
     loadUsers(search);
 }
 
-// Tab switching with ARIA attributes
 document.querySelectorAll('.admin-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-        // Update tab states
         document.querySelectorAll('.admin-tab').forEach(t => {
             t.classList.remove('active');
             t.setAttribute('aria-selected', 'false');
         });
         tab.classList.add('active');
         tab.setAttribute('aria-selected', 'true');
-        
-        // Update panel states
+ 
         const panelId = `panel-${tab.dataset.tab}`;
         document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
         document.getElementById(panelId).classList.add('active');
-        
-        // Load data for the active panel
+
         if (tab.dataset.tab === 'orders') loadOrders();
         if (tab.dataset.tab === 'products') loadProducts();
         if (tab.dataset.tab === 'reviews') loadReviews();
         if (tab.dataset.tab === 'users') loadUsers();
     });
     
-    // Keyboard support for tabs
     tab.addEventListener('keydown', (e) => {
         const tabs = Array.from(document.querySelectorAll('.admin-tab'));
         const currentIndex = tabs.indexOf(e.target);

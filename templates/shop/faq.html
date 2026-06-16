@@ -701,8 +701,7 @@ function toggleFaq(button) {
     
     button.setAttribute('aria-expanded', !isExpanded);
     answer.setAttribute('aria-hidden', isExpanded);
-    
-    // Устанавливаем фокус на открытом ответе для лучшей навигации
+
     if (!isExpanded) {
         answer.setAttribute('tabindex', '-1');
         answer.focus();
@@ -710,7 +709,6 @@ function toggleFaq(button) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Обработка якорных ссылок
     if (window.location.hash) {
         const targetId = window.location.hash.substring(1);
         const targetElement = document.getElementById(targetId);
@@ -725,7 +723,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Клавиатурная навигация для аккордеона
     const buttons = document.querySelectorAll('.faq-question');
     buttons.forEach(button => {
         button.addEventListener('keypress', function(e) {
@@ -735,7 +732,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Навигация между кнопками стрелками
         button.addEventListener('keydown', function(e) {
             const buttonsList = Array.from(document.querySelectorAll('.faq-question'));
             const currentIndex = buttonsList.indexOf(this);

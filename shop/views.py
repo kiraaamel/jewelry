@@ -15,7 +15,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
-from django.db.models import Avg, Value, FloatField
+from django.db import models
+from django.db.models import Avg, Value, FloatField, Q, Count
 from django.db.models.functions import Coalesce
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.decorators import action
@@ -392,6 +393,18 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductVariantSerializer(variants, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'])
+    def bestsellers(self, request: Request) -> Response:
+        """
+        Возвращает товары, отсортированные по популярности (количество заказов).
+        """
+        products = Product.objects.filter(is_active=True).annotate(
+            order_count=Count('orderitem', filter=Q(orderitem__order__status__in=['delivered', 'received']))
+        ).order_by('-order_count')[:4]
+        
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)
+
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
     def apply_discount(self, request: Request, pk: Optional[int] = None) -> Response:
         """
@@ -680,6 +693,22 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        bonus_spent = 0
+
+        if order.bonus_earned > 0 and order.user:
+            bonus_to_remove = order.bonus_earned
+            if order.user.bonus_points >= bonus_to_remove:
+                order.user.bonus_points -= bonus_to_remove
+                bonus_spent = bonus_to_remove
+            else:
+                bonus_spent = order.user.bonus_points
+                order.user.bonus_points = 0
+            order.user.save()
+            request.session['bonus_cancelled'] = {
+                'amount': bonus_spent,
+                'order_number': order.order_number,
+                'date': timezone.now().isoformat()
+            }
         order.status = Order.Status.CANCELLED
         order.save()
 
@@ -688,7 +717,11 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                 item.variant.stock_quantity += item.quantity
                 item.variant.save()
 
-        return Response({'status': 'ok'})
+        return Response({
+            'status': 'ok',
+            'bonus_spent': bonus_spent,
+            'order_number': order.order_number
+        })
 
     @action(detail=True, methods=['get'])
     def get_pickup_code(self, request: Request, pk: Optional[int] = None) -> Response:
@@ -783,17 +816,28 @@ class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    def get_queryset(self):
-        """
-        Возвращает отзывы с учётом прав пользователя.
-
-        Returns:
-            QuerySet отзывов
-        """
+    def get_queryset(self) -> Review:
         user: User = self.request.user
+        queryset = Review.objects.all().order_by('-created_at')
+        
+        public = self.request.query_params.get('public')
+        if public is not None and public.lower() == 'true':
+            return queryset.filter(moderated=True)
+        
+        moderated_param = self.request.query_params.get('moderated')
+        if moderated_param is not None:
+            if moderated_param.lower() == 'true':
+                queryset = queryset.filter(moderated=True)
+            elif moderated_param.lower() == 'false':
+                queryset = queryset.filter(moderated=False)
+        
         if user.is_staff:
-            return Review.objects.all().order_by('-created_at')
-        return Review.objects.filter(moderated=True).order_by('-created_at')
+            return queryset
+        my_reviews = self.request.query_params.get('my_reviews')
+        if my_reviews is not None and my_reviews.lower() == 'true':
+            return queryset.filter(user=user)
+        from django.db.models import Q
+        return queryset.filter(Q(user=user) | Q(moderated=True))
 
     def get_serializer_context(self) -> Dict[str, Any]:
         """

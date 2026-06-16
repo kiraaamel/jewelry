@@ -356,7 +356,7 @@
     }
     
     .size-btn {
-        width: 2.8125rem;
+        min-width: 2.8125rem;
         height: 2.8125rem;
         border-radius: 0.625rem;
         border: 1px solid var(--accent);
@@ -1661,7 +1661,6 @@ function renderProductPage(product) {
         
         const needsSizeSelection = productVariants.length > 1;
 
-        // Если товар с одним размером, сразу выбираем его
         if (!needsSizeSelection && productVariants.length === 1 && !selectedVariant) {
             selectedVariant = productVariants[0];
         }
@@ -1670,15 +1669,12 @@ function renderProductPage(product) {
         quantityInput.value = currentQty;
         
         function updateDisplay() {
-            // Обновляем поле ввода
             quantityInput.value = currentQty;
-            
-            // Обновляем цену
+
             const activeVariant = selectedVariant || (productVariants.length === 1 ? productVariants[0] : null);
             const maxQty = getMaxAvailableQuantity(currentProduct, activeVariant);
             totalSpan.textContent = (price * currentQty).toFixed(0);
             
-            // Обновляем состояние кнопок
             if (decreaseBtn) {
                 decreaseBtn.disabled = (currentQty <= 1) || (needsSizeSelection && !selectedVariant);
             }
@@ -1690,8 +1686,6 @@ function renderProductPage(product) {
             }
         }
 
-        // ✅ Используем onclick вместо cloneNode и addEventListener
-        // Кнопка "-"
         decreaseBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1707,7 +1701,6 @@ function renderProductPage(product) {
             }
         };
 
-        // Кнопка "+"
         increaseBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1731,7 +1724,6 @@ function renderProductPage(product) {
             }
         };
 
-        // Ручной ввод
         quantityInput.oninput = () => {
             if (needsSizeSelection && !selectedVariant) {
                 showNotification('Пожалуйста, сначала выберите размер');
@@ -1760,7 +1752,6 @@ function renderProductPage(product) {
             updateDisplay();
         };
         
-        // Начальное отображение
         updateDisplay();
     }
     function initSizeButtons() {
@@ -1786,7 +1777,6 @@ function renderProductPage(product) {
                     }
                 }
 
-                // Обновляем количество через initQuantityControls
                 const quantityInput = document.getElementById('quantity');
                 if (quantityInput) {
                     quantityInput.value = 1;
@@ -1795,7 +1785,6 @@ function renderProductPage(product) {
                         totalSpan.textContent = currentProduct.price;
                     }
                 }
-                // Принудительно обновляем состояние кнопок
                 initQuantityControls(currentProduct.price);
             });
         });
@@ -1865,7 +1854,6 @@ function renderProductPage(product) {
                 updateCartCount();
                 showNotification('Товар добавлен в корзину!');
                 loadCartItems().then(() => {
-                    // ✅ ЗАМЕНИТЬ updateQuantityMax() НА:
                     initQuantityControls(currentProduct.price);
                 });
             }

@@ -1278,18 +1278,6 @@ function initSizeModalButtons() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    initSizeModalButtons();
-    loadCollections();
-    loadProducts('bestseller-products', '/api/products/?page_size=4', 4);
-    loadReviews();
-    
-    const isAuth = document.body.classList.contains('user-authenticated');
-    if (isAuth) {
-        loadProducts('recommended-products', '/api/products/?page_size=4', 4);
-    }
-});
-
 document.getElementById('qty-minus')?.addEventListener('click', () => {
     const qtyInput = document.getElementById('modal-qty-value');
     let val = parseInt(qtyInput.value) || 1;
@@ -1594,7 +1582,8 @@ async function loadReviews() {
     if (!container) return;
     
     try {
-        const response = await fetch('/api/reviews/?moderated=true&page_size=6');
+        // Используем параметр public=true для получения всех промодерированных отзывов
+        const response = await fetch('/api/reviews/?public=true&page_size=3');
         if (!response.ok) throw new Error('Network error');
         
         const data = await response.json();
@@ -1605,13 +1594,16 @@ async function loadReviews() {
             return;
         }
         
+        // Получаем названия товаров
         const productIds = [...new Set(reviews.map(review => review.product).filter(id => id))];
-        
-        const productsResponse = await fetch(`/api/products/?ids=${productIds.join(',')}&page_size=100`);
-        if (!productsResponse.ok) throw new Error('Network error');
-        
-        const productsData = await productsResponse.json();
-        const products = productsData.results || (Array.isArray(productsData) ? productsData : []);
+        let products = [];
+        if (productIds.length > 0) {
+            const productsResponse = await fetch(`/api/products/?ids=${productIds.join(',')}&page_size=100`);
+            if (productsResponse.ok) {
+                const productsData = await productsResponse.json();
+                products = productsData.results || (Array.isArray(productsData) ? productsData : []);
+            }
+        }
         
         const productNames = {};
         products.forEach(product => {
@@ -1623,7 +1615,7 @@ async function loadReviews() {
         ).join('');
         
     } catch (error) {
-        console.error(error);
+        console.error('Error loading reviews:', error);
         container.innerHTML = '<div class="col-12 text-center" style="color: var(--gray);">Ошибка загрузки отзывов</div>';
     }
 }
@@ -1673,7 +1665,7 @@ function loadCollections() {
 
 document.addEventListener('DOMContentLoaded', function() {
     loadCollections();
-    loadProducts('bestseller-products', '/api/products/?page_size=4', 4);
+    loadProducts('bestseller-products', '/api/products/bestsellers/', 4);
     loadReviews();
     
     const isAuth = document.body.classList.contains('user-authenticated');

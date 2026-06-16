@@ -991,11 +991,9 @@
                         const cart = JSON.parse(savedCart);
                         if (cart.items && cart.items.length > 0) {
                             console.log('Restoring', cart.items.length, 'items from localStorage after login');
-                            
-                            // Небольшая задержка, чтобы пользователь точно авторизовался
+
                             setTimeout(() => {
                                 const addPromises = cart.items.map(item => {
-                                    // ✅ Используем variant_id
                                     return fetch('/api/cart/add_item/', {
                                         method: 'POST',
                                         headers: {
@@ -1015,8 +1013,6 @@
                                         if (allOk) {
                                             localStorage.removeItem('guest_cart');
                                             updateCartCount();
-                                            console.log('Guest cart restored successfully after login');
-                                            // Не перезагружаем, просто обновляем счётчик
                                         } else {
                                             console.error('Some requests failed');
                                         }
@@ -1092,13 +1088,10 @@
         }
         
         function saveGuestCart() {
-            console.log('saveGuestCart called');  // для отладки
             fetch('/api/cart/')
                 .then(response => response.json())
                 .then(data => {
-                    console.log('Cart data for save:', data);  // для отладки
                     if (data.items && data.items.length > 0) {
-                        // Сохраняем полную информацию о товарах в корзине
                         const cartToSave = {
                             items: data.items.map(item => ({
                                 variant_id: item.variant_id,

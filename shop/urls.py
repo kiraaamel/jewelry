@@ -65,6 +65,6 @@ urlpatterns: List[Union[path, include]] = [
     path('api/auth/me/', views.UserProfileView.as_view(), name='user_profile'),
 
     path('admin-dashboard/', admin_dashboard, name='admin_dashboard'),
-    # Тестовый маршрут для Sentry (закомментирован)
+    # Тестовый маршрут для Sentry
     # path('sentry-debug/', views.trigger_error, name='sentry-debug'),
 ]

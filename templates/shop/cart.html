@@ -329,6 +329,7 @@
     padding: 1.25rem;
     position: sticky;
     top: 1.25rem;
+    max-height: fit-content;
 }
 
 .summary-row {
@@ -944,7 +945,6 @@ function updateCartSummary() {
     
     const earnBonus = Math.floor(finalPrice * 0.05);
     
-    // Обновляем элементы
     const selectedCountEl = document.getElementById('selected-count');
     const subtotalEl = document.getElementById('summary-subtotal');
     const discountEl = document.getElementById('summary-discount');
@@ -963,8 +963,7 @@ function updateCartSummary() {
     } else {
         if (bonusUsedEl) bonusUsedEl.innerHTML = '';
     }
-    
-    // Проверяем, есть ли доступные товары для оформления
+
     let hasAvailableItem = false;
     for (const item of cartData.items) {
         if (selectedItems.has(item.id)) {
@@ -998,7 +997,7 @@ function toggleSelectAndUpdate(id) {
     } else {
         selectedItems.add(id);
     }
-    updateCartSummary();  // ✅ Просто вызываем updateCartSummary
+    updateCartSummary();
 }
 
 function applyPromoCode() {
@@ -1165,8 +1164,7 @@ function toggleSelectAll(){
             selectedItems.delete(id);
         }
     });
-    
-    // ✅ Просто вызываем функцию обновления итогов
+ 
     updateCartSummary();
 }
 function deleteSelected(){

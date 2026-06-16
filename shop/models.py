@@ -519,8 +519,6 @@ class Product(models.Model):
             return self.image.url if hasattr(self.image, 'url') else self.image
         return None
 
-    # ========== МЕТОДЫ ==========
-
     def is_in_wishlist(self, user: Optional[User]) -> bool:
         """
         Проверяет, находится ли товар в избранном у пользователя.
@@ -819,7 +817,6 @@ class PromoCode(models.Model):
     # Активность
     is_active = models.BooleanField(default=True, verbose_name='Активен')
 
-    # Категории товаров (опционально)
     applicable_categories = models.ManyToManyField('Category', blank=True, verbose_name='Применяется к категориям')
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
@@ -993,7 +990,7 @@ class Order(models.Model):
             self.save(update_fields=['pickup_code', 'code_generated_at'])
         else:
             time_diff = timezone.now() - self.code_generated_at
-            if time_diff.total_seconds() > 600:  # 10 минут = 600 секунд
+            if time_diff.total_seconds() > 600:
                 self.pickup_code = self.generate_pickup_code()
                 self.code_generated_at = timezone.now()
                 self.save(update_fields=['pickup_code', 'code_generated_at'])

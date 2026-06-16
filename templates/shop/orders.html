@@ -1118,7 +1118,6 @@ function repeatOrder(orderId) {
     const promises = [];
 
     for (const item of order.items) {
-        // ✅ Используем variant_id, если он есть
         if (item.variant_id) {
             promises.push(
                 fetch('/api/cart/add_item/', {
@@ -1134,7 +1133,6 @@ function repeatOrder(orderId) {
                 })
             );
         } 
-        // ✅ Если variant_id нет, но есть product_id, находим вариант
         else if (item.product_id) {
             promises.push(
                 fetch(`/api/products/${item.product_id}/`)

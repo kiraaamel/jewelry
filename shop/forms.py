@@ -6,7 +6,6 @@ from django.http import HttpRequest
 from allauth.account.forms import SignupForm
 from .models import User
 
-# Валидатор для телефона
 phone_validator: RegexValidator = RegexValidator(
     regex=r'^(\+7|7|8)?[\s\-]?\(?[0-9]{3}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$',
     message='Введите корректный номер телефона в формате +7 999 123-45-67'
@@ -123,7 +122,6 @@ class CustomSignupForm(SignupForm):
         """
         user: User = super().save(request)
 
-        # Заполняем дополнительные поля
         user.phone = self.cleaned_data.get('phone', '')
         user.first_name = self.cleaned_data.get('first_name', '')
         user.last_name = self.cleaned_data.get('last_name', '')
