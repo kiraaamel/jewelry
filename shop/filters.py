@@ -46,12 +46,12 @@ class ProductFilter(filters.FilterSet):
     # Фильтрация по цене (минимальная и максимальная)
     price_min: filters.NumberFilter = filters.NumberFilter(
         field_name='price',
-        lookup_expr='gte',
+        lookup_expr='gte', # >=
         help_text='Минимальная цена товара (>=)'
     )
     price_max: filters.NumberFilter = filters.NumberFilter(
         field_name='price',
-        lookup_expr='lte',
+        lookup_expr='lte', # <=
         help_text='Максимальная цена товара (<=)'
     )
 
@@ -65,7 +65,7 @@ class ProductFilter(filters.FilterSet):
     silver_type: filters.ChoiceFilter = filters.ChoiceFilter(
         field_name='silver_type',
         choices=Product.SILVER_TYPE_CHOICES,
-        lookup_expr='exact',
+        lookup_expr='exact', # = (точно совпадает)
         help_text='Тип серебра (sterling, oxidized, rhodium, black)'
     )
 

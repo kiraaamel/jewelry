@@ -38,7 +38,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
         required=True,
-        validators=[validate_password]
+        validators=[validate_password] #встроенная проверка Django
     )
     password2 = serializers.CharField(
         write_only=True,

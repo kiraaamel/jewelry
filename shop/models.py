@@ -407,8 +407,6 @@ class Product(models.Model):
         fineness_display = self.get_fineness_display()
         return f"{self.name} - {silver_display} ({fineness_display}) - {self.price}₽"
 
-    # ========== СВОЙСТВА ==========
-
     @property
     def available_quantity(self) -> int:
         """
@@ -432,16 +430,6 @@ class Product(models.Model):
             return 0
         total = sum(review.rating for review in reviews)
         return round(total / reviews.count(), 1)
-
-    @property
-    def reviews_count(self) -> int:
-        """
-        Возвращает количество промодерированных отзывов на товар.
-
-        Returns:
-            Количество отзывов
-        """
-        return self.reviews.filter(moderated=True).count()
 
     @property
     def discount_percent(self) -> int:

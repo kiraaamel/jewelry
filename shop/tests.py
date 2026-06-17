@@ -28,8 +28,8 @@ class AuthenticationTests(TestCase):
 
     def setUp(self) -> None:
         """Настройка тестовой среды для аутентификации."""
-        self.client: APIClient = APIClient()
-        self.register_url: str = '/api/auth/register/'
+        self.client: APIClient = APIClient() #имитатор браузера
+        self.register_url: str = '/api/auth/register/' #сохранение URL в переменную
         self.login_url: str = '/api/auth/login/'
         self.me_url: str = '/api/auth/me/'
 

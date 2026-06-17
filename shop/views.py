@@ -297,7 +297,11 @@ class ProductViewSet(viewsets.ModelViewSet):
         Возвращает QuerySet товаров с учётом фильтрации по поиску и ids.
         """
         try:
-            queryset = Product.objects.filter(is_active=True).select_related('category', 'collection')
+            queryset = Product.objects.filter(is_active=True).select_related(
+                'category', 'collection'
+            ).annotate( 
+                reviews_count=Count('reviews', filter=Q(reviews__moderated=True))
+            )
 
             ids: Optional[str] = self.request.query_params.get('ids', None)
             if ids:
@@ -599,7 +603,7 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
         """
         Возвращает заказы текущего пользователя.
         """
-        return Order.objects.filter(user=self.request.user).prefetch_related('items').order_by('-created_at')
+        return Order.objects.filter(user=self.request.user).prefetch_related('items').order_by('-created_at') #заказы + позиции заказов
 
     @action(detail=False, methods=['post'])
     def create_order(self, request: Request) -> Response:
@@ -1201,6 +1205,6 @@ def admin_dashboard(request: HttpRequest) -> HttpResponse:
     return render(request, 'shop/admin_dashboard.html')
 
 
-# def trigger_error(request):
-#     """Тестовая функция для проверки Sentry"""
-#     division_by_zero = 1 / 0
+def trigger_error(request):
+    """Тестовая функция для проверки Sentry"""
+    division_by_zero = 1 / 0

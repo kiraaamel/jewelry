@@ -616,7 +616,7 @@ class CartItemAdmin(admin.ModelAdmin):
         Returns:
             QuerySet с подгруженными связанными объектами.
         """
-        return super().get_queryset(request).select_related('product', 'variant')
+        return super().get_queryset(request).select_related('product', 'variant') #позиция заказа + товар и вариант
 
 
 class ProductVariantInline(admin.TabularInline):
@@ -1281,7 +1281,7 @@ class ProductVariantAdmin(admin.ModelAdmin):
         Returns:
             QuerySet с подгруженным связанным товаром.
         """
-        return super().get_queryset(request).select_related('product')
+        return super().get_queryset(request).select_related('product') #все варианты товара + товар
 
 
 # Регистрация всех моделей в админке
